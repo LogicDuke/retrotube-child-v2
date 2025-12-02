@@ -174,6 +174,33 @@ add_filter('wp_get_attachment_image_attributes', function ($attr, $attachment, $
     return $attr;
 }, 10, 3);
 
+// Preload the model banner image used as the LCP background on single model pages.
+add_action('wp_head', function () {
+    static $printed = false;
+
+    if ($printed) {
+        return;
+    }
+
+    if (!is_singular('model')) {
+        return;
+    }
+
+    $model_id = get_queried_object_id();
+    if (!$model_id || !function_exists('tmw_resolve_model_banner_url')) {
+        return;
+    }
+
+    $banner_url = tmw_resolve_model_banner_url($model_id);
+    if (empty($banner_url)) {
+        return;
+    }
+
+    $printed = true;
+
+    echo '\n<link rel="preload" as="image" href="' . esc_url($banner_url) . '" fetchpriority="high">\n';
+}, 5);
+
 // Disable updates for the Retrotube parent theme
 add_filter('site_transient_update_themes', function($value) {
 
