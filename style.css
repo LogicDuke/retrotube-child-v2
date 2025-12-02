@@ -942,22 +942,7 @@ a.tag-link {
   overflow: visible;     /* avoid clipping if parent has smaller content box */
 }
 
-/* Slot machine: reserve space & stabilize assets (CLS guard) */
-.single-model .tmw-slot-machine {
-  min-height: 300px;
-}
-
-@media (min-width: 768px) {
-  .single-model .tmw-slot-machine {
-    min-height: 360px;
-  }
-}
-
-.single-model .tmw-slot-machine .slot-body,
-.single-model .tmw-slot-machine .slot-container,
-.single-model .tmw-slot-machine .slot-right {
-  min-height: 240px;
-}
+/* Slot machine: height now governed by plugin CSS */
 
 .single-model .tmw-slot-machine img {
   display: block;
@@ -1064,19 +1049,8 @@ a.tag-link {
 }
 
 /* =========================
-   Slot machine stability
+   Slot machine stability (visual styling only; height via plugin)
    ========================= */
-.tmw-slot-machine,
-.single-model .tmw-slot-machine {
-  min-height: 420px;
-}
-
-@media (min-width: 768px) {
-  .tmw-slot-machine,
-  .single-model .tmw-slot-machine {
-    min-height: 360px;
-  }
-}
 
 .tmw-slot-machine .tmw-result.slot-result {
   text-shadow: none !important;
