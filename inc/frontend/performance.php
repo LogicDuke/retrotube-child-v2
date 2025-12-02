@@ -211,7 +211,6 @@ add_filter('script_loader_tag', function ($tag, $handle, $src) {
         'pagead2.g.doubleclick.net',
         'analytics.google.com',
         'static.cloudflareinsights.com',
-        'cdn.gtranslate.net',
         'connect.facebook.net',
         'vk.com',
         'unpkg.com',
