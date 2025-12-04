@@ -21,6 +21,64 @@ if (!function_exists('tmw_debug_log')) {
   }
 }
 
+if (!function_exists('tmw_model_banner_default_size')) {
+  /**
+   * Default banner size for model heroes.
+   *
+   * Uses a hero-specific size instead of the generic "large" to improve LCP.
+   */
+  function tmw_model_banner_default_size($size) {
+    if ($size === 'large') {
+      return 'tmw-model-hero-banner';
+    }
+
+    return $size;
+  }
+}
+
+add_filter('tmw/model_banner/image_size', 'tmw_model_banner_default_size', 10, 1);
+
+if (!function_exists('tmw_current_post_has_slot_machine')) {
+  /**
+   * Check whether the current singular post contains the slot machine shortcode.
+   */
+  function tmw_current_post_has_slot_machine(): bool {
+    if (!is_singular()) {
+      return false;
+    }
+
+    $post = get_post();
+    if (!$post) {
+      return false;
+    }
+
+    return has_shortcode((string) $post->post_content, 'tmw_slot_machine');
+  }
+}
+
+if (!function_exists('tmw_should_prioritize_model_banner')) {
+  /**
+   * Determine whether the model banner should request high priority loading.
+   */
+  function tmw_should_prioritize_model_banner($model_id = 0, $context = 'frontend'): bool {
+    if (is_admin()) {
+      return false;
+    }
+
+    if (!empty($context) && $context !== 'frontend') {
+      return false;
+    }
+
+    if (is_singular('model')) {
+      return true;
+    }
+
+    $post_type = $model_id ? get_post_type((int) $model_id) : '';
+
+    return $post_type === 'model';
+  }
+}
+
 // === TMW v3.1.5 — Label alias for model tags ===
 add_filter('the_content', function ($content) {
     if (!is_singular('model')) {
@@ -200,7 +258,26 @@ add_action('init', 'tmw_register_hybrid_scan_cli');
  * 🧩 TMW Flipbox Force Ajax + Footer Fix (v2.9.3)
  * Ensures ajaxurl exists and wp_footer() output includes our ping script.
  */
-add_action('wp_footer', function () {
+if (!function_exists('tmw_is_debug_ping_enabled')) {
+  function tmw_is_debug_ping_enabled(): bool {
+    if (defined('TMW_DEBUG') && TMW_DEBUG) {
+      return true;
+    }
+
+    if (isset($_GET['tmw-debug']) && current_user_can('manage_options')) {
+      return true;
+    }
+
+    return false;
+  }
+}
+
+if (!function_exists('tmw_output_flipbox_debug_ping_footer')) {
+  function tmw_output_flipbox_debug_ping_footer(): void {
+    if (!tmw_is_debug_ping_enabled()) {
+      return;
+    }
+
     ?>
     <script>
     window.ajaxurl = window.ajaxurl || "<?php echo admin_url('admin-ajax.php'); ?>";
@@ -210,7 +287,10 @@ add_action('wp_footer', function () {
         .then(() => console.log('[TMW-FLIPBOX-DEBUG] Footer ping sent.'));
     </script>
     <?php
-}, 9999);
+  }
+}
+
+add_action('wp_footer', 'tmw_output_flipbox_debug_ping_footer', 9999);
 
 add_action('wp_ajax_tmw_flipbox_debug_ping_footer', function(){
     tmw_debug_log('[TMW-FLIPBOX-DEBUG] ✅ Footer ping executed (js confirmed).');
@@ -416,15 +496,21 @@ if (!function_exists('tmw_render_model_banner')) {
         ? tmw_child_image_dimensions($url, 1035, 350)
         : ['width' => 1035, 'height' => 350];
 
+      $default_sizes = '(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1200px';
+
       $attrs = [
-        'src'           => esc_url($url),
-        'alt'           => '',
-        'loading'       => 'eager',
-        'fetchpriority' => 'high',
-        'decoding'      => 'async',
-        'width'         => (int) $dimensions['width'],
-        'height'        => (int) $dimensions['height'],
+        'src'      => esc_url($url),
+        'alt'      => '',
+        'loading'  => 'eager',
+        'decoding' => 'async',
+        'width'    => (int) $dimensions['width'],
+        'height'   => (int) $dimensions['height'],
+        'sizes'    => $default_sizes,
       ];
+
+      if (tmw_should_prioritize_model_banner($model_id, $context)) {
+        $attrs['fetchpriority'] = 'high';
+      }
 
       if ($attachment_id) {
         $src_data = wp_get_attachment_image_src($attachment_id, $image_size);
