@@ -38,6 +38,17 @@ if (!function_exists('tmw_model_banner_default_size')) {
 
 add_filter('tmw/model_banner/image_size', 'tmw_model_banner_default_size', 10, 1);
 
+if (!function_exists('tmw_model_banner_sizes_hint')) {
+  /**
+   * Provide a responsive sizes hint tailored for the model hero banner.
+   */
+  function tmw_model_banner_sizes_hint($context = 'frontend'): string {
+    $default = '(max-width: 540px) 100vw, (max-width: 960px) 92vw, 1200px';
+
+    return apply_filters('tmw/model_banner/sizes', $default, $context);
+  }
+}
+
 if (!function_exists('tmw_current_post_has_slot_machine')) {
   /**
    * Check whether the current singular post contains the slot machine shortcode.
@@ -65,15 +76,22 @@ if (!function_exists('tmw_should_prioritize_model_banner')) {
       return false;
     }
 
-    if (!empty($context) && $context !== 'frontend') {
+    $normalized_context = is_string($context) ? strtolower($context) : '';
+    $allowed_contexts   = ['frontend', 'model-hero'];
+
+    if (!in_array($normalized_context, $allowed_contexts, true)) {
       return false;
     }
+
+    if ($normalized_context === 'frontend' && (!is_singular('model') || !is_main_query())) {
+      return false;
+    }
+
+    $post_type = $model_id ? get_post_type((int) $model_id) : '';
 
     if (is_singular('model')) {
       return true;
     }
-
-    $post_type = $model_id ? get_post_type((int) $model_id) : '';
 
     return $post_type === 'model';
   }
@@ -260,7 +278,11 @@ add_action('init', 'tmw_register_hybrid_scan_cli');
  */
 if (!function_exists('tmw_is_debug_ping_enabled')) {
   function tmw_is_debug_ping_enabled(): bool {
-    if (defined('TMW_DEBUG') && TMW_DEBUG) {
+    if (defined('TMW_DEBUG_PING') && TMW_DEBUG_PING) {
+      return true;
+    }
+
+    if (defined('TMW_DEBUG') && TMW_DEBUG && current_user_can('manage_options')) {
       return true;
     }
 
@@ -496,7 +518,8 @@ if (!function_exists('tmw_render_model_banner')) {
         ? tmw_child_image_dimensions($url, 1035, 350)
         : ['width' => 1035, 'height' => 350];
 
-      $default_sizes = '(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1200px';
+      $normalized_context = is_string($context) ? strtolower($context) : '';
+      $default_sizes      = tmw_model_banner_sizes_hint($context);
 
       $attrs = [
         'src'      => esc_url($url),
@@ -539,7 +562,7 @@ if (!function_exists('tmw_render_model_banner')) {
         }
 
         $sizes = wp_get_attachment_image_sizes($attachment_id, $image_size);
-        if ($sizes) {
+        if ($sizes && !in_array($normalized_context, ['frontend', 'model-hero'], true)) {
           $attrs['sizes'] = $sizes;
         }
       }

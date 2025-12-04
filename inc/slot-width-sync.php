@@ -7,19 +7,32 @@ if (!defined('ABSPATH')) { exit; }
  * - Measures the hero frame and applies the same width and horizontal alignment to .tmw-slot-banner.
  * - Recomputes on resize/orientation changes.
  */
-add_action('wp_footer', function () {
-  if (!is_singular('model')) { return; }
 
-  if (function_exists('tmw_current_post_has_slot_machine') && !tmw_current_post_has_slot_machine()) {
-    return;
+if (!function_exists('tmw_should_boot_slot_width_sync')) {
+  function tmw_should_boot_slot_width_sync(): bool {
+    if (!is_singular('model') || is_admin()) {
+      return false;
+    }
+
+    if (function_exists('tmw_current_post_has_slot_machine')) {
+      return tmw_current_post_has_slot_machine();
+    }
+
+    if (function_exists('has_shortcode')) {
+      $post = get_post();
+      return $post ? has_shortcode((string) $post->post_content, 'tmw_slot_machine') : false;
+    }
+
+    return false;
   }
+}
 
-  if (!function_exists('tmw_current_post_has_slot_machine') && function_exists('has_shortcode')) {
-    $post = get_post();
-    if (!$post || !has_shortcode((string) $post->post_content, 'tmw_slot_machine')) {
+if (!function_exists('tmw_output_slot_width_sync_script')) {
+  function tmw_output_slot_width_sync_script(): void {
+    if (!tmw_should_boot_slot_width_sync()) {
       return;
     }
-  } ?>
+?>
   <script>
   (function() {
     var heroSel = '.tmw-banner-frame, .tmw-banner-container';
@@ -70,4 +83,17 @@ add_action('wp_footer', function () {
     window.addEventListener('orientationchange', debouncedSync);
   })();
   </script>
-<?php }, 100);
+<?php }
+}
+
+add_action('wp', function () {
+  if (!function_exists('tmw_output_slot_width_sync_script')) {
+    return;
+  }
+
+  if (!tmw_should_boot_slot_width_sync()) {
+    return;
+  }
+
+  add_action('wp_footer', 'tmw_output_slot_width_sync_script', 100);
+}, 30);

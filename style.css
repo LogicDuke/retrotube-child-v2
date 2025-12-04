@@ -949,6 +949,11 @@ a.tag-link {
   display: block;
 }
 
+.tmw-slot-banner .tmw-slot-machine .slot-container,
+.tmw-slot-banner .tmw-slot-machine .slot-right {
+  min-height: 220px;
+}
+
 .tmw-slot-banner .tmw-slot-machine img {
   max-width: 100%;
   height: auto;
