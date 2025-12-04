@@ -458,6 +458,16 @@ if (!function_exists('tmw_render_model_banner')) {
         }
       }
 
+      $img_html  = '';
+      if ($attachment_id) {
+        $img_html = wp_get_attachment_image(
+          $attachment_id,
+          $image_size,
+          false,
+          $attrs
+        );
+      }
+
       $attr_html = '';
       foreach ($attrs as $key => $value) {
         if ($value === '' || $value === null) {
@@ -466,9 +476,13 @@ if (!function_exists('tmw_render_model_banner')) {
         $attr_html .= ' ' . $key . '="' . esc_attr($value) . '"';
       }
 
+      if (!$img_html) {
+        $img_html = '<img' . $attr_html . ' />';
+      }
+
       echo '<div class="tmw-banner-container">';
       echo '  <div class="' . esc_attr(implode(' ', $classes)) . '" style="' . esc_attr($style) . '">';
-      echo '    <img' . $attr_html . ' />';
+      echo '    ' . $img_html;
       echo '  </div>';
       echo '</div>';
 
