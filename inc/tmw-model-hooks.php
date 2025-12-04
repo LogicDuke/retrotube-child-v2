@@ -38,6 +38,27 @@ if (!function_exists('tmw_model_banner_default_size')) {
 
 add_filter('tmw/model_banner/image_size', 'tmw_model_banner_default_size', 10, 1);
 
+if (!function_exists('tmw_model_banner_bg_image_size')) {
+  /**
+   * Default background image size for model hero banner frames.
+   *
+   * This ensures we don't load an oversized "full" image as a CSS background
+   * when a hero-sized image is already available.
+   */
+  function tmw_model_banner_bg_image_size($size) {
+    // Only override the default; allow existing custom sizes to pass through untouched.
+    if ($size === 'full' || $size === 'large') {
+      // Use the hero banner size so background and <img> share the same asset
+      // instead of loading a separate heavy full-size image.
+      return 'tmw-model-hero-banner';
+    }
+
+    return $size;
+  }
+}
+
+add_filter('tmw/model_banner/bg_image_size', 'tmw_model_banner_bg_image_size', 10, 1);
+
 if (!function_exists('tmw_model_banner_sizes_hint')) {
   /**
    * Provide a responsive sizes hint tailored for the model hero banner.
@@ -500,19 +521,32 @@ if (!function_exists('tmw_render_model_banner')) {
 
     if ($url) {
       $classes = array_filter(['tmw-banner-frame', 'tmw-bg-mode', $context]);
+      $attachment_id = attachment_url_to_postid($url);
+      $banner_bg_url = $url;
+
+      if ($attachment_id) {
+        $bg_size = apply_filters('tmw/model_banner/bg_image_size', 'tmw-model-hero-banner');
+        $bg_image = wp_get_attachment_image_src($attachment_id, $bg_size);
+
+        if (is_array($bg_image) && !empty($bg_image[0])) {
+          $banner_bg_url = esc_url_raw(set_url_scheme($bg_image[0], 'https'));
+        }
+      }
 
       $style_parts = [
         sprintf('--offset-y:%dpx', (int) $offset),
         sprintf('--offset-base:%dpx', (int) $offset_base),
-        sprintf('background-image:url("%s")', esc_url_raw($url)),
       ];
+
+      if ($banner_bg_url) {
+        $style_parts[] = sprintf('background-image:url("%s")', esc_url_raw($banner_bg_url));
+      }
 
       $style = implode('; ', $style_parts);
       if ($style !== '') {
         $style .= ';';
       }
 
-      $attachment_id = attachment_url_to_postid($url);
       $image_size    = apply_filters('tmw/model_banner/image_size', 'large');
       $dimensions    = function_exists('tmw_child_image_dimensions')
         ? tmw_child_image_dimensions($url, 1035, 350)
