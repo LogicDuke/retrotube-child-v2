@@ -8,7 +8,18 @@ if (!defined('ABSPATH')) { exit; }
  * - Recomputes on resize/orientation changes.
  */
 add_action('wp_footer', function () {
-  if (!is_singular('model')) { return; } ?>
+  if (!is_singular('model')) { return; }
+
+  if (function_exists('tmw_current_post_has_slot_machine') && !tmw_current_post_has_slot_machine()) {
+    return;
+  }
+
+  if (!function_exists('tmw_current_post_has_slot_machine') && function_exists('has_shortcode')) {
+    $post = get_post();
+    if (!$post || !has_shortcode((string) $post->post_content, 'tmw_slot_machine')) {
+      return;
+    }
+  } ?>
   <script>
   (function() {
     var heroSel = '.tmw-banner-frame, .tmw-banner-container';

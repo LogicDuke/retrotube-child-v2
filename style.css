@@ -942,6 +942,19 @@ a.tag-link {
   overflow: visible;     /* avoid clipping if parent has smaller content box */
 }
 
+/* Slot machine CLS mitigation: reserve vertical space */
+.tmw-slot-banner,
+.tmw-slot-banner .tmw-slot-machine {
+  min-height: 260px;
+  display: block;
+}
+
+.tmw-slot-banner .tmw-slot-machine img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
 /* Slot machine: height now governed by plugin CSS */
 
 .single-model .tmw-slot-machine img {
