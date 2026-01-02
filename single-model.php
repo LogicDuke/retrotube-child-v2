@@ -30,6 +30,10 @@ get_header(); ?>
         $cache_key     = 'tmw_model_tags_' . $post_id;
         $cached_payload = get_transient( $cache_key );
 
+        if ( function_exists( 'tmw_get_model_acf_fields_cached' ) ) {
+          tmw_get_model_acf_fields_cached( $post_id );
+        }
+
         $video_tags = array();
         $tag_count  = 0;
 
