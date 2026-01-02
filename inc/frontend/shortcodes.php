@@ -41,3 +41,25 @@ add_action('init', function () {
         return $output;
     }, 10, 4);
 }, 20);
+
+add_filter('do_shortcode_tag', function ($output, $tag, $attr, $m) {
+    if ($tag !== 'tmw_slot_machine') {
+        return $output;
+    }
+
+    if (trim((string) $output) === '') {
+        return $output;
+    }
+
+    if (strpos($output, 'data-tmw-slot-lazy') !== false) {
+        return $output;
+    }
+
+    static $logged = false;
+    if (!$logged && defined('TMW_DEBUG') && TMW_DEBUG) {
+        error_log('[TMW-SLOT-LAZY] Wrapping slot machine output for lazy initialization.');
+        $logged = true;
+    }
+
+    return '<div class="tmw-slot-machine-lazy" data-tmw-slot-lazy="1">' . $output . '</div>';
+}, 9, 4);
