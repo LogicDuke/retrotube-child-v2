@@ -182,6 +182,107 @@ if (!function_exists('tmw_get_videos_for_model')) {
     }
 }
 
+if (!function_exists('tmw_get_model_post_id_by_slug')) {
+    function tmw_get_model_post_id_by_slug($model_slug) {
+        if (empty($model_slug)) {
+            return 0;
+        }
+
+        $query = get_posts([
+            'name'           => $model_slug,
+            'post_type'      => ['page', 'post'],
+            'post_status'    => 'publish',
+            'posts_per_page' => 1,
+            'fields'         => 'ids',
+            'no_found_rows'  => true,
+        ]);
+
+        return !empty($query) ? (int) $query[0] : 0;
+    }
+}
+
+if (!function_exists('tmw_invalidate_model_tags_cache_by_slugs')) {
+    function tmw_invalidate_model_tags_cache_by_slugs($model_slugs, $context = '') {
+        $debug_enabled = defined('TMW_DEBUG') && TMW_DEBUG;
+        $slugs = array_filter((array) $model_slugs);
+
+        foreach ($slugs as $model_slug) {
+            $model_post_id = tmw_get_model_post_id_by_slug($model_slug);
+            if (!$model_post_id) {
+                if ($debug_enabled) {
+                    error_log('[TMW-MODEL] No model post found for slug "' . $model_slug . '" when clearing tags cache.');
+                }
+                continue;
+            }
+
+            $cache_key = 'tmw_model_tags_' . $model_post_id;
+            delete_transient($cache_key);
+
+            if ($debug_enabled) {
+                $context_note = $context ? ' (' . $context . ')' : '';
+                error_log('[TMW-MODEL] Cleared tags cache for model "' . $model_slug . '"' . $context_note . '.');
+            }
+        }
+    }
+}
+
+if (!function_exists('tmw_invalidate_model_tags_cache_for_video')) {
+    function tmw_invalidate_model_tags_cache_for_video($video_id, $context = '') {
+        $debug_enabled = defined('TMW_DEBUG') && TMW_DEBUG;
+        $model_terms = wp_get_post_terms($video_id, 'models', ['fields' => 'slugs']);
+
+        if (is_wp_error($model_terms)) {
+            if ($debug_enabled) {
+                error_log('[TMW-MODEL] Error retrieving model terms for video ID ' . $video_id . ': ' . $model_terms->get_error_message());
+            }
+            return;
+        }
+
+        if (empty($model_terms)) {
+            if ($debug_enabled) {
+                $context_note = $context ? ' (' . $context . ')' : '';
+                error_log('[TMW-MODEL] No model terms found for video ID ' . $video_id . $context_note . '.');
+            }
+            return;
+        }
+
+        tmw_invalidate_model_tags_cache_by_slugs($model_terms, $context ?: 'video update');
+    }
+}
+
+if (!function_exists('tmw_invalidate_model_tags_cache_on_video_save')) {
+    function tmw_invalidate_model_tags_cache_on_video_save($post_id, $post) {
+        if (wp_is_post_revision($post_id) || wp_is_post_autosave($post_id)) {
+            return;
+        }
+
+        $video_type = tmw_detect_livejasmin_post_type();
+        if (empty($video_type) || $post->post_type !== $video_type) {
+            return;
+        }
+
+        tmw_invalidate_model_tags_cache_for_video($post_id, 'video save');
+    }
+}
+
+if (!function_exists('tmw_invalidate_model_tags_cache_on_tag_change')) {
+    function tmw_invalidate_model_tags_cache_on_tag_change($object_id, $terms, $tt_ids, $taxonomy, $append, $old_tt_ids) {
+        if ($taxonomy !== 'post_tag' && $taxonomy !== 'models') {
+            return;
+        }
+
+        $video_type = tmw_detect_livejasmin_post_type();
+        if (empty($video_type) || get_post_type($object_id) !== $video_type) {
+            return;
+        }
+
+        tmw_invalidate_model_tags_cache_for_video($object_id, 'term update');
+    }
+}
+
+add_action('save_post', 'tmw_invalidate_model_tags_cache_on_video_save', 20, 2);
+add_action('set_object_terms', 'tmw_invalidate_model_tags_cache_on_tag_change', 20, 6);
+
 if (!function_exists('tmw_register_hybrid_scan_cli')) {
   function tmw_register_hybrid_scan_cli() {
     if (!defined('WP_CLI') || !WP_CLI) {
