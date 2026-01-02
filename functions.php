@@ -213,3 +213,103 @@ add_filter('site_transient_update_themes', function($value) {
     return $value;
 });
 
+// [TMW-ACF-CACHE] Cache model ACF fields to reduce repeated meta lookups.
+if (!function_exists('tmw_model_acf_cache_key')) {
+    function tmw_model_acf_cache_key($post_id): string {
+        return 'model_acf_' . (int) $post_id;
+    }
+}
+
+if (!function_exists('tmw_get_model_acf_fields_cached')) {
+    function tmw_get_model_acf_fields_cached($post_id): array {
+        $post_id = (int) $post_id;
+        if (!$post_id) {
+            return [];
+        }
+
+        $cache_key = tmw_model_acf_cache_key($post_id);
+        $cached = get_transient($cache_key);
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        if (!function_exists('acf_get_meta')) {
+            return [];
+        }
+
+        $fields = acf_get_meta($post_id);
+        if (!is_array($fields)) {
+            $fields = [];
+        }
+
+        set_transient($cache_key, $fields, HOUR_IN_SECONDS);
+
+        if (defined('TMW_DEBUG') && TMW_DEBUG) {
+            error_log('[TMW-ACF-CACHE] Primed ACF cache for model ID ' . $post_id . '.');
+        }
+
+        return $fields;
+    }
+}
+
+if (!function_exists('tmw_prime_model_acf_cache_for_posts')) {
+    function tmw_prime_model_acf_cache_for_posts(array $post_ids): void {
+        $post_ids = array_values(array_filter(array_map('intval', $post_ids)));
+        if (!$post_ids) {
+            return;
+        }
+
+        update_postmeta_cache($post_ids);
+
+        foreach ($post_ids as $post_id) {
+            tmw_get_model_acf_fields_cached($post_id);
+        }
+    }
+}
+
+if (!function_exists('tmw_flush_model_acf_cache')) {
+    function tmw_flush_model_acf_cache($post_id): void {
+        $post_id = (int) $post_id;
+        if (!$post_id) {
+            return;
+        }
+
+        delete_transient(tmw_model_acf_cache_key($post_id));
+
+        if (defined('TMW_DEBUG') && TMW_DEBUG) {
+            error_log('[TMW-ACF-CACHE] Flushed ACF cache for model ID ' . $post_id . '.');
+        }
+    }
+}
+
+add_action('save_post_model', 'tmw_flush_model_acf_cache', 20, 1);
+add_action('before_delete_post', function ($post_id) {
+    if (get_post_type($post_id) !== 'model') {
+        return;
+    }
+
+    tmw_flush_model_acf_cache($post_id);
+}, 20, 1);
+
+add_filter('acf/pre_load_value', function ($preload, $post_id, $field) {
+    if (!is_numeric($post_id)) {
+        return $preload;
+    }
+
+    $post_id = (int) $post_id;
+    if (!$post_id || get_post_type($post_id) !== 'model') {
+        return $preload;
+    }
+
+    $cache = get_transient(tmw_model_acf_cache_key($post_id));
+    if (!is_array($cache)) {
+        return $preload;
+    }
+
+    $field_name = is_array($field) && isset($field['name']) ? $field['name'] : '';
+    if (!$field_name || !array_key_exists($field_name, $cache)) {
+        return $preload;
+    }
+
+    return $cache[$field_name];
+}, 10, 3);
