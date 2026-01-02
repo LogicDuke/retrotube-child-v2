@@ -19,4 +19,8 @@ if ( is_singular('model') ) {
     );
 }
 
+if (function_exists('tmw_lazy_video_wrap_html')) {
+    $related_markup = tmw_lazy_video_wrap_html($related_markup);
+}
+
 echo $related_markup;

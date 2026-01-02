@@ -24,7 +24,15 @@ if ( has_post_thumbnail() && wp_get_attachment_url( get_post_thumbnail_id() ) ) 
 		);
 		?>
 
-		<?php get_template_part( 'template-parts/content', 'video-player' ); ?>
+		<?php
+		ob_start();
+		get_template_part( 'template-parts/content', 'video-player' );
+		$player_markup = ob_get_clean();
+		if (function_exists('tmw_lazy_video_wrap_html')) {
+			$player_markup = tmw_lazy_video_wrap_html($player_markup);
+		}
+		echo $player_markup;
+		?>
 
 		<?php if ( get_post_meta( $post->ID, 'unique_ad_under_player', true ) != '' ) : ?>
 			<div class="happy-under-player">

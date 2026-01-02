@@ -161,6 +161,48 @@ add_action('wp_enqueue_scripts', function () {
   }
 }, 100);
 
+add_action('wp_enqueue_scripts', function () {
+  if (is_admin()) {
+    return;
+  }
+
+  $lazy_video_path = get_stylesheet_directory() . '/js/lazy-video.js';
+  if (file_exists($lazy_video_path)) {
+    wp_enqueue_script(
+      'tmw-lazy-video',
+      get_stylesheet_directory_uri() . '/js/lazy-video.js',
+      [],
+      filemtime($lazy_video_path),
+      true
+    );
+    wp_script_add_data('tmw-lazy-video', 'defer', true);
+  }
+
+  $affiliate_path = get_stylesheet_directory() . '/js/defer-affiliates.js';
+  if (file_exists($affiliate_path)) {
+    wp_enqueue_script(
+      'tmw-defer-affiliates',
+      get_stylesheet_directory_uri() . '/js/defer-affiliates.js',
+      [],
+      filemtime($affiliate_path),
+      true
+    );
+    wp_script_add_data('tmw-defer-affiliates', 'defer', true);
+  }
+
+  $slot_lazy_path = get_stylesheet_directory() . '/js/tmw-slot-machine-lazy.js';
+  if (file_exists($slot_lazy_path)) {
+    wp_enqueue_script(
+      'tmw-slot-machine-lazy',
+      get_stylesheet_directory_uri() . '/js/tmw-slot-machine-lazy.js',
+      [],
+      filemtime($slot_lazy_path),
+      true
+    );
+    wp_script_add_data('tmw-slot-machine-lazy', 'defer', true);
+  }
+}, 110);
+
 // Model tag styles now inherit from the global stylesheet to match video tags.
 
 /* === TMW: Extend Video Widget for Model Filtering (Hybrid post/video) === */
@@ -272,4 +314,3 @@ add_action('admin_enqueue_scripts', function ($hook) {
 if ( file_exists( get_stylesheet_directory() . '/inc/slot-width-sync.php' ) ) {
     require_once get_stylesheet_directory() . '/inc/slot-width-sync.php';
 }
-

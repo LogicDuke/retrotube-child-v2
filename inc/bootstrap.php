@@ -23,6 +23,9 @@ if (is_readable($hybrid_scan)) {
 require_once __DIR__ . '/setup.php';
 require_once __DIR__ . '/enqueue.php';
 require_once __DIR__ . '/frontend/performance.php';
+require_once __DIR__ . '/frontend/lazy-video.php';
+require_once __DIR__ . '/frontend/affiliate-defer.php';
+require_once __DIR__ . '/frontend/slot-machine-lazy.php';
 
 /** Front-end features */
 require_once __DIR__ . '/frontend/accessibility.php';
