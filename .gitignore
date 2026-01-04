@@ -1,0 +1,20 @@
+﻿# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+wp-content/debug.log
+
+# WP cache / uploads (if any ever appear)
+wp-content/cache/
+wp-content/uploads/
+wp-content/w3tc-config/
+
+# Node / vendor (if ever added)
+node_modules/
+vendor/
+
+# Zip backups
+*.zip
