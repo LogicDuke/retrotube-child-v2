@@ -13,6 +13,10 @@ function tmw_is_local_url(string $url): bool {
     if (empty($url)) {
         return false;
     }
+    $parsed = parse_url($url);
+    if (!isset($parsed['scheme']) || !in_array(strtolower($parsed['scheme']), ['http', 'https'], true)) {
+        return false;
+    }
     $site_host = parse_url(home_url(), PHP_URL_HOST);
     $image_host = parse_url($url, PHP_URL_HOST);
     if (!is_string($site_host) || $site_host === '') {
@@ -20,9 +24,6 @@ function tmw_is_local_url(string $url): bool {
     }
     if ($image_host === false || $image_host === null) {
         return false;
-    }
-    if ($image_host === '') {
-        return true;
     }
     if (!is_string($image_host)) {
         return false;
