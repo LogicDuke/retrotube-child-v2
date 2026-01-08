@@ -197,31 +197,6 @@ if (!function_exists('tmw_register_hybrid_scan_cli')) {
 add_action('init', 'tmw_register_hybrid_scan_cli');
 
 /**
- * 🧩 TMW Flipbox Force Ajax + Footer Fix (v2.9.3)
- * Ensures ajaxurl exists and wp_footer() output includes our ping script.
- */
-add_action('wp_footer', function () {
-    ?>
-    <script>
-    window.ajaxurl = window.ajaxurl || "<?php echo admin_url('admin-ajax.php'); ?>";
-    console.log('[TMW-FLIPBOX-DEBUG] Footer ping initializing...');
-    fetch(window.ajaxurl + '?action=tmw_flipbox_debug_ping_footer&t=' + Date.now())
-        .then(r => r.text())
-        .then(() => console.log('[TMW-FLIPBOX-DEBUG] Footer ping sent.'));
-    </script>
-    <?php
-}, 9999);
-
-add_action('wp_ajax_tmw_flipbox_debug_ping_footer', function(){
-    tmw_debug_log('[TMW-FLIPBOX-DEBUG] ✅ Footer ping executed (js confirmed).');
-    wp_die();
-});
-add_action('wp_ajax_nopriv_tmw_flipbox_debug_ping_footer', function(){
-    tmw_debug_log('[TMW-FLIPBOX-DEBUG] ✅ Footer ping executed (js confirmed).');
-    wp_die();
-});
-
-/**
  * Unified banner resolver used by both admin preview and the front-end.
  * Priority: post-level ACF/legacy sources -> taxonomy ACF & feed helpers -> featured image fallback.
  */
