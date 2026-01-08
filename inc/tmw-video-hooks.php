@@ -53,7 +53,7 @@ if (!function_exists('tmw_child_flipbox_front_image_markup')) {
       return '';
     }
 
-    $attachment_id = function_exists('attachment_url_to_postid') ? attachment_url_to_postid($front_url) : 0;
+    $attachment_id = tmw_get_attachment_id_cached($front_url);
     $sizes_attr = '(max-width: 600px) 100vw, 369px';
 
     if ($is_lcp) {
