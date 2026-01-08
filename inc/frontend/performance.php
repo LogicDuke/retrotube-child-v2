@@ -263,6 +263,7 @@ function tmw_child_fontawesome_display_swap(string $href): string {
 
     $path = str_replace("\0", '', $path);
     $path = wp_normalize_path(ltrim($path, '/'));
+    // Defense in depth: strip obvious relative components before realpath resolution.
     $path = preg_replace('#(\.\./|\.\/)#', '', $path);
     $file = wp_normalize_path(ABSPATH . $path);
     $resolved = realpath($file);
@@ -270,7 +271,7 @@ function tmw_child_fontawesome_display_swap(string $href): string {
         return '';
     }
 
-    $root = wp_normalize_path(ABSPATH);
+    $root = trailingslashit(wp_normalize_path(ABSPATH));
     if (strpos($resolved, $root) !== 0) {
         return '';
     }
