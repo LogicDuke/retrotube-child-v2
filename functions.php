@@ -32,9 +32,9 @@ if (file_exists($__tmw_filter_links)) { require_once $__tmw_filter_links; }
 
 /**
  * RetroTube Child (Flipbox Edition) v2 — Bootstrap
- * v4.1.0: move logic into /inc without behavior change.
+ * v4.2.0: move logic into /inc without behavior change.
  */
-define('TMW_CHILD_VERSION', '4.1.0');
+define('TMW_CHILD_VERSION', '4.2.0');
 define('TMW_CHILD_PATH', get_stylesheet_directory());
 define('TMW_CHILD_URL',  get_stylesheet_directory_uri());
 
@@ -49,9 +49,6 @@ remove_all_filters('retrieve_password_message');
 require_once __DIR__ . '/inc/tmw-reset-mail-url.php';
 
 // === TMW Register Audit (audit-only) ===
-if (!defined('TMW_REG_AUDIT')) {
-    define('TMW_REG_AUDIT', defined('TMW_DEBUG') && TMW_DEBUG);
-}
 if (TMW_REG_AUDIT && defined('TMW_DEBUG') && TMW_DEBUG && file_exists(get_stylesheet_directory() . '/inc/tmw-register-audit.php')) {
     require_once get_stylesheet_directory() . '/inc/tmw-register-audit.php';
 }
@@ -71,7 +68,7 @@ add_action('admin_init', function () {
     if (!is_user_logged_in() || !current_user_can('manage_options')) { return; }
     if (!isset($_GET['tmw_audit']) || $_GET['tmw_audit'] !== 'structure') { return; }
 
-    $audit = get_stylesheet_directory() . '/CODEX_THEME_STRUCTURE_AUDIT.php';
+    $audit = get_stylesheet_directory() . '/docs/archive/CODEX_THEME_STRUCTURE_AUDIT.php';
     if (file_exists($audit)) {
         require_once $audit;
         if (function_exists('tmw_theme_structure_audit')) {
@@ -185,4 +182,3 @@ add_filter('site_transient_update_themes', function($value) {
 
     return $value;
 });
-

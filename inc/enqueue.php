@@ -230,7 +230,9 @@ add_action('wp_enqueue_scripts', function () {
   $script_report = empty($script_handles) ? '(none)' : implode('|', $script_handles);
   $style_report  = empty($style_handles) ? '(none)' : implode('|', $style_handles);
 
-  error_log('[TMW-SLOT-AUDIT] enqueue slot assets on post_type=' . ($post_type ?: 'null') . ' scripts=' . $script_report . ' styles=' . $style_report);
+  if (defined('TMW_DEBUG') && TMW_DEBUG) {
+    error_log('[TMW-SLOT-AUDIT] enqueue slot assets on post_type=' . ($post_type ?: 'null') . ' scripts=' . $script_report . ' styles=' . $style_report);
+  }
 }, 200);
 
 if ( file_exists( get_stylesheet_directory() . '/inc/tmw-tax-bind-models-video.php' ) ) {
@@ -272,4 +274,3 @@ add_action('admin_enqueue_scripts', function ($hook) {
 if ( file_exists( get_stylesheet_directory() . '/inc/slot-width-sync.php' ) ) {
     require_once get_stylesheet_directory() . '/inc/slot-width-sync.php';
 }
-

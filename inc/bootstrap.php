@@ -23,6 +23,7 @@ if (is_readable($hybrid_scan)) {
 require_once __DIR__ . '/setup.php';
 require_once __DIR__ . '/enqueue.php';
 require_once __DIR__ . '/frontend/performance.php';
+require_once __DIR__ . '/frontend/banner-performance.php';
 
 /** Front-end features */
 require_once __DIR__ . '/frontend/accessibility.php';
