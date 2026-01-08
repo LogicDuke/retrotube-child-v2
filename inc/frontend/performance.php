@@ -63,78 +63,69 @@ add_action('wp_enqueue_scripts', function () {
 }, 99);
 
 /**
- * Delay non-critical styles on heavy media views without changing final appearance.
+ * Delay non-critical styles on model pages without changing final appearance.
  */
 add_filter('style_loader_tag', function ($html, $handle, $href, $media) {
-    if (is_admin() || !tmw_child_is_heavy_media_view()) {
+    if (is_admin()) {
         return $html;
     }
 
-    $host = parse_url($href, PHP_URL_HOST);
-
-    $critical_handles = [
+    $critical = [
         'retrotube-parent',
         'retrotube-child-style',
-        'rt-child-flip',
     ];
 
-    if (in_array($handle, $critical_handles, true)) {
+    if (in_array($handle, $critical, true)) {
         return $html;
     }
 
-    $delay_handles = [
-        'jquery-fancybox',
-        'fancybox',
-        'fancybox-css',
-        'font-awesome',
-        'fontawesome',
-        'fontawesome-all',
-        'videojs',
-        'video-js',
-        'videojs-quality',
-        'videojs-quality-selector',
-    ];
+    if (is_singular('model')) {
+        $defer_handles = [
+            'font-awesome',
+            'fontawesome',
+            'video-js',
+            'videojs',
+            'theme-my-login',
+            'tml',
+            'cookie-consent',
+            'disclaimer',
+            'toc_list_style',
+            'slot-machine',
+            'rt-child-flip',
+            'flipboxes',
+        ];
 
-    $delay_prefixes = [
-        'autoptimize_',
-        'autoptimize-',
-        'ao-',
-    ];
-
-    $delay_hosts = [
-        'vjs.zencdn.net',
-        'unpkg.com',
-    ];
-
-    $should_delay = in_array($handle, $delay_handles, true);
-
-    if (!$should_delay) {
-        foreach ($delay_prefixes as $prefix) {
-            if (strpos($handle, $prefix) === 0) {
-                $should_delay = true;
-                break;
+        foreach ($defer_handles as $defer) {
+            if (stripos($handle, $defer) !== false) {
+                return sprintf(
+                    '<link rel="preload" as="style" href="%s" onload="this.onload=null;this.rel=\'stylesheet\'"><noscript>%s</noscript>',
+                    esc_url($href),
+                    $html
+                );
             }
         }
     }
 
-    if (!$should_delay) {
-        if ($host && in_array($host, $delay_hosts, true)) {
-            $should_delay = true;
-        }
+    return $html;
+}, 10, 4);
+
+add_action('wp_head', function () {
+    if (is_admin()) {
+        return;
     }
 
-    if (!$should_delay) {
-        return $html;
+    echo '<style>@font-face{font-family:"FontAwesome";font-display:swap;}</style>';
+
+    $preconnects = [
+        'https://www.googletagmanager.com',
+        'https://connect.facebook.net',
+        'https://pagead2.googlesyndication.com',
+    ];
+
+    foreach ($preconnects as $origin) {
+        printf('<link rel="preconnect" href="%s" crossorigin>%s', esc_url($origin), "\n");
     }
-
-    $media_attr = $media ?: 'all';
-    $escaped_href = esc_url($href);
-    $escaped_id = esc_attr($handle) . '-css';
-
-    return '<link rel="preload" as="style" href="' . $escaped_href . '" />'
-        . '<link rel="stylesheet" id="' . $escaped_id . '" href="' . $escaped_href . '" media="print" onload="this.media=\'all\'">'
-        . '<noscript><link rel="stylesheet" id="' . $escaped_id . '" href="' . $escaped_href . '" media="' . esc_attr($media_attr) . '"></noscript>';
-}, 20, 4);
+}, 1);
 
 add_action('wp_footer', function () {
     if (!is_singular('model')) {
@@ -179,10 +170,6 @@ add_filter('script_loader_tag', function ($tag, $handle, $src) {
         return $tag;
     }
 
-    if (!(is_front_page() || is_singular('model'))) {
-        return $tag;
-    }
-
     $defer_handles = [
         'jquery-bxslider',
         'bxslider',
@@ -206,63 +193,57 @@ add_filter('script_loader_tag', function ($tag, $handle, $src) {
 
     $host = parse_url($src, PHP_URL_HOST);
     $delay_hosts = [
-        'www.googletagmanager.com',
-        'pagead2.googlesyndication.com',
-        'pagead2.g.doubleclick.net',
-        'analytics.google.com',
-        'static.cloudflareinsights.com',
-        'cdn.gtranslate.net',
+        'googletagmanager.com',
         'connect.facebook.net',
-        'vk.com',
-        'unpkg.com',
-        'vjs.zencdn.net',
+        'googlesyndication.com',
+        'google-analytics.com',
     ];
 
-    if ($host && in_array($host, $delay_hosts, true)) {
-        return '<script type="text/plain" data-tmw-delay="true" data-tmw-defer="true" data-src="' . esc_url($src) . '"></script>';
-    }
-
-    $is_videojs = stripos($handle, 'videojs') !== false || stripos($handle, 'video-js') !== false || $host === 'vjs.zencdn.net';
-
-    if ($is_videojs) {
-        return '<script src="' . esc_url($src) . '" defer></script>';
+    foreach ($delay_hosts as $delay_host) {
+        if ($host && stripos($host, $delay_host) !== false) {
+            return sprintf('<script data-src="%s"></script>', esc_url($src));
+        }
     }
 
     return $tag;
 }, 10, 3);
 
 add_action('wp_footer', function () {
-    if (!(is_front_page() || is_singular('model'))) {
+    if (is_admin()) {
         return;
     }
     ?>
     <script>
     (function () {
         var loaded = false;
-        function loadDelayedScripts() {
+        function loadScripts() {
             if (loaded) { return; }
             loaded = true;
-            var delayed = document.querySelectorAll('script[data-tmw-delay]');
-            delayed.forEach(function (node) {
-                var src = node.getAttribute('data-src');
-                if (!src) { return; }
+            document.querySelectorAll('script[data-src]').forEach(function (el) {
                 var s = document.createElement('script');
-                s.src = src;
+                s.src = el.getAttribute('data-src');
                 s.async = true;
-                if (node.getAttribute('data-tmw-defer') === 'true') {
-                    s.defer = true;
-                }
-                node.parentNode.insertBefore(s, node.nextSibling);
+                document.body.appendChild(s);
             });
         }
 
-        ['scroll', 'pointerdown', 'click', 'touchstart', 'keydown'].forEach(function (eventName) {
-            window.addEventListener(eventName, loadDelayedScripts, { once: true, passive: true });
+        ['scroll', 'click', 'touchstart', 'mousemove', 'keydown'].forEach(function (evt) {
+            window.addEventListener(evt, loadScripts, { once: true, passive: true });
         });
+
+        setTimeout(loadScripts, 5000);
     })();
     </script>
     <?php
-});
+}, 99);
+
+add_filter('wp_editor_set_quality', function ($quality, $mime_type) {
+    if ($mime_type === 'image/webp') {
+        return 80;
+    }
+
+    return $quality;
+}, 10, 2);
 
 /**
  * Utility: fetch image dimensions from attachment metadata or headers.

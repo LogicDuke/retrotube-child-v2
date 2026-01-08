@@ -328,15 +328,6 @@ if (!function_exists('tmw_featured_pick_terms')) {
 }
 if (!function_exists('tmw_featured_models_shortcode')) {
   function tmw_featured_models_shortcode($atts = []): string {
-    if (!wp_style_is('retrotube-child-style', 'enqueued')) {
-      wp_enqueue_style(
-        'retrotube-child-style',
-        get_stylesheet_uri(),
-        [],
-        tmw_child_style_version()
-      );
-    }
-
     if (!wp_style_is('rt-child-flip', 'enqueued')) {
       if (!wp_style_is('rt-child-flip', 'registered')) {
         $flipboxes_path = get_stylesheet_directory() . '/assets/flipboxes.css';

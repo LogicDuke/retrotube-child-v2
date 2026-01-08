@@ -780,44 +780,40 @@ a.tag-link {
   display: block;
 }
 
-/* v4.0.1 — Single background renderer: fill height + keep 1:1 offset */
+/* v4.0.1 — LCP image is <img> (no background renderer) */
 .single-model .tmw-banner-frame.tmw-bg-mode {
-  background-size: cover !important;
-  background-repeat: no-repeat !important;
-  /* v4.0.2 — parity with <img> path: include --offset-scale */
-  background-position:
-    var(--offset-x, 50%)
-    calc(
-      var(--tmw-hero-vpos, 50%) +
-      (var(--offset-y, 0px) * var(--offset-scale, 1))
-    ) !important;
+  background-color: #000;
+  background-image: none !important;
 }
 
-/* Hide only the visual <img> layer; keep in DOM for SEO/alt */
 .single-model .tmw-banner-frame.tmw-bg-mode > img,
 .single-model .tmw-banner-frame.tmw-bg-mode picture > img,
 .single-model .tmw-banner-frame.tmw-bg-mode .wp-post-image {
-  opacity: 0 !important;
-  pointer-events: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center calc(50% + var(--offset-y, 0px));
 }
 
 /* v4.0.2 — mobile reassertion to win against any late overrides */
 @media (max-width: 840px) {
   .single-model .tmw-banner-frame.tmw-bg-mode {
-    background-size: cover !important;
-    background-repeat: no-repeat !important;
-    background-position:
-      var(--offset-x, 50%)
-      calc(
-        var(--tmw-hero-vpos, 50%) +
-        (var(--offset-y, 0px) * var(--offset-scale, 1))
-      ) !important;
+    background-color: #000;
+    background-image: none !important;
   }
   .single-model .tmw-banner-frame.tmw-bg-mode > img,
   .single-model .tmw-banner-frame.tmw-bg-mode picture > img,
   .single-model .tmw-banner-frame.tmw-bg-mode .wp-post-image {
-    opacity: 0 !important;
-    pointer-events: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center calc(50% + var(--offset-y, 0px));
   }
 }
 
