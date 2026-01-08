@@ -261,7 +261,21 @@ function tmw_child_fontawesome_display_swap(string $href): string {
         return '';
     }
 
-    $file = ABSPATH . ltrim($path, '/');
+    $path = str_replace("\0", '', $path);
+    $path = wp_normalize_path(ltrim($path, '/'));
+    $path = preg_replace('#(\.\./|\.\/)#', '', $path);
+    $file = wp_normalize_path(ABSPATH . $path);
+    $resolved = realpath($file);
+    if ($resolved === false) {
+        return '';
+    }
+
+    $root = wp_normalize_path(ABSPATH);
+    if (strpos($resolved, $root) !== 0) {
+        return '';
+    }
+
+    $file = $resolved;
     if (!is_readable($file)) {
         return '';
     }
@@ -279,7 +293,7 @@ function tmw_child_fontawesome_display_swap(string $href): string {
     $blocks = [];
     foreach ($matches[0] as $block) {
         if (stripos($block, 'font-display') === false) {
-            $block = rtrim($block, " \t\n\r\0\x0B}") . 'font-display:swap;}';
+            $block = rtrim($block, " \t\n\r\0\x0B}") . 'font-display: swap;}';
         }
         $blocks[] = $block;
     }
