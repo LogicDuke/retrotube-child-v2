@@ -67,3 +67,28 @@ function tmw_get_image_dimensions_fast(string $url, int $fallback_w = 1035, int 
     }
     return $defaults;
 }
+
+/**
+ * Preload LCP banner image on model pages.
+ */
+add_action('wp_head', function () {
+    if (!is_singular('model')) {
+        return;
+    }
+
+    $model_id = get_the_ID();
+    if (!$model_id || !function_exists('tmw_resolve_model_banner_url')) {
+        return;
+    }
+
+    $banner_url = tmw_resolve_model_banner_url($model_id);
+    if (empty($banner_url)) {
+        return;
+    }
+
+    printf(
+        '<link rel="preload" as="image" href="%s" fetchpriority="high">%s',
+        esc_url($banner_url),
+        "\n"
+    );
+}, 1);

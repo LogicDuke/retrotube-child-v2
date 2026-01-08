@@ -377,7 +377,6 @@ if (!function_exists('tmw_render_model_banner')) {
       $style_parts = [
         sprintf('--offset-y:%dpx', (int) $offset),
         sprintf('--offset-base:%dpx', (int) $offset_base),
-        sprintf('background-image:url("%s")', esc_url_raw($url)),
       ];
 
       $style = implode('; ', $style_parts);
