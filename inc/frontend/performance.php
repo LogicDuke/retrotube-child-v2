@@ -70,13 +70,18 @@ add_filter('style_loader_tag', function ($html, $handle, $href, $media) {
         return $html;
     }
 
+    $fontawesome_inline = '';
+    if (stripos($handle, 'font-awesome') !== false || stripos($handle, 'fontawesome') !== false) {
+        $fontawesome_inline = tmw_child_fontawesome_display_swap($href);
+    }
+
     $critical = [
         'retrotube-parent',
         'retrotube-child-style',
     ];
 
     if (in_array($handle, $critical, true)) {
-        return $html;
+        return $html . $fontawesome_inline;
     }
 
     if (is_singular('model')) {
@@ -101,20 +106,18 @@ add_filter('style_loader_tag', function ($html, $handle, $href, $media) {
                     '<link rel="preload" as="style" href="%s" onload="this.onload=null;this.rel=\'stylesheet\'"><noscript>%s</noscript>',
                     esc_url($href),
                     $html
-                );
+                ) . $fontawesome_inline;
             }
         }
     }
 
-    return $html;
+    return $html . $fontawesome_inline;
 }, 10, 4);
 
 add_action('wp_head', function () {
     if (is_admin()) {
         return;
     }
-
-    echo '<style>@font-face{font-family:"FontAwesome";font-display:swap;}</style>';
 
     $preconnects = [
         'https://www.googletagmanager.com',
@@ -237,13 +240,52 @@ add_action('wp_footer', function () {
     <?php
 }, 99);
 
-add_filter('wp_editor_set_quality', function ($quality, $mime_type) {
+add_filter('wp_editor_set_quality', function ($quality, $mime_type, $size) {
     if ($mime_type === 'image/webp') {
         return 80;
     }
 
     return $quality;
-}, 10, 2);
+}, 10, 3);
+
+/**
+ * Append FontAwesome @font-face rules with font-display: swap when local CSS is available.
+ */
+function tmw_child_fontawesome_display_swap(string $href): string {
+    if (!function_exists('tmw_is_local_url') || !tmw_is_local_url($href)) {
+        return '';
+    }
+
+    $path = wp_parse_url($href, PHP_URL_PATH);
+    if (!$path || !defined('ABSPATH')) {
+        return '';
+    }
+
+    $file = ABSPATH . ltrim($path, '/');
+    if (!is_readable($file)) {
+        return '';
+    }
+
+    $css = file_get_contents($file);
+    if ($css === false || stripos($css, '@font-face') === false) {
+        return '';
+    }
+
+    preg_match_all('/@font-face\\s*\\{[^}]*\\}/i', $css, $matches);
+    if (empty($matches[0])) {
+        return '';
+    }
+
+    $blocks = [];
+    foreach ($matches[0] as $block) {
+        if (stripos($block, 'font-display') === false) {
+            $block = rtrim($block, " \t\n\r\0\x0B}") . 'font-display:swap;}';
+        }
+        $blocks[] = $block;
+    }
+
+    return '<style>' . implode("\n", $blocks) . '</style>';
+}
 
 /**
  * Utility: fetch image dimensions from attachment metadata or headers.
