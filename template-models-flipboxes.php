@@ -16,7 +16,7 @@ get_header(); ?>
         'cols'            => 4,
         'show_pagination' => true,
       ]);
-      remove_filter('tmw_model_flipbox_link', 'tmw_flipbox_link_guard_filter', 10);
+      remove_filter('tmw_model_flipbox_link', 'tmw_flipbox_link_guard_filter', 10, 2);
       ?>
     </section>
     <aside class="tmw-sidebar">

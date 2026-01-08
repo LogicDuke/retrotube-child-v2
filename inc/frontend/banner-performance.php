@@ -15,8 +15,17 @@ function tmw_is_local_url(string $url): bool {
     }
     $site_host = parse_url(home_url(), PHP_URL_HOST);
     $image_host = parse_url($url, PHP_URL_HOST);
-    if (empty($image_host)) {
+    if (!is_string($site_host) || $site_host === '') {
+        return false;
+    }
+    if ($image_host === false || $image_host === null) {
+        return false;
+    }
+    if ($image_host === '') {
         return true;
+    }
+    if (!is_string($image_host)) {
+        return false;
     }
     return strcasecmp($site_host, $image_host) === 0;
 }
