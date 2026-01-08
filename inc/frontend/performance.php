@@ -272,7 +272,14 @@ function tmw_child_image_dimensions(string $url, int $fallback_width = 364, int 
     $height = null;
 
     if ($url !== '') {
-        $attachment_id = attachment_url_to_postid($url);
+        if (!tmw_is_local_url($url)) {
+            return [
+                'width'  => $fallback_width,
+                'height' => $fallback_height,
+            ];
+        }
+
+        $attachment_id = tmw_get_attachment_id_cached($url);
         if ($attachment_id) {
             $meta = wp_get_attachment_metadata($attachment_id);
             if (is_array($meta)) {
@@ -286,14 +293,6 @@ function tmw_child_image_dimensions(string $url, int $fallback_width = 364, int 
                     $width  = isset($full[1]) ? (int) $full[1] : $width;
                     $height = isset($full[2]) ? (int) $full[2] : $height;
                 }
-            }
-        }
-
-        if (!$width || !$height) {
-            $info = @getimagesize($url);
-            if (is_array($info) && isset($info[0], $info[1])) {
-                $width  = (int) $info[0];
-                $height = (int) $info[1];
             }
         }
     }
@@ -390,7 +389,7 @@ function tmw_child_front_page_lcp_image(): array {
 
     $dims = tmw_child_image_dimensions($front_url);
 
-    $attachment_id = function_exists('attachment_url_to_postid') ? attachment_url_to_postid($front_url) : 0;
+    $attachment_id = tmw_get_attachment_id_cached($front_url);
     if ($attachment_id) {
         $optimized = wp_get_attachment_image_src($attachment_id, 'tmw-front-optimized');
         if (is_array($optimized) && !empty($optimized[0])) {

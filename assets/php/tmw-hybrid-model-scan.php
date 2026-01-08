@@ -367,6 +367,8 @@ if (!function_exists('tmw_hybrid_scan_log_result')) {
       $summary = implode(', ', $model_slugs);
     }
 
-    error_log(sprintf('[TMW-HYBRID-SCAN] %s → %s', $title, $summary));
+    if (defined('TMW_DEBUG') && TMW_DEBUG) {
+      error_log(sprintf('[TMW-HYBRID-SCAN] %s → %s', $title, $summary));
+    }
   }
 }

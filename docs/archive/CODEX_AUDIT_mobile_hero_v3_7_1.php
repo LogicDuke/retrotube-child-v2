@@ -13,7 +13,9 @@ if (!function_exists('tmw_mobile_hero_audit_v3_7_1a')):
 
 function tmw_mobile_hero_audit_v3_7_1a() {
     if (!function_exists('get_stylesheet_directory')) {
-        error_log('[TMW-MOBILE-HERO-AUDIT] ERROR: WordPress not loaded. Run with wp-cli: wp eval \'include get_stylesheet_directory()."/CODEX_AUDIT_mobile_hero_v3_7_1a.php"; tmw_mobile_hero_audit_v3_7_1a();\'');
+        if (defined('TMW_DEBUG') && TMW_DEBUG) {
+            error_log('[TMW-MOBILE-HERO-AUDIT] ERROR: WordPress not loaded. Run with wp-cli: wp eval \'include get_stylesheet_directory()."/CODEX_AUDIT_mobile_hero_v3_7_1a.php"; tmw_mobile_hero_audit_v3_7_1a();\'');
+        }
         return;
     }
 
@@ -220,6 +222,10 @@ function tmw_line_of($text, $absPos) {
     $slice = substr($text, 0, max(0, $absPos));
     return substr_count($slice, "\n") + 1;
 }
-function log_audit($msg) { error_log('[TMW-MOBILE-HERO-AUDIT] ' . $msg); }
+function log_audit($msg) {
+    if (defined('TMW_DEBUG') && TMW_DEBUG) {
+        error_log('[TMW-MOBILE-HERO-AUDIT] ' . $msg);
+    }
+}
 
 endif; // function guard

@@ -62,3 +62,13 @@ if (!function_exists('tmw_get_flipbox_link_guard')) {
         };
     }
 }
+
+/**
+ * Filter: Disable flipbox links on mobile to prevent accidental navigation.
+ */
+function tmw_flipbox_link_guard_filter($link, $term_id) {
+    if (wp_is_mobile()) {
+        return false;
+    }
+    return $link;
+}

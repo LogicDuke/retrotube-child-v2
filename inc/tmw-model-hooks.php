@@ -410,7 +410,7 @@ if (!function_exists('tmw_render_model_banner')) {
         $style .= ';';
       }
 
-      $attachment_id = attachment_url_to_postid($url);
+      $attachment_id = tmw_get_attachment_id_cached($url);
       $image_size    = apply_filters('tmw/model_banner/image_size', 'large');
       $dimensions    = function_exists('tmw_child_image_dimensions')
         ? tmw_child_image_dimensions($url, 1035, 350)
@@ -592,7 +592,7 @@ if (!function_exists('tmw_get_banner_style')) {
     $used_meta_fallback = false;
 
     if ($image_url) {
-      $attachment_id = function_exists('attachment_url_to_postid') ? attachment_url_to_postid($image_url) : 0;
+      $attachment_id = tmw_get_attachment_id_cached($image_url);
       if ($attachment_id) {
         $meta = wp_get_attachment_metadata($attachment_id);
         if (is_array($meta)) {
@@ -608,10 +608,12 @@ if (!function_exists('tmw_get_banner_style')) {
       }
 
       $size = null;
-      if (function_exists('wp_getimagesize')) {
-        $size = wp_getimagesize($image_url);
-      } else {
-        $size = @getimagesize($image_url); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+      if (tmw_is_local_url($image_url)) {
+        if (function_exists('wp_getimagesize')) {
+          $size = wp_getimagesize($image_url);
+        } else {
+          $size = @getimagesize($image_url); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+        }
       }
 
       if (is_array($size) && !empty($size[0]) && !empty($size[1])) {

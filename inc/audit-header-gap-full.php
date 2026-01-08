@@ -277,12 +277,14 @@ add_action('wp_ajax_tmw_header_gap_full', function () {
 
     @file_put_contents($md, $md_body);
 
-    error_log(sprintf('[TMW-HDR-GAP-FULL] gap=%spx locked(h=%s,hero=%s) wrote=%s',
-        $gap,
-        !empty($locks['header_top'])?'yes':'no',
-        !empty($locks['hero_mb'])?'yes':'no',
-        wp_normalize_path($md)
-    ));
+    if (defined('TMW_DEBUG') && TMW_DEBUG) {
+        error_log(sprintf('[TMW-HDR-GAP-FULL] gap=%spx locked(h=%s,hero=%s) wrote=%s',
+            $gap,
+            !empty($locks['header_top'])?'yes':'no',
+            !empty($locks['hero_mb'])?'yes':'no',
+            wp_normalize_path($md)
+        ));
+    }
 
     wp_send_json_success(['ok'=>true, 'json'=>basename($json), 'md'=>basename($md)]);
 });

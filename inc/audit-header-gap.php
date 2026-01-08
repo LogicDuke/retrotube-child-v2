@@ -149,6 +149,8 @@ add_action('wp_ajax_tmw_header_gap_report', function () {
 
     @file_put_contents($md, $md_body);
 
-    error_log(sprintf('[TMW-HDR-GAP] gap=%spx wrote=%s', $gap, wp_normalize_path($md)));
+    if (defined('TMW_DEBUG') && TMW_DEBUG) {
+        error_log(sprintf('[TMW-HDR-GAP] gap=%spx wrote=%s', $gap, wp_normalize_path($md)));
+    }
     wp_send_json_success(['ok'=>true]);
 });

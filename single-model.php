@@ -10,10 +10,11 @@ if ($tmw_debug_enabled) {
   error_log('[TMW-MODEL] single-model.php loaded for ' . get_the_title());
 }
 
-// Keep tags area visible (audit mode) so we can verify.
-$tmw_tags_audit_css = '.tmw-model-tags{display:block!important;visibility:visible!important;opacity:1!important}'
-    . '.tmw-model-tags:empty::before{content:"(No tags linked — audit mode)";color:#999;font-size:12px;}';
-wp_add_inline_style('retrotube-child-style', $tmw_tags_audit_css);
+if ($tmw_debug_enabled) {
+  $tmw_tags_audit_css = '.tmw-model-tags{display:block!important;visibility:visible!important;opacity:1!important}'
+      . '.tmw-model-tags:empty::before{content:"(No tags linked — audit mode)";color:#999;font-size:12px;}';
+  wp_add_inline_style('retrotube-child-style', $tmw_tags_audit_css);
+}
 
 get_header(); ?>
 
