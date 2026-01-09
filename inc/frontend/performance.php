@@ -175,7 +175,7 @@ add_action('wp_footer', function () {
  * Add defer to non-critical scripts and delay third-party tags until interaction.
  */
 add_filter('script_loader_tag', function ($tag, $handle, $src) {
-    if (is_admin()) {
+    if (is_admin() || is_user_logged_in() || is_preview()) {
         return $tag;
     }
 
