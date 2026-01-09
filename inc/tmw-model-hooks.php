@@ -11,9 +11,9 @@ if (!function_exists('tmw_debug_log')) {
   /**
    * Log debug messages for the TMW theme when enabled.
    *
-   * @param string $message Message to log.
+   * @param mixed $message Message to log.
    */
-  function tmw_debug_log(string $message): void {
+  function tmw_debug_log($message): void {
     if (!defined('TMW_DEBUG') || !TMW_DEBUG) {
       return;
     }
@@ -120,7 +120,7 @@ if (!function_exists('tmw_detect_livejasmin_post_type')) {
     /**
      * Determine the LiveJasmin post type slug if available.
      *
-     * @return string|null Post type slug or null when unavailable.
+     * @return string Post type slug.
      */
     function tmw_detect_livejasmin_post_type() {
         static $detected = null;
@@ -171,7 +171,7 @@ if (!function_exists('tmw_get_videos_for_model')) {
      *
      * @param string $model_slug Model slug.
      * @param int    $limit      Max number of results.
-     * @return WP_Query Query instance for the model videos.
+     * @return WP_Post[] Array of posts (empty when none).
      */
     function tmw_get_videos_for_model($model_slug, $limit = 24) {
         if (empty($model_slug)) {
@@ -599,9 +599,9 @@ if (!function_exists('tmw_get_banner_style')) {
    * @param int   $offset_y Vertical offset in pixels.
    * @param int   $height   Banner height in pixels.
    * @param array $context  Optional context overrides.
-   * @return array<string,string> CSS custom properties and styles.
+   * @return string CSS custom properties and styles (inline style string).
    */
-  function tmw_get_banner_style($offset_y = 0, $height = 350, $context = []) {
+  function tmw_get_banner_style($offset_y = 0, $height = 350, $context = []): string {
     $offset_y = is_numeric($offset_y) ? (int) $offset_y : 0;
     $height   = is_numeric($height) ? (int) $height : 350;
     if ($height <= 0) {
@@ -1517,7 +1517,7 @@ if (!function_exists('tmw_aw_card_data')) {
     $term = get_term($term_id, 'models');
     $cands = [];
     $explicit = get_term_meta($term_id, 'tmw_aw_nick', true);
-    if (!$explicit) $explicit = get_term_meta($term_id, 'tm_lj_nick', true);
+    if (!$explicit) $explicit = get_term_meta($term_id, 'tmw_lj_nick', true);
     if ($explicit) $cands[] = $explicit;
     if ($term && !is_wp_error($term)) {
       $cands[] = $term->slug;
