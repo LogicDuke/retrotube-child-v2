@@ -172,14 +172,10 @@ add_action('wp_footer', function () {
 }, 60);
 
 /**
- * Add defer to non-critical heavy-view scripts and delay third-party tags until interaction.
+ * Add defer to non-critical scripts and delay third-party tags until interaction.
  */
 add_filter('script_loader_tag', function ($tag, $handle, $src) {
     if (is_admin()) {
-        return $tag;
-    }
-
-    if (!(is_front_page() || is_singular('model'))) {
         return $tag;
     }
 
@@ -232,9 +228,6 @@ add_filter('script_loader_tag', function ($tag, $handle, $src) {
 }, 10, 3);
 
 add_action('wp_footer', function () {
-    if (!(is_front_page() || is_singular('model'))) {
-        return;
-    }
     ?>
     <script>
     (function () {
