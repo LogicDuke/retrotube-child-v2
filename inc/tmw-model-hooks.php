@@ -9,9 +9,11 @@ require_once get_stylesheet_directory() . '/assets/php/tmw-hybrid-model-scan.php
 
 if (!function_exists('tmw_debug_log')) {
   /**
-   * Log debug messages for the TMW theme when enabled.
+   * Log a message to the PHP error log when TMW debugging is enabled.
    *
-   * @param string $message Message to log.
+   * Messages are prefixed with "[TMW]" and written only if the TMW_DEBUG constant is defined and truthy.
+   *
+   * @param string $message The message to log; non-string values will be converted to a string.
    */
   function tmw_debug_log(string $message): void {
     if (!defined('TMW_DEBUG') || !TMW_DEBUG) {
@@ -58,7 +60,9 @@ add_filter('the_content', function ($content) {
 
 
 /**
- * Register post tags on the model post type.
+ * Ensure the 'post_tag' taxonomy is registered for the 'model' post type when both exist.
+ *
+ * If the taxonomy or the post type is not present, the function performs no action.
  */
 function tmw_bind_post_tag_to_model(): void {
     if (!taxonomy_exists('post_tag') || !post_type_exists('model')) {
@@ -118,9 +122,14 @@ add_action('registered_taxonomy', function ($taxonomy) {
 
 if (!function_exists('tmw_detect_livejasmin_post_type')) {
     /**
-     * Determine the LiveJasmin post type slug if available.
+     * Locate the post type used by LiveJasmin-related posts and memoize the result.
      *
-     * @return string|null Post type slug or null when unavailable.
+     * Attempts to detect a post type that stores LiveJasmin metadata (prefers an existing 'video'
+     * post type but will inspect postmeta to discover another type). The detected post type is
+     * cached across calls. When a models taxonomy exists but is not registered for the detected
+     * post type, this function will register or bind the taxonomy as a side effect.
+     *
+     * @return string|null The detected post type slug, or `null` if detection could not determine one.
      */
     function tmw_detect_livejasmin_post_type() {
         static $detected = null;
@@ -167,11 +176,13 @@ if (!function_exists('tmw_detect_livejasmin_post_type')) {
 // === [TMW-MODEL-QUERY-FIX v2.6.8] Ensure model pages display related videos ===
 if (!function_exists('tmw_get_videos_for_model')) {
     /**
-     * Query videos related to a model slug.
+     * Retrieve video posts associated with a model slug.
      *
-     * @param string $model_slug Model slug.
-     * @param int    $limit      Max number of results.
-     * @return WP_Query Query instance for the model videos.
+     * Returns related published posts for the given model slug, limited by the supplied maximum.
+     *
+     * @param string $model_slug Slug of the model to query.
+     * @param int    $limit      Maximum number of posts to return.
+     * @return WP_Post[] Array of WP_Post objects for matching videos, or an empty array if none found or the slug is empty.
      */
     function tmw_get_videos_for_model($model_slug, $limit = 24) {
         if (empty($model_slug)) {
@@ -253,11 +264,15 @@ add_action('wp_ajax_nopriv_tmw_flipbox_debug_ping_footer', function(){
  */
 if (!function_exists('tmw_resolve_model_banner_url')) {
   /**
-   * Resolve the banner URL for a model post or term.
+   * Resolve the canonical banner image URL for a model (post or taxonomy term).
+   *
+   * If a single numeric argument is provided that does not correspond to a post, it
+   * is interpreted as a term ID. The resolved URL is normalized to HTTPS and
+   * sanitized before being returned.
    *
    * @param int $post_id Optional model post ID.
    * @param int $term_id Optional model term ID.
-   * @return string Resolved banner URL or empty string.
+   * @return string The resolved banner image URL (HTTPS, sanitized) or an empty string if none found.
    */
   function tmw_resolve_model_banner_url($post_id = 0, $term_id = 0) {
     $arg_count = func_num_args();
@@ -527,10 +542,15 @@ if (!function_exists('tmw_render_model_banner')) {
  */
 if (!function_exists('tmw_get_model_banner_offset_y')) {
   /**
-   * Get banner vertical offset for a model post.
+   * Resolve the vertical banner offset for a model post.
+   *
+   * If the post has a `_banner_position_y` meta value that numeric value is used;
+   * otherwise the function falls back to the first associated `models` term's
+   * ACF field `banner_offset_y` (if available). The resulting offset is clamped
+   * to the range -1000 to 1000.
    *
    * @param int $post_id Model post ID.
-   * @return int Offset in pixels.
+   * @return int The vertical offset in pixels (negative moves banner up, positive moves it down), clamped between -1000 and 1000.
    */
   function tmw_get_model_banner_offset_y($post_id) {
     $raw_y   = get_post_meta($post_id, '_banner_position_y', true);
@@ -562,8 +582,11 @@ if (!function_exists('tmw_get_model_banner_offset_y')) {
 }
 
 if (!function_exists('tmw_get_model_banner_height')) {
-  /**
-   * Get banner height for a model post.
+  / **
+   * Resolve the banner height for a model post, falling back to 350 pixels when no override is available.
+   *
+   * Attempts to read the term ACF field `banner_height` from the first associated `models` term.
+   * Supports ACF field values provided as a scalar or as an array with a `value` key.
    *
    * @param int $post_id Model post ID.
    * @return int Banner height in pixels.
@@ -594,12 +617,24 @@ if (!function_exists('tmw_get_model_banner_height')) {
 
 if (!function_exists('tmw_get_banner_style')) {
   /**
-   * Build banner inline style properties.
+   * Build a string of CSS custom properties and style fragments for a model banner.
    *
-   * @param int   $offset_y Vertical offset in pixels.
-   * @param int   $height   Banner height in pixels.
-   * @param array $context  Optional context overrides.
-   * @return array<string,string> CSS custom properties and styles.
+   * Generates inline CSS custom properties (e.g. --offset-y, --banner-object-fit) based on the provided
+   * vertical offset, banner height, and optional context. The function clamps offset values to a safe
+   * range, derives image dimensions when available (attachment metadata or local image size), and
+   * chooses an appropriate object-fit value according to the image-to-frame aspect ratio.
+   *
+   * @param int   $offset_y Vertical offset in pixels; will be clamped to a safe maximum based on height.
+   * @param int   $height   Banner height in pixels; values <= 0 fall back to 350.
+   * @param array $context  Optional context overrides. Recognized keys:
+   *                        - 'render_context' (string): 'frontend' or 'admin' to influence sizing heuristics.
+   *                        - 'image_url'     (string): explicit image URL to evaluate.
+   *                        - 'post_id'       (int):    post ID used to resolve a banner or read meta.
+   *                        - 'term_id'       (int):    term ID used to resolve a banner when post_id is absent.
+   *                        - 'offset_base'   (int):    override for the base offset value (pixels).
+   *
+   * @return string A concatenated string of CSS custom properties and style fragments suitable for
+   *                an inline style attribute (e.g. '--offset-y:10px;--banner-object-fit:cover;...').
    */
   function tmw_get_banner_style($offset_y = 0, $height = 350, $context = []) {
     $offset_y = is_numeric($offset_y) ? (int) $offset_y : 0;
@@ -848,10 +883,14 @@ add_action('admin_bar_menu', function ($admin_bar) {
  * ====================================================================== */
 if (!function_exists('tmw_sync_model_term_to_post')) {
   /**
-   * Sync a model taxonomy term to a model post.
+   * Ensure a corresponding "model" CPT post exists and matches the given models taxonomy term.
    *
-   * @param int $term_id Term ID.
-   * @param int $tt_id   Term taxonomy ID.
+   * Creates a new published `model` post when no matching post exists for the term slug,
+   * or updates the existing post's title and content when they differ from the term's name
+   * and description. Logs creation or update results via tmw_debug_log.
+   *
+   * @param int $term_id Term ID for the models taxonomy.
+   * @param int $tt_id   Term taxonomy ID (unused by this function but provided by the hook).
    */
   function tmw_sync_model_term_to_post($term_id, $tt_id) {
     $term = get_term($term_id, 'models');
@@ -936,9 +975,11 @@ add_action('init', function () {
  * ====================================================================== */
 if (!function_exists('tmw_placeholder_image_url')) {
   /**
-   * Provide a safe placeholder image URL for missing assets.
+   * Returns a safe placeholder image URL for model assets.
    *
-   * @return string Placeholder image URL or SVG data URI.
+   * Prefers a local theme placeholder image when available; otherwise returns an inline SVG data URI.
+   *
+   * @return string URL of the placeholder image or an SVG data URI.
    */
   function tmw_placeholder_image_url() {
     $path = get_stylesheet_directory() . '/assets/img/placeholders/model-card.jpg';
@@ -955,10 +996,13 @@ if (!function_exists('tmw_placeholder_image_url')) {
  * ====================================================================== */
 if (!function_exists('tmw_img_fingerprint')) {
   /**
-   * Normalize an image URL for comparison purposes.
+   * Create a normalized fingerprint of an image URL for reliable comparison.
    *
-   * @param string $url Image URL.
-   * @return string Normalized fingerprint.
+   * Produces a lowercase, path-only string with the query string removed and common size
+   * specifiers (e.g., "800x600" path segments or suffixes like "_800x600") stripped.
+   *
+   * @param string $url The image URL to normalize; may include query string or size tokens.
+   * @return string A normalized fingerprint string (lowercased path) or an empty string for empty input.
    */
   function tmw_img_fingerprint($url) {
     if (!$url) return '';
@@ -972,11 +1016,13 @@ if (!function_exists('tmw_img_fingerprint')) {
 }
 if (!function_exists('tmw_same_image')) {
   /**
-   * Compare two image URLs using normalized fingerprints.
+   * Determine whether two image URLs reference the same image by comparing normalized fingerprints.
    *
-   * @param string $a First URL.
-   * @param string $b Second URL.
-   * @return bool True if the images match.
+   * If either input is empty, the function will return `false`.
+   *
+   * @param string $a First image URL to compare.
+   * @param string $b Second image URL to compare.
+   * @return bool `true` if the images match, `false` otherwise.
    */
   function tmw_same_image($a, $b) {
     if (!$a || !$b) return false;
@@ -1004,10 +1050,12 @@ if (!function_exists('tmw_bg_style')) {
  * ====================================================================== */
 if (!function_exists('tmw_is_portrait')) {
   /**
-   * Determine whether the image URL appears to be portrait-oriented.
+   * Determines whether an image URL likely represents a portrait image.
    *
-   * @param string $url Image URL.
-   * @return bool True for portrait, false otherwise.
+   * Uses common `WIDTHxHEIGHT` size tokens in the URL (e.g., `600x800`) as a heuristic.
+   *
+   * @param string $url Image URL to inspect.
+   * @return bool `true` if the URL suggests a portrait orientation, `false` otherwise.
    */
   function tmw_is_portrait($url) {
     $url = (string)$url;
@@ -1018,10 +1066,14 @@ if (!function_exists('tmw_is_portrait')) {
 }
 if (!function_exists('tmw_classify_image')) {
   /**
-   * Classify an image URL as explicit, safe, or unknown.
+   * Classifies an image URL as 'explicit', 'safe', or 'unknown' based on regex patterns.
    *
-   * @param string $url Image URL.
-   * @return string Classification string.
+   * The function tests the provided URL against configurable explicit and non-explicit
+   * regular expressions (filters: `tmw_explicit_regex`, `tmw_nonexplicit_regex`) and
+   * returns the matching classification.
+   *
+   * @param string $url The image URL to classify.
+   * @return string One of `'explicit'` if the URL matches explicit patterns, `'safe'` if it matches non-explicit patterns, or `'unknown'` if neither matches.
    */
   function tmw_classify_image($url) {
     $explicit_re    = defined('TMW_EXPLICIT_RE')    ? TMW_EXPLICIT_RE    : '~(explicit|nsfw|xxx|nude|naked|topless|boobs|tits|pussy|ass|anal|hard|sex|cum|dildo)~i';
@@ -1077,9 +1129,14 @@ add_action('created_models', 'tmw_save_models_aw_meta', 10);
 add_action('edited_models',  'tmw_save_models_aw_meta', 10);
 if (!function_exists('tmw_save_models_aw_meta')) {
   /**
-   * Persist AWE term meta fields for models taxonomy.
+   * Save AWE-related term meta for a models taxonomy term when submitted from the term edit form.
+   *
+   * Verifies the `tmw_aw_term_meta` nonce and, if valid, sanitizes and saves `tmw_aw_nick` and
+   * `tmw_aw_subaff` from the POST payload to term meta. Clears the `tmw_aw_feed_v1` transient to
+   * force a refresh of cached feed data after edits.
    *
    * @param int $term_id Term ID being saved.
+   * @return void
    */
   function tmw_save_models_aw_meta($term_id){
     if (!isset($_POST['tmw_aw_term_meta_nonce']) ||
@@ -1107,10 +1164,13 @@ add_filter('manage_models_custom_column', function($out, $col, $term_id){
  * ====================================================================== */
 if (!function_exists('tmw_try_parent_template')) {
   /**
-   * Attempt to render a template from the parent theme.
+   * Render the first existing template file found in the parent theme from a list of candidates.
    *
-   * @param array $candidates Template path candidates.
-   * @return bool True when a template was rendered.
+   * Searches the parent theme directory for each candidate path (relative to the parent theme)
+   * and includes the first file that exists, outputting its rendered contents.
+   *
+   * @param string[] $candidates Relative template path candidates to try in order.
+   * @return bool `true` if a template file was found and rendered (output echoed), `false` otherwise.
    */
   function tmw_try_parent_template(array $candidates): bool {
     $parent_dir = trailingslashit(get_template_directory());
@@ -1137,10 +1197,12 @@ if (!function_exists('tmw_try_parent_template')) {
 
 if (!function_exists('tmw_render_sidebar_layout')) {
   /**
-   * Render a two-column layout with sidebar and callback for main content.
+   * Render a two-column layout (main content + sidebar) and invoke a callback to output the main content.
    *
-   * @param string   $context_class Extra CSS class for the content area.
-   * @param callable $callback      Callback that outputs the main content.
+   * The provided $context_class is appended to the primary content container's CSS classes.
+   *
+   * @param string   $context_class Additional CSS class(es) applied to the primary content container.
+   * @param callable $callback      Callable that echoes or prints the main content when invoked.
    */
   function tmw_render_sidebar_layout(string $context_class, callable $callback): void {
     $context_class = trim($context_class);
@@ -1169,9 +1231,12 @@ if (!function_exists('tmw_render_sidebar_layout')) {
  * ====================================================================== */
 
 /**
- * Override parent query mods for /videos/?filter=longest to prevent 404.
+ * Ensure the Videos page main query is not turned into a 404 by parent query modifications.
  *
- * @param WP_Query $query Main query instance.
+ * Clears parent-added meta/query ordering and restores primary query flags when viewing the
+ * singular "videos" page so the page does not produce an empty result / 404.
+ *
+ * @param WP_Query $query The main query instance.
  */
 function tmw_videos_page_override( $query ) {
   if ( ! is_admin() && $query->is_main_query() && is_page( 'videos' ) ) {
@@ -1208,9 +1273,12 @@ add_action('after_setup_theme', function () {
  * ====================================================================== */
 if (!function_exists('tmw_tools_settings')) {
   /**
-   * Fetch TMW tools settings from options.
+   * Retrieve the stored TMW tools settings.
    *
-   * @return array Settings array.
+   * Returns the option value saved under "tmw_mf_settings" if it is an array;
+   * otherwise returns an empty array.
+   *
+   * @return array The settings array, or an empty array when not set or invalid.
    */
   function tmw_tools_settings(): array {
     $opt = get_option('tmw_mf_settings', []);
@@ -1219,10 +1287,14 @@ if (!function_exists('tmw_tools_settings')) {
 }
 if (!function_exists('tmw_get_model_keys')) {
   /**
-   * Build a list of normalized model identifiers for overrides.
+   * Produce a list of candidate model identifiers for overrides.
+   *
+   * Collects configured nicknames and the term's name and slug, then adds
+   * normalized variants (lowercased and punctuation/space-removed) and returns
+   * a deduplicated array of keys in preference order.
    *
    * @param int $term_id Model term ID.
-   * @return array Normalized model keys.
+   * @return array List of candidate model keys (original and normalized variants).
    */
   function tmw_get_model_keys(int $term_id): array {
     $keys = [];
@@ -1246,11 +1318,15 @@ if (!function_exists('tmw_get_model_keys')) {
 }
 if (!function_exists('tmw_tools_pick_from_map')) {
   /**
-   * Pick the first matching value from a map using candidate keys.
+   * Selects the first non-empty value from a lookup map using an ordered list of candidate keys.
    *
-   * @param array $map   Lookup map.
-   * @param array $cands Candidate keys.
-   * @return mixed|null Matching value or null.
+   * Tries keys in this precedence: exact key match, case-insensitive match, then normalized match
+   * where keys are lowercased and stripped of spaces, underscores, and hyphens. Empty string
+   * values are treated as absent.
+   *
+   * @param array $map   Associative lookup map of keys to values.
+   * @param array $cands Ordered list of candidate keys to try.
+   * @return mixed|null The first matching non-empty value from the map, or `null` if none found.
    */
   function tmw_tools_pick_from_map($map, array $cands) {
     if (!is_array($map) || empty($cands)) return null;
@@ -1263,12 +1339,12 @@ if (!function_exists('tmw_tools_pick_from_map')) {
   }
 }
 if (!function_exists('tmw_bg_align_css')) {
-  /**
-   * Generate background alignment CSS for the banner tool overrides.
+  /****
+   * Builds CSS for background alignment and sizing used by banner overrides.
    *
-   * @param float|int $pos_percent Horizontal position percentage.
-   * @param float|int $zoom        Zoom factor.
-   * @return string CSS string for background alignment.
+   * @param float|int $pos_percent Horizontal focal position percentage; clamped to 0–100.
+   * @param float|int $zoom        Zoom factor; clamped to 1.0–2.5. Values greater than 1 produce a percentage `background-size`; 1 yields `cover`.
+   * @return string Inline CSS that sets `background-position`, `background-size`, and the `--tmw-bgpos` / `--tmw-bgsize` CSS custom properties.
    */
   function tmw_bg_align_css($pos_percent = 50, $zoom = 1.0): string {
     $pos = max(0, min(100, (float)$pos_percent));
@@ -1282,10 +1358,18 @@ if (!function_exists('tmw_bg_align_css')) {
 }
 if (!function_exists('tmw_tools_overrides_for_term')) {
   /**
-   * Resolve front/back overrides and CSS for a model term.
+   * Resolve override image URLs and corresponding CSS for a model term.
    *
-   * @param int $term_id Model term ID.
-   * @return array<string,string> Override URLs and CSS.
+   * Looks up configured front/back image overrides and object-position/zoom overrides
+   * for the given model term and returns normalized front/back URLs plus generated
+   * background alignment CSS for each side.
+   *
+   * @param int $term_id The model taxonomy term ID to resolve overrides for.
+   * @return array<string,string> Associative array with keys:
+   *   - `front_url`: front image URL or empty string.
+   *   - `back_url`: back image URL or empty string.
+   *   - `css_front`: CSS string for front background alignment/zoom.
+   *   - `css_back`: CSS string for back background alignment/zoom.
    */
   function tmw_tools_overrides_for_term(int $term_id): array {
     $s      = tmw_tools_settings();
@@ -1316,10 +1400,10 @@ if (!function_exists('tmw_tools_overrides_for_term')) {
  * ====================================================================== */
 if (!function_exists('tmw_normalize_nick')) {
   /**
-   * Normalize a model nickname for feed matching.
+   * Normalize a model nickname for feed matching by lowercasing and removing all characters except letters and digits.
    *
-   * @param string $s Input string.
-   * @return string Normalized nickname.
+   * @param string $s The input nickname to normalize; may contain spaces or punctuation.
+   * @return string The normalized nickname containing only lowercase letters and digits.
    */
   function tmw_normalize_nick($s){
     $s = strtolower($s);
@@ -1329,10 +1413,13 @@ if (!function_exists('tmw_normalize_nick')) {
 }
 if (!function_exists('tmw_aw_get_feed')) {
   /**
-   * Fetch the AWE feed data with caching.
+   * Retrieve the AWE feed and return parsed models data, cached for a configurable duration.
+   *
+   * Attempts to fetch and decode the JSON feed defined by AWEMPIRE_FEED_URL, extracts the
+   * models array when present, caches the result for $ttl_minutes, and returns the parsed data.
    *
    * @param int $ttl_minutes Cache duration in minutes.
-   * @return array Feed data array.
+   * @return array Parsed models data from the feed, or an empty array if the feed is unavailable or cannot be parsed.
    */
   function tmw_aw_get_feed($ttl_minutes = 10) {
     $key = 'tmw_aw_feed_v1';
@@ -1353,10 +1440,13 @@ if (!function_exists('tmw_aw_get_feed')) {
 }
 if (!function_exists('tmw_aw_find_by_candidates')) {
   /**
-   * Locate a feed row matching candidate identifiers.
+   * Find a model row in the AWE feed that matches any of the provided candidate identifiers.
    *
-   * @param array $cands Candidate identifiers.
-   * @return array|null Matched feed row or null.
+   * Matches are performed by normalizing candidate strings and comparing them against common
+   * feed fields such as `performerId`, `displayName`, `nickname`, `name`, and `uniqueModelId`.
+   *
+   * @param array $cands Candidate identifiers (nicknames, IDs, names, etc.) to match against the feed.
+   * @return array|null The matched feed row as an associative array, or `null` if no match is found.
    */
   function tmw_aw_find_by_candidates($cands){
     $feed = tmw_aw_get_feed();
@@ -1398,10 +1488,16 @@ if (!function_exists('tmw_try_portrait_variant')) {
 }
 if (!function_exists('tmw_aw_pick_images_from_row')) {
   /**
-   * Pick front/back images from a feed row.
+   * Choose front and back image URLs from an AWE feed row.
    *
-   * @param array $row Feed row data.
-   * @return array{0:?string,1:?string} Front/back image URLs.
+   * Extracts image URLs from a nested feed row structure and selects a preferred
+   * front image (preferring portrait and "safe" images) and a distinct back
+   * image (preferring explicit portrait variants). Falls back to landscape
+   * variants, portrait conversions when available, or duplicates the front image
+   * if no distinct back image can be found.
+   *
+   * @param array $row Feed row data (may contain nested arrays and URL strings).
+   * @return array{0:?string,1:?string} Tuple where index 0 is the chosen front image URL or `null`, and index 1 is the chosen back image URL or `null` (may equal the front URL when no distinct back is available).
    */
   function tmw_aw_pick_images_from_row($row) {
     $all = [];
@@ -1474,11 +1570,16 @@ if (!function_exists('tmw_aw_pick_images_from_row')) {
 }
 if (!function_exists('tmw_aw_build_link')) {
   /**
-   * Build a tracking URL with optional sub-affiliate ID.
+   * Builds a tracking URL by inserting or appending a sub-affiliate identifier.
    *
-   * @param string $base Base tracking URL.
-   * @param string $sub  Sub-affiliate ID.
-   * @return string Tracking URL.
+   * If `$base` contains the `{SUBAFFID}` placeholder it will be replaced with
+   * the URL-encoded `$sub`. If no placeholder exists and `$sub` is provided,
+   * the sub-affiliate parameter `subAffId` is appended to the query string.
+   * If `$sub` is empty any `{SUBAFFID}` placeholder is removed.
+   *
+   * @param string $base Base tracking URL or template containing `{SUBAFFID}`.
+   * @param string $sub  Optional sub-affiliate ID to insert or append.
+   * @return string `#` when `$base` is empty; otherwise the resulting tracking URL with the sub-affiliate applied or placeholder removed.
    */
   function tmw_aw_build_link($base, $sub = '') {
     if (!$base) return '#';
@@ -1496,10 +1597,17 @@ if (!function_exists('tmw_aw_build_link')) {
  * ====================================================================== */
 if (!function_exists('tmw_aw_card_data')) {
   /**
-   * Build front/back card data for a model term.
+   * Resolve front/back image URLs and a tracking link for a model term's card.
    *
-   * @param int $term_id Model term ID.
-   * @return array<string,string> Card data array.
+   * Attempts taxonomy ACF overrides, matches the AWE feed by several candidate keys,
+   * falls back to a deterministic feed-derived candidate or a placeholder, and
+   * prefers portrait variants for front/back images when available.
+   *
+   * @param int $term_id Models taxonomy term ID.
+   * @return array<string,string> Associative array with keys:
+   *     - `front`: URL for the card front image.
+   *     - `back`: URL for the card back image.
+   *     - `link`: Tracking URL (may be empty string if none found).
    */
   function tmw_aw_card_data($term_id) {
     $placeholder = tmw_placeholder_image_url();
@@ -1897,10 +2005,12 @@ add_action('admin_enqueue_scripts', function ($hook) {
 /* 4) Banner helpers */
 if (!function_exists('tmw_pick_banner_from_feed_row')) {
   /**
-   * Select a banner image URL from an AWE feed row.
+   * Selects the most suitable banner image URL from an AWE feed row.
    *
-   * @param array $row Feed row data.
-   * @return string Banner URL or empty string.
+   * Scans the provided feed row for image URLs and prefers landscape and larger images when choosing a single banner candidate.
+   *
+   * @param array $row Feed row data to search for image URLs.
+   * @return string Banner image URL if one is found, empty string otherwise.
    */
   function tmw_pick_banner_from_feed_row($row) {
     if (!is_array($row)) return '';
@@ -2083,9 +2193,11 @@ add_action('template_redirect', function(){
  * ====================================================================== */
 if (!function_exists('tmw_strip_video_in_content_active')) {
   /**
-   * Determine whether video embeds should be stripped from content.
+   * Determine whether video embeds should be removed from the current content render.
    *
-   * @return bool True when stripping is active.
+   * Active on non-admin, singular page views for known video/post types.
+   *
+   * @return bool `true` if video-embed stripping is enabled for the current request, `false` otherwise.
    */
   function tmw_strip_video_in_content_active() {
     if (is_admin()) return false;
