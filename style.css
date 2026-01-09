@@ -797,7 +797,7 @@ a.tag-link {
 .single-model .tmw-banner-frame.tmw-bg-mode > img,
 .single-model .tmw-banner-frame.tmw-bg-mode picture > img,
 .single-model .tmw-banner-frame.tmw-bg-mode .wp-post-image {
-  opacity: 0.001 !important;
+  opacity: 0.001 !important; /* [TMW-LCP] keep “invisible” but eligible for LCP */
   pointer-events: none;
 }
 
@@ -816,7 +816,7 @@ a.tag-link {
   .single-model .tmw-banner-frame.tmw-bg-mode > img,
   .single-model .tmw-banner-frame.tmw-bg-mode picture > img,
   .single-model .tmw-banner-frame.tmw-bg-mode .wp-post-image {
-    opacity: 0.001 !important;
+    opacity: 0.001 !important; /* [TMW-LCP] keep “invisible” but eligible for LCP */
     pointer-events: none;
   }
 }
