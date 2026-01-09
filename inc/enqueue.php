@@ -5,6 +5,11 @@ if (!defined('ABSPATH')) { exit; }
  * STYLE HELPERS
  * ====================================================================== */
 if (!function_exists('tmw_child_style_version')) {
+  /**
+   * Resolve the child theme stylesheet version for cache busting.
+   *
+   * @return int|string Version value derived from filemtime or theme metadata.
+   */
   function tmw_child_style_version() {
     static $version = null;
     if ($version !== null) {
