@@ -270,7 +270,3 @@ add_action('admin_enqueue_scripts', function ($hook) {
     // Move any admin-only assets here, same conditions as before.
     // Admin asset logic lives in inc/admin modules.
 }, 20);
-
-if ( file_exists( get_stylesheet_directory() . '/inc/slot-width-sync.php' ) ) {
-    require_once get_stylesheet_directory() . '/inc/slot-width-sync.php';
-}

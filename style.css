@@ -787,29 +787,6 @@ a.tag-link {
   transform: none !important;
 }
 
-/* v4.0.1 — Single background renderer: fill height + keep 1:1 offset */
-.single-model .tmw-banner-frame.tmw-bg-mode {
-  background-image: none !important;
-}
-
-/* Hide only the visual <img> layer; keep in DOM for SEO/alt */
-.single-model .tmw-banner-frame.tmw-bg-mode > img,
-.single-model .tmw-banner-frame.tmw-bg-mode picture > img,
-.single-model .tmw-banner-frame.tmw-bg-mode .wp-post-image {
-  opacity: 1 !important;
-  pointer-events: auto;
-}
-
-/* v4.0.2 — mobile reassertion to win against any late overrides */
-@media (max-width: 840px) {
-  .single-model .tmw-banner-frame.tmw-bg-mode > img,
-  .single-model .tmw-banner-frame.tmw-bg-mode picture > img,
-  .single-model .tmw-banner-frame.tmw-bg-mode .wp-post-image {
-    opacity: 1 !important;
-    pointer-events: auto;
-  }
-}
-
 /* (Optional safety) ensure the frame can show its background */
 .single-model .tmw-banner-frame { background-color: #000; overflow: hidden; }
 /* v4.0.3 — Mobile center alignment for related videos on single model pages */
@@ -925,17 +902,18 @@ a.tag-link {
 }
 
 
-/* v4.3.0 — Allow slot to shift horizontally without clipping */
+/* v4.4.0 — Center slot banner without JS transforms */
 .single-model .tmw-slot-banner {
-  position: relative;    /* enable translateX to take effect cleanly */
-  overflow: visible;     /* avoid clipping if parent has smaller content box */
+  max-width: 1035px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 @media (max-width: 840px) {
   .single-model .tmw-slot-banner {
     width: 100% !important;
     max-width: 100% !important;
-    transform: none !important;
     min-height: 300px;
   }
 }
