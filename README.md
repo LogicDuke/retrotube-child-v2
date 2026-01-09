@@ -17,6 +17,7 @@
 - When iterating on this child theme, take the time to think through changes holistically—small visual tweaks often impact the shortcode markup, PHP templates, and SCSS partials together.
 - Document any non-obvious decisions directly in the template or partial that implements them so future updates retain the original intent.
 - Runtime logic now lives in `/inc`. Keep `functions.php` as a bootstrap only.
+- Admin note: after adding new hero image sizes, run a thumbnail regeneration tool once so older uploads gain `tmw-hero-mobile` and `tmw-hero-desktop`.
 
 ## Module map (v4.1.0)
 - `functions.php` — Defines theme constants and loads the bootstrap.
