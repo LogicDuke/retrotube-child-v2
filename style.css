@@ -762,62 +762,51 @@ a.tag-link {
   .single-model .tmw-banner-frame img,
   .single-model .tmw-banner-frame picture > img,
   .single-model .tmw-banner-frame .wp-post-image {
-    object-fit: cover !important;
-    width: 100% !important;
     max-width: none !important;
-    transform: translateY(calc(var(--offset-y, 0px) * var(--offset-scale, 1))) !important;
   }
 }
 
 /* v3.7.2 — Model banner height fill only (no offset/position changes) */
 .single-model .tmw-banner-frame > img,
 .single-model .tmw-banner-frame picture > img,
+.single-model .tmw-banner-frame .wp-post-image,
 .single-model .tmw-hero > img,
 .single-model .tmw-hero picture > img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover !important; /* fill the frame's height */
   display: block;
+  object-fit: cover !important;
+  object-position: var(--offset-x, 50%)
+    calc(
+      var(--tmw-hero-vpos, 50%) +
+      (var(--offset-y, 0px) * var(--offset-scale, 1))
+    );
+  opacity: 1 !important;
+  transform: none !important;
 }
 
 /* v4.0.1 — Single background renderer: fill height + keep 1:1 offset */
 .single-model .tmw-banner-frame.tmw-bg-mode {
-  background-size: cover !important;
-  background-repeat: no-repeat !important;
-  /* v4.0.2 — parity with <img> path: include --offset-scale */
-  background-position:
-    var(--offset-x, 50%)
-    calc(
-      var(--tmw-hero-vpos, 50%) +
-      (var(--offset-y, 0px) * var(--offset-scale, 1))
-    ) !important;
+  background-image: none !important;
 }
 
 /* Hide only the visual <img> layer; keep in DOM for SEO/alt */
 .single-model .tmw-banner-frame.tmw-bg-mode > img,
 .single-model .tmw-banner-frame.tmw-bg-mode picture > img,
 .single-model .tmw-banner-frame.tmw-bg-mode .wp-post-image {
-  opacity: 0.001 !important; /* [TMW-LCP] keep “invisible” but eligible for LCP */
-  pointer-events: none;
+  opacity: 1 !important;
+  pointer-events: auto;
 }
 
 /* v4.0.2 — mobile reassertion to win against any late overrides */
 @media (max-width: 840px) {
-  .single-model .tmw-banner-frame.tmw-bg-mode {
-    background-size: cover !important;
-    background-repeat: no-repeat !important;
-    background-position:
-      var(--offset-x, 50%)
-      calc(
-        var(--tmw-hero-vpos, 50%) +
-        (var(--offset-y, 0px) * var(--offset-scale, 1))
-      ) !important;
-  }
   .single-model .tmw-banner-frame.tmw-bg-mode > img,
   .single-model .tmw-banner-frame.tmw-bg-mode picture > img,
   .single-model .tmw-banner-frame.tmw-bg-mode .wp-post-image {
-    opacity: 0.001 !important; /* [TMW-LCP] keep “invisible” but eligible for LCP */
-    pointer-events: none;
+    opacity: 1 !important;
+    pointer-events: auto;
   }
 }
 
@@ -940,6 +929,15 @@ a.tag-link {
 .single-model .tmw-slot-banner {
   position: relative;    /* enable translateX to take effect cleanly */
   overflow: visible;     /* avoid clipping if parent has smaller content box */
+}
+
+@media (max-width: 840px) {
+  .single-model .tmw-slot-banner {
+    width: 100% !important;
+    max-width: 100% !important;
+    transform: none !important;
+    min-height: 300px;
+  }
 }
 
 /* Slot machine: reserve space & stabilize assets (CLS guard) */

@@ -397,12 +397,11 @@ if (!function_exists('tmw_render_model_banner')) {
     }
 
     if ($url) {
-      $classes = array_filter(['tmw-banner-frame', 'tmw-bg-mode', $context]);
+      $classes = array_filter(['tmw-banner-frame', $context]);
 
       $style_parts = [
         sprintf('--offset-y:%dpx', (int) $offset),
         sprintf('--offset-base:%dpx', (int) $offset_base),
-        sprintf('background-image:url("%s")', esc_url_raw($url)),
       ];
 
       $style = implode('; ', $style_parts);
@@ -419,12 +418,17 @@ if (!function_exists('tmw_render_model_banner')) {
       $attrs = [
         'src'           => esc_url($url),
         'alt'           => '',
-        'loading'       => 'eager',
-        'fetchpriority' => 'high',
         'decoding'      => 'async',
         'width'         => (int) $dimensions['width'],
         'height'        => (int) $dimensions['height'],
       ];
+
+      if ($context === 'frontend' && is_singular('model')) {
+        $attrs['loading'] = 'eager';
+        $attrs['fetchpriority'] = 'high';
+      } else {
+        $attrs['loading'] = 'lazy';
+      }
 
       if ($attachment_id) {
         $src_data = wp_get_attachment_image_src($attachment_id, $image_size);
@@ -1063,8 +1067,13 @@ add_action( 'pre_get_posts', 'tmw_videos_page_override', 20 );
 
 
 add_filter('wp_resource_hints', function($urls, $relation_type){
-  if ('preconnect' === $relation_type) $urls[] = 'https://galleryn3.vcmdawe.com';
-  if ('dns-prefetch' === $relation_type) $urls[] = '//galleryn3.vcmdawe.com';
+  $should_hint = is_singular('video') || is_page('videos');
+  if ($should_hint && 'preconnect' === $relation_type) {
+    $urls[] = 'https://galleryn3.vcmdawe.com';
+  }
+  if ($should_hint && 'dns-prefetch' === $relation_type) {
+    $urls[] = '//galleryn3.vcmdawe.com';
+  }
   return $urls;
 }, 10, 2);
 

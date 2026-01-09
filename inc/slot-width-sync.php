@@ -16,38 +16,28 @@ add_action('wp_footer', function () {
     var t;
 
     function syncSlotToHero() {
+      if (window.matchMedia && window.matchMedia('(max-width: 840px)').matches) {
+        return;
+      }
       var hero = document.querySelector(heroSel);
       var slot = document.querySelector(slotSel);
       if (!hero || !slot) return;
 
       // Reset any previous transform/width we set so we can measure cleanly.
       slot.style.transform = '';
-      slot.style.width = '';
-      slot.style.maxWidth = '';
-      slot.style.marginLeft = '';
-      slot.style.marginRight = '';
 
       // Measure hero & slot.
       var h = hero.getBoundingClientRect();
       var s = slot.getBoundingClientRect();
 
-      // Apply hero width to slot.
-      var targetW = Math.round(h.width);
-      slot.style.width = targetW + 'px';
-      slot.style.maxWidth = targetW + 'px';
-
-      // Re-measure slot after width change, then align centers to match hero.
-      var s2 = slot.getBoundingClientRect();
       var heroCenter = h.left + h.width / 2;
-      var slotCenter = s2.left + s2.width / 2;
+      var slotCenter = s.left + s.width / 2;
       var dx = Math.round(heroCenter - slotCenter);
 
       // Shift the slot horizontally to match hero's alignment.
-      slot.style.transform = 'translateX(' + dx + 'px)';
-
-      // Keep the slot visually centered like hero (in case theme centers via margins)
-      slot.style.marginLeft = '0';
-      slot.style.marginRight = '0';
+      window.requestAnimationFrame(function () {
+        slot.style.transform = 'translateX(' + dx + 'px)';
+      });
     }
 
     function debouncedSync() {
