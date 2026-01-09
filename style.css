@@ -10,15 +10,12 @@
    ========================= */
 /* Global hero defaults */
 :root {
-  --offset-x: 50%;
-  --offset-y: 0px;
   /* Canonical hero base height for fallback when per-post base is absent */
   --tmw-hero-base-h: 350; /* px (matches 1035/350 aspect) */
   /* Mobile hero height tied to desktop aspect:
      desktop ratio = 350 / 1035 ≈ 0.338
      Using calc(100vw * 0.338) keeps the same crop window height as desktop */
   --tmw-hero-mobile-h: clamp(120px, calc(100vw * 0.338), 200px);
-  --tmw-hero-vpos: 50%;
 }
 
 /* Header / Navigation helpers */
@@ -55,18 +52,6 @@
   box-shadow: 0 2px 6px rgba(0,0,0,.5);
 }
 
-/* Banner offset safety net (relaxed) */
-.tmw-banner-frame {
-  --offset-y: 0px;
-  --offset-scale: 1; /* runtime: heroHeight / baseHeight */
-}
-
-/* Ensure both desktop and mobile hero images use --offset-y (pixel-perfect with admin) */
-.tmw-banner-frame {
-  /* Frame height is defined elsewhere; keep overflow hidden so the image can fill it */
-  overflow: hidden;
-}
-
 .tmw-banner-frame img,
 .tmw-banner-frame picture > img,
 .tmw-banner-frame .wp-post-image {
@@ -74,10 +59,7 @@
   width: 100% !important;
   height: 100% !important; /* beats img{height:auto} in parent/global styles */
   object-fit: cover !important;
-  /* Keep base anchor only; we apply the offset via transform to match admin */
-  object-position: 50% var(--tmw-hero-vpos, 50%);
-  transform: translateY(calc(var(--offset-y, 0px) * var(--offset-scale, 1)));
-  will-change: transform, object-position;
+  object-position: 50% 50%;
 }
 
 /* Fallback for browsers without object-fit support */
@@ -99,7 +81,6 @@
 .single-model .tmw-banner-frame {
   position: relative;
   overflow: hidden;
-  --offset-scale: 1;
 }
 
 .tmw-banner-frame .no-banner-placeholder {
@@ -751,41 +732,6 @@ a.tag-link {
   }
 }
 
-
-/* Mobile parity: identical offset handling on small viewports */
-@media (max-width: 840px) {
-  /* Clip any offset bleed safely on mobile */
-  .single-model .tmw-banner-container,
-  .single-model .tmw-model-hero,
-  .single-model .tmw-banner-frame { overflow: hidden; }
-
-  .single-model .tmw-banner-frame img,
-  .single-model .tmw-banner-frame picture > img,
-  .single-model .tmw-banner-frame .wp-post-image {
-    max-width: none !important;
-  }
-}
-
-/* v3.7.2 — Model banner height fill only (no offset/position changes) */
-.single-model .tmw-banner-frame > img,
-.single-model .tmw-banner-frame picture > img,
-.single-model .tmw-banner-frame .wp-post-image,
-.single-model .tmw-hero > img,
-.single-model .tmw-hero picture > img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
-  object-fit: cover !important;
-  object-position: var(--offset-x, 50%)
-    calc(
-      var(--tmw-hero-vpos, 50%) +
-      (var(--offset-y, 0px) * var(--offset-scale, 1))
-    );
-  opacity: 1 !important;
-  transform: none !important;
-}
 
 /* (Optional safety) ensure the frame can show its background */
 .single-model .tmw-banner-frame { background-color: #000; overflow: hidden; }

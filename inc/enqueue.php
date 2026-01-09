@@ -244,10 +244,6 @@ if ( file_exists( get_stylesheet_directory() . '/inc/tmw-tax-bind-models-video.p
     require_once get_stylesheet_directory() . '/inc/tmw-tax-bind-models-video.php';
 }
 
-if (file_exists(get_stylesheet_directory() . '/inc/tmw-mobile-hero-parity.php')) {
-    require_once get_stylesheet_directory() . '/inc/tmw-mobile-hero-parity.php';
-}
-
 /**
  * Autoptimize: exclude hero handles from concatenation/reorder to keep cascade deterministic.
  * The filters are ignored automatically when Autoptimize is not active.
@@ -255,7 +251,7 @@ if (file_exists(get_stylesheet_directory() . '/inc/tmw-mobile-hero-parity.php'))
 add_filter('autoptimize_filter_css_exclude', function ($list) {
     // Keep the child stylesheet separate for predictable cascade, and ensure
     // the late inline hero fix stays untouched for debug toggles.
-    $extra = ',retrotube-child-style,tmw-mobile-hero-fix';
+    $extra = ',retrotube-child-style';
     return is_string($list) ? $list . $extra : $extra;
 });
 add_filter('script_loader_tag', function ($tag, $handle, $src) {

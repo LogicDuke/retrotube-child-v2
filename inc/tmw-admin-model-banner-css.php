@@ -28,9 +28,7 @@ add_action('admin_head', function () {
     .wp-admin .tmw-banner-frame.tmw-bg-mode {
       background-size: cover !important;
       background-repeat: no-repeat !important;
-      background-position:
-        var(--offset-x, 50%)
-        calc(var(--tmw-hero-vpos, 50%) + var(--offset-y, 0px)) !important;
+      background-position: 50% 50% !important;
     }
     .wp-admin .tmw-banner-frame.tmw-bg-mode > img,
     .wp-admin .tmw-banner-frame.tmw-bg-mode picture > img,

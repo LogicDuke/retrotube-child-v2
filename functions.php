@@ -114,6 +114,29 @@ add_action('wp_head', function () {
     <?php
 });
 
+add_action('wp_head', function () {
+    if (!is_singular('model')) {
+        return;
+    }
+
+    if (!function_exists('tmw_resolve_model_banner_url')) {
+        return;
+    }
+
+    $model_id = get_queried_object_id();
+    if (!$model_id) {
+        return;
+    }
+
+    $banner_url = tmw_resolve_model_banner_url($model_id);
+    if (!$banner_url) {
+        return;
+    }
+    ?>
+    <link rel="preload" as="image" href="<?php echo esc_url($banner_url); ?>" fetchpriority="high">
+    <?php
+}, 1);
+
 // Ensure logo images retain explicit dimensions and async decoding without moving markup.
 add_filter('get_custom_logo_image_attributes', function ($attrs, $custom_logo_id) {
     if (!$custom_logo_id) {
