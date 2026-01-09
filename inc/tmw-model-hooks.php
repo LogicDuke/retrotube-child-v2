@@ -8,6 +8,11 @@ if (!defined('TMW_BANNER_DEBUG')) {
 require_once get_stylesheet_directory() . '/assets/php/tmw-hybrid-model-scan.php';
 
 if (!function_exists('tmw_debug_log')) {
+  /**
+   * Log debug messages for the TMW theme when enabled.
+   *
+   * @param string $message Message to log.
+   */
   function tmw_debug_log(string $message): void {
     if (!defined('TMW_DEBUG') || !TMW_DEBUG) {
       return;
@@ -52,6 +57,9 @@ add_filter('the_content', function ($content) {
 }, 12);
 
 
+/**
+ * Register post tags on the model post type.
+ */
 function tmw_bind_post_tag_to_model(): void {
     if (!taxonomy_exists('post_tag') || !post_type_exists('model')) {
         return;
@@ -69,6 +77,9 @@ add_action('registered_post_type', function ($post_type) {
     }
 }, 20);
 
+/**
+ * Attach the models taxonomy to relevant post types.
+ */
 function tmw_bind_models_taxonomy(): void {
     if (!taxonomy_exists('models')) {
         return;
@@ -106,6 +117,11 @@ add_action('registered_taxonomy', function ($taxonomy) {
 }, 30, 1);
 
 if (!function_exists('tmw_detect_livejasmin_post_type')) {
+    /**
+     * Determine the LiveJasmin post type slug if available.
+     *
+     * @return string|null Post type slug or null when unavailable.
+     */
     function tmw_detect_livejasmin_post_type() {
         static $detected = null;
 
@@ -150,6 +166,13 @@ if (!function_exists('tmw_detect_livejasmin_post_type')) {
 
 // === [TMW-MODEL-QUERY-FIX v2.6.8] Ensure model pages display related videos ===
 if (!function_exists('tmw_get_videos_for_model')) {
+    /**
+     * Query videos related to a model slug.
+     *
+     * @param string $model_slug Model slug.
+     * @param int    $limit      Max number of results.
+     * @return WP_Query Query instance for the model videos.
+     */
     function tmw_get_videos_for_model($model_slug, $limit = 24) {
         if (empty($model_slug)) {
             return [];
@@ -183,6 +206,9 @@ if (!function_exists('tmw_get_videos_for_model')) {
 }
 
 if (!function_exists('tmw_register_hybrid_scan_cli')) {
+  /**
+   * Register the hybrid scan WP-CLI command if available.
+   */
   function tmw_register_hybrid_scan_cli() {
     if (!defined('WP_CLI') || !WP_CLI) {
       return;
@@ -226,6 +252,13 @@ add_action('wp_ajax_nopriv_tmw_flipbox_debug_ping_footer', function(){
  * Priority: post-level ACF/legacy sources -> taxonomy ACF & feed helpers -> featured image fallback.
  */
 if (!function_exists('tmw_resolve_model_banner_url')) {
+  /**
+   * Resolve the banner URL for a model post or term.
+   *
+   * @param int $post_id Optional model post ID.
+   * @param int $term_id Optional model term ID.
+   * @return string Resolved banner URL or empty string.
+   */
   function tmw_resolve_model_banner_url($post_id = 0, $term_id = 0) {
     $arg_count = func_num_args();
     $original_post_id = $post_id;
@@ -356,6 +389,12 @@ if (!function_exists('tmw_resolve_model_banner_url')) {
  * Back-compat wrapper for existing calls.
  */
 if (!function_exists('tmw_get_model_banner_url')) {
+  /**
+   * Fetch the banner URL for a model post.
+   *
+   * @param int $post_id Model post ID.
+   * @return string Banner URL or empty string.
+   */
   function tmw_get_model_banner_url($post_id) {
     $banner = tmw_resolve_model_banner_url($post_id);
 
@@ -487,6 +526,12 @@ if (!function_exists('tmw_render_model_banner')) {
  * Resolve vertical offset (in px). Prefers saved slider meta, then ACF taxonomy `banner_offset_y` if present.
  */
 if (!function_exists('tmw_get_model_banner_offset_y')) {
+  /**
+   * Get banner vertical offset for a model post.
+   *
+   * @param int $post_id Model post ID.
+   * @return int Offset in pixels.
+   */
   function tmw_get_model_banner_offset_y($post_id) {
     $raw_y   = get_post_meta($post_id, '_banner_position_y', true);
     $has_meta = $raw_y !== '' && $raw_y !== null;
@@ -517,6 +562,12 @@ if (!function_exists('tmw_get_model_banner_offset_y')) {
 }
 
 if (!function_exists('tmw_get_model_banner_height')) {
+  /**
+   * Get banner height for a model post.
+   *
+   * @param int $post_id Model post ID.
+   * @return int Banner height in pixels.
+   */
   function tmw_get_model_banner_height($post_id) {
     $height = 350;
 
@@ -542,6 +593,14 @@ if (!function_exists('tmw_get_model_banner_height')) {
 }
 
 if (!function_exists('tmw_get_banner_style')) {
+  /**
+   * Build banner inline style properties.
+   *
+   * @param int   $offset_y Vertical offset in pixels.
+   * @param int   $height   Banner height in pixels.
+   * @param array $context  Optional context overrides.
+   * @return array<string,string> CSS custom properties and styles.
+   */
   function tmw_get_banner_style($offset_y = 0, $height = 350, $context = []) {
     $offset_y = is_numeric($offset_y) ? (int) $offset_y : 0;
     $height   = is_numeric($height) ? (int) $height : 350;
@@ -788,6 +847,12 @@ add_action('admin_bar_menu', function ($admin_bar) {
  * MODEL TERM → CPT SYNC
  * ====================================================================== */
 if (!function_exists('tmw_sync_model_term_to_post')) {
+  /**
+   * Sync a model taxonomy term to a model post.
+   *
+   * @param int $term_id Term ID.
+   * @param int $tt_id   Term taxonomy ID.
+   */
   function tmw_sync_model_term_to_post($term_id, $tt_id) {
     $term = get_term($term_id, 'models');
     if (is_wp_error($term) || !$term) return;
@@ -870,6 +935,11 @@ add_action('init', function () {
  * SAFE PLACEHOLDER (never 404s)
  * ====================================================================== */
 if (!function_exists('tmw_placeholder_image_url')) {
+  /**
+   * Provide a safe placeholder image URL for missing assets.
+   *
+   * @return string Placeholder image URL or SVG data URI.
+   */
   function tmw_placeholder_image_url() {
     $path = get_stylesheet_directory() . '/assets/img/placeholders/model-card.jpg';
     if (file_exists($path)) {
@@ -884,6 +954,12 @@ if (!function_exists('tmw_placeholder_image_url')) {
  * DISTINCT-IMAGE HELPERS (ignore size folders, queries, host)
  * ====================================================================== */
 if (!function_exists('tmw_img_fingerprint')) {
+  /**
+   * Normalize an image URL for comparison purposes.
+   *
+   * @param string $url Image URL.
+   * @return string Normalized fingerprint.
+   */
   function tmw_img_fingerprint($url) {
     if (!$url) return '';
     $u = explode('?', $url, 2)[0];
@@ -895,6 +971,13 @@ if (!function_exists('tmw_img_fingerprint')) {
   }
 }
 if (!function_exists('tmw_same_image')) {
+  /**
+   * Compare two image URLs using normalized fingerprints.
+   *
+   * @param string $a First URL.
+   * @param string $b Second URL.
+   * @return bool True if the images match.
+   */
   function tmw_same_image($a, $b) {
     if (!$a || !$b) return false;
     return tmw_img_fingerprint($a) === tmw_img_fingerprint($b);
@@ -903,6 +986,12 @@ if (!function_exists('tmw_same_image')) {
 
 /* Preserve data: URLs in inline background-image styles */
 if (!function_exists('tmw_bg_style')) {
+  /**
+   * Build a safe background-image CSS string for inline usage.
+   *
+   * @param string $url Image URL.
+   * @return string CSS background-image declaration.
+   */
   function tmw_bg_style($url){
     if (!$url) return '';
     $safe = (strpos($url, 'data:image') === 0) ? $url : esc_url($url);
@@ -914,6 +1003,12 @@ if (!function_exists('tmw_bg_style')) {
  * EXPLICIT vs NON-EXPLICIT CLASSIFIER + PORTRAIT HELPERS
  * ====================================================================== */
 if (!function_exists('tmw_is_portrait')) {
+  /**
+   * Determine whether the image URL appears to be portrait-oriented.
+   *
+   * @param string $url Image URL.
+   * @return bool True for portrait, false otherwise.
+   */
   function tmw_is_portrait($url) {
     $url = (string)$url;
     if (strpos($url, '600x800') !== false || strpos($url, '504x896') !== false) return true;
@@ -922,6 +1017,12 @@ if (!function_exists('tmw_is_portrait')) {
   }
 }
 if (!function_exists('tmw_classify_image')) {
+  /**
+   * Classify an image URL as explicit, safe, or unknown.
+   *
+   * @param string $url Image URL.
+   * @return string Classification string.
+   */
   function tmw_classify_image($url) {
     $explicit_re    = defined('TMW_EXPLICIT_RE')    ? TMW_EXPLICIT_RE    : '~(explicit|nsfw|xxx|nude|naked|topless|boobs|tits|pussy|ass|anal|hard|sex|cum|dildo)~i';
     $nonexplicit_re = defined('TMW_NONEXPLICIT_RE') ? TMW_NONEXPLICIT_RE : '~(cover|poster|teaser|profile|safe|thumb|avatar|portrait)~i';
@@ -975,6 +1076,11 @@ add_action('models_edit_form_fields', function($term){
 add_action('created_models', 'tmw_save_models_aw_meta', 10);
 add_action('edited_models',  'tmw_save_models_aw_meta', 10);
 if (!function_exists('tmw_save_models_aw_meta')) {
+  /**
+   * Persist AWE term meta fields for models taxonomy.
+   *
+   * @param int $term_id Term ID being saved.
+   */
   function tmw_save_models_aw_meta($term_id){
     if (!isset($_POST['tmw_aw_term_meta_nonce']) ||
         !wp_verify_nonce($_POST['tmw_aw_term_meta_nonce'], 'tmw_aw_term_meta')) {
@@ -1000,6 +1106,12 @@ add_filter('manage_models_custom_column', function($out, $col, $term_id){
  * TEMPLATE HELPERS
  * ====================================================================== */
 if (!function_exists('tmw_try_parent_template')) {
+  /**
+   * Attempt to render a template from the parent theme.
+   *
+   * @param array $candidates Template path candidates.
+   * @return bool True when a template was rendered.
+   */
   function tmw_try_parent_template(array $candidates): bool {
     $parent_dir = trailingslashit(get_template_directory());
 
@@ -1024,6 +1136,12 @@ if (!function_exists('tmw_try_parent_template')) {
 }
 
 if (!function_exists('tmw_render_sidebar_layout')) {
+  /**
+   * Render a two-column layout with sidebar and callback for main content.
+   *
+   * @param string   $context_class Extra CSS class for the content area.
+   * @param callable $callback      Callback that outputs the main content.
+   */
   function tmw_render_sidebar_layout(string $context_class, callable $callback): void {
     $context_class = trim($context_class);
     $primary_class = 'content-area with-sidebar-right';
@@ -1052,6 +1170,8 @@ if (!function_exists('tmw_render_sidebar_layout')) {
 
 /**
  * Override parent query mods for /videos/?filter=longest to prevent 404.
+ *
+ * @param WP_Query $query Main query instance.
  */
 function tmw_videos_page_override( $query ) {
   if ( ! is_admin() && $query->is_main_query() && is_page( 'videos' ) ) {
@@ -1087,12 +1207,23 @@ add_action('after_setup_theme', function () {
  * TMW TOOLS INTEGRATION (front/back overrides + alignment/zoom)
  * ====================================================================== */
 if (!function_exists('tmw_tools_settings')) {
+  /**
+   * Fetch TMW tools settings from options.
+   *
+   * @return array Settings array.
+   */
   function tmw_tools_settings(): array {
     $opt = get_option('tmw_mf_settings', []);
     return is_array($opt) ? $opt : [];
   }
 }
 if (!function_exists('tmw_get_model_keys')) {
+  /**
+   * Build a list of normalized model identifiers for overrides.
+   *
+   * @param int $term_id Model term ID.
+   * @return array Normalized model keys.
+   */
   function tmw_get_model_keys(int $term_id): array {
     $keys = [];
     $aw = get_term_meta($term_id, 'tmw_aw_nick', true);
@@ -1114,6 +1245,13 @@ if (!function_exists('tmw_get_model_keys')) {
   }
 }
 if (!function_exists('tmw_tools_pick_from_map')) {
+  /**
+   * Pick the first matching value from a map using candidate keys.
+   *
+   * @param array $map   Lookup map.
+   * @param array $cands Candidate keys.
+   * @return mixed|null Matching value or null.
+   */
   function tmw_tools_pick_from_map($map, array $cands) {
     if (!is_array($map) || empty($cands)) return null;
     foreach ($cands as $k) if (isset($map[$k]) && $map[$k] !== '') return $map[$k];
@@ -1125,6 +1263,13 @@ if (!function_exists('tmw_tools_pick_from_map')) {
   }
 }
 if (!function_exists('tmw_bg_align_css')) {
+  /**
+   * Generate background alignment CSS for the banner tool overrides.
+   *
+   * @param float|int $pos_percent Horizontal position percentage.
+   * @param float|int $zoom        Zoom factor.
+   * @return string CSS string for background alignment.
+   */
   function tmw_bg_align_css($pos_percent = 50, $zoom = 1.0): string {
     $pos = max(0, min(100, (float)$pos_percent));
     $z   = max(1.0, min(2.5, (float)$zoom));
@@ -1136,6 +1281,12 @@ if (!function_exists('tmw_bg_align_css')) {
   }
 }
 if (!function_exists('tmw_tools_overrides_for_term')) {
+  /**
+   * Resolve front/back overrides and CSS for a model term.
+   *
+   * @param int $term_id Model term ID.
+   * @return array<string,string> Override URLs and CSS.
+   */
   function tmw_tools_overrides_for_term(int $term_id): array {
     $s      = tmw_tools_settings();
     $cands  = tmw_get_model_keys($term_id);
@@ -1164,6 +1315,12 @@ if (!function_exists('tmw_tools_overrides_for_term')) {
  * AWE FEED HELPERS
  * ====================================================================== */
 if (!function_exists('tmw_normalize_nick')) {
+  /**
+   * Normalize a model nickname for feed matching.
+   *
+   * @param string $s Input string.
+   * @return string Normalized nickname.
+   */
   function tmw_normalize_nick($s){
     $s = strtolower($s);
     $s = preg_replace('~[^\pL\d]+~u', '', $s);
@@ -1171,6 +1328,12 @@ if (!function_exists('tmw_normalize_nick')) {
   }
 }
 if (!function_exists('tmw_aw_get_feed')) {
+  /**
+   * Fetch the AWE feed data with caching.
+   *
+   * @param int $ttl_minutes Cache duration in minutes.
+   * @return array Feed data array.
+   */
   function tmw_aw_get_feed($ttl_minutes = 10) {
     $key = 'tmw_aw_feed_v1';
     $cached = get_transient($key);
@@ -1189,6 +1352,12 @@ if (!function_exists('tmw_aw_get_feed')) {
   }
 }
 if (!function_exists('tmw_aw_find_by_candidates')) {
+  /**
+   * Locate a feed row matching candidate identifiers.
+   *
+   * @param array $cands Candidate identifiers.
+   * @return array|null Matched feed row or null.
+   */
   function tmw_aw_find_by_candidates($cands){
     $feed = tmw_aw_get_feed();
     if (empty($feed) || !is_array($feed)) return null;
@@ -1210,6 +1379,12 @@ if (!function_exists('tmw_aw_find_by_candidates')) {
  * AWE image picker — prefer PORTRAIT. FRONT=safe, BACK=explicit
  * ====================================================================== */
 if (!function_exists('tmw_try_portrait_variant')) {
+  /**
+   * Try to derive a portrait URL variant from a landscape URL.
+   *
+   * @param string $url Image URL.
+   * @return string|null Portrait variant or null.
+   */
   function tmw_try_portrait_variant($url) {
     $try = preg_replace_callback('~/(800x600|896x504)/~', function($m){
       return '/'.($m[1]==='800x600' ? '600x800' : '504x896').'/';
@@ -1222,6 +1397,12 @@ if (!function_exists('tmw_try_portrait_variant')) {
   }
 }
 if (!function_exists('tmw_aw_pick_images_from_row')) {
+  /**
+   * Pick front/back images from a feed row.
+   *
+   * @param array $row Feed row data.
+   * @return array{0:?string,1:?string} Front/back image URLs.
+   */
   function tmw_aw_pick_images_from_row($row) {
     $all = [];
     $walk = function($v) use (&$walk, &$all) {
@@ -1292,6 +1473,13 @@ if (!function_exists('tmw_aw_pick_images_from_row')) {
   }
 }
 if (!function_exists('tmw_aw_build_link')) {
+  /**
+   * Build a tracking URL with optional sub-affiliate ID.
+   *
+   * @param string $base Base tracking URL.
+   * @param string $sub  Sub-affiliate ID.
+   * @return string Tracking URL.
+   */
   function tmw_aw_build_link($base, $sub = '') {
     if (!$base) return '#';
     if ($sub) {
@@ -1307,6 +1495,12 @@ if (!function_exists('tmw_aw_build_link')) {
  * CARD DATA
  * ====================================================================== */
 if (!function_exists('tmw_aw_card_data')) {
+  /**
+   * Build front/back card data for a model term.
+   *
+   * @param int $term_id Model term ID.
+   * @return array<string,string> Card data array.
+   */
   function tmw_aw_card_data($term_id) {
     $placeholder = tmw_placeholder_image_url();
     $front = $back = ''; $link  = '';
@@ -1702,6 +1896,12 @@ add_action('admin_enqueue_scripts', function ($hook) {
 
 /* 4) Banner helpers */
 if (!function_exists('tmw_pick_banner_from_feed_row')) {
+  /**
+   * Select a banner image URL from an AWE feed row.
+   *
+   * @param array $row Feed row data.
+   * @return string Banner URL or empty string.
+   */
   function tmw_pick_banner_from_feed_row($row) {
     if (!is_array($row)) return '';
     $urls = [];
@@ -1882,6 +2082,11 @@ add_action('template_redirect', function(){
  * CONTENT CLEANUPS (remove video players from post content area)
  * ====================================================================== */
 if (!function_exists('tmw_strip_video_in_content_active')) {
+  /**
+   * Determine whether video embeds should be stripped from content.
+   *
+   * @return bool True when stripping is active.
+   */
   function tmw_strip_video_in_content_active() {
     if (is_admin()) return false;
     if (!is_singular()) return false;
@@ -1938,6 +2143,13 @@ add_filter('body_class', function ($classes) {
  * UTIL
  * ====================================================================== */
 if (!function_exists('tmw_count_terms')) {
+  /**
+   * Count terms for a taxonomy with a safe fallback.
+   *
+   * @param string $taxonomy   Taxonomy slug.
+   * @param bool   $hide_empty Whether to hide empty terms.
+   * @return int Term count.
+   */
   function tmw_count_terms($taxonomy, $hide_empty=false){
     if (function_exists('wp_count_terms')) {
       $count = wp_count_terms(['taxonomy'=>$taxonomy,'hide_empty'=>$hide_empty]);
