@@ -21,19 +21,13 @@
 }
 
 /* Image behavior identical to frontend */
-#tmw-banner-preview .tmw-banner-frame,
-#tmwBannerPreview .tmw-banner-frame {
-  --offset-scale: 1;
-}
-
 #tmw-banner-preview img,
 #tmwBannerPreview img {
   width: 100% !important;
   height: 100% !important;             /* match frontend fill model  */
   object-fit: cover !important;        /* identical crop logic       */
-  object-position: 50% var(--tmw-hero-vpos, 50%) !important;
-  transform: translateY(calc(var(--offset-y, 0px) * var(--offset-scale, 1))) !important;
+  object-position: 50% 50% !important;
   margin: 0;
   display: block;
-  transition: transform 0.25s ease;
+  transition: object-position 0.25s ease;
 }

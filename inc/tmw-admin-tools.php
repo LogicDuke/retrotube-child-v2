@@ -116,9 +116,10 @@ if (defined('TMW_DEBUG') && TMW_DEBUG) {
  * ====================================================================== */
 if (!function_exists('tmw_render_banner_position_box')) {
   function tmw_render_banner_position_box($post) {
-    $stored_y = get_post_meta($post->ID, '_banner_position_y', true);
-    $raw_y    = is_numeric($stored_y) ? (int) $stored_y : 0;
-    $value    = max(-1000, min(1000, $raw_y));
+    $value = function_exists('tmw_get_model_banner_focal_y')
+      ? (int) round(tmw_get_model_banner_focal_y($post->ID))
+      : 50;
+    $value = max(0, min(100, $value));
     $banner   = function_exists('tmw_resolve_model_banner_url') ? tmw_resolve_model_banner_url($post->ID) : '';
 
     wp_nonce_field('tmw_save_banner_position', 'tmw_banner_position_nonce');
@@ -137,8 +138,8 @@ if (!function_exists('tmw_render_banner_position_box')) {
       echo '<p><em>' . esc_html__('No banner found. Assign a “Models” term with a banner in ACF, or set a featured image.', 'retrotube-child') . '</em></p>';
     }
 
-    echo '<input type="range" min="-350" max="350" step="1" value="' . esc_attr($value) . '" id="tmwBannerSlider" class="tmw-slider" name="banner_position_y">
-    <p><small>Vertical offset (px): <span id="tmwBannerValue">' . esc_html($value) . '</span></small></p>';
+    echo '<input type="range" min="0" max="100" step="1" value="' . esc_attr($value) . '" id="tmwBannerSlider" class="tmw-slider" name="banner_focal_y">
+    <p><small>Vertical focus (%): <span id="tmwBannerValue">' . esc_html($value) . '</span> (0=top, 100=bottom)</small></p>';
 
     if (defined('TMW_BANNER_DEBUG') && TMW_BANNER_DEBUG) {
       echo '<p><code>Resolved URL: ' . esc_html($banner ? $banner : 'EMPTY') . '</code></p>';
@@ -152,100 +153,30 @@ if (!function_exists('tmw_render_banner_position_box')) {
             const previewWrap = document.getElementById("tmw-banner-preview") || document.getElementById("tmwBannerPreview");
             const previewFrame = previewWrap ? (previewWrap.classList && previewWrap.classList.contains('tmw-banner-frame') ? previewWrap : previewWrap.querySelector('.tmw-banner-frame')) : null;
             const val = document.getElementById("tmwBannerValue");
-            if (typeof window.tmwSetBannerOffsetY !== "function") {
-                window.tmwSetBannerOffsetY = function(pxValue) {
-                    var v = Number(pxValue) || 0;
-                    var root = document.documentElement;
-                    if (root && root.style) {
-                        root.style.setProperty("--offset-y", v + "px");
-                    }
-                    var defaultWrap = document.getElementById("tmw-banner-preview") || document.getElementById("tmwBannerPreview");
-                    var defaultFrame = null;
-                    if (defaultWrap) {
-                        if (defaultWrap.classList && defaultWrap.classList.contains('tmw-banner-frame')) {
-                            defaultFrame = defaultWrap;
-                        } else {
-                            defaultFrame = defaultWrap.querySelector('.tmw-banner-frame');
-                        }
-                    }
-                    if (defaultFrame && defaultFrame.style) {
-                        defaultFrame.style.setProperty("--offset-y", v + "px");
-                    }
-                    return v;
-                };
+
+            function applyFocus(value) {
+                if (!previewFrame) {
+                    return;
+                }
+                const img = previewFrame.querySelector('img');
+                if (!img || !img.style) {
+                    return;
+                }
+                const numeric = parseInt(value, 10);
+                const clamped = Math.max(0, Math.min(100, isNaN(numeric) ? 50 : numeric));
+                img.style.objectPosition = `50% ${clamped}%`;
+                if (val) {
+                    val.textContent = clamped;
+                }
             }
-            window.tmwUpdateBannerOffset = window.tmwUpdateBannerOffset || function(previewEl, value, posX){
-                var numeric = parseInt(value, 10);
-                if (isNaN(numeric)) { numeric = 0; }
-                var clamped = Math.max(-1000, Math.min(1000, numeric));
-                var applied = (typeof window.tmwSetBannerOffsetY === "function") ? window.tmwSetBannerOffsetY(clamped) : clamped;
-                var defaultWrap = document.getElementById("tmw-banner-preview") || document.getElementById("tmwBannerPreview");
-                var defaultFrame = null;
-                if (defaultWrap) {
-                    if (defaultWrap.classList && defaultWrap.classList.contains('tmw-banner-frame')) {
-                        defaultFrame = defaultWrap;
-                    } else {
-                        defaultFrame = defaultWrap.querySelector('.tmw-banner-frame');
-                    }
-                }
-                var target = previewEl;
-                if (target && target.classList && !target.classList.contains('tmw-banner-frame')) {
-                    target = target.querySelector ? target.querySelector('.tmw-banner-frame') : null;
-                }
-                if (!target) {
-                    target = defaultFrame;
-                }
-                if (target && target.style && target !== defaultFrame) {
-                    target.style.setProperty("--offset-y", applied + "px");
-                }
-                if (target && target.style) {
-                    if (typeof posX === "number" && !isNaN(posX)) {
-                        target.style.setProperty("--offset-x", posX + "%");
-                    } else if (!target.style.getPropertyValue("--offset-x")) {
-                        target.style.setProperty("--offset-x", "50%");
-                    }
-                }
-                return clamped;
-            };
-            if (slider && previewFrame) {
+
+            if (slider) {
                 slider.addEventListener("input", function(e){
-                    var current = parseInt(e.target.value, 10) || 0;
-                    var clamped = Math.max(-1000, Math.min(1000, current));
-                    if (clamped !== current) {
-                        e.target.value = clamped;
-                    }
-                    if (val) {
-                        val.textContent = clamped;
-                    }
-                    if (typeof window.tmwUpdateBannerOffset === "function") {
-                        window.tmwUpdateBannerOffset(previewFrame, clamped);
-                    }
+                    applyFocus(e.target.value);
                 });
-                if (typeof window.tmwUpdateBannerOffset === "function") {
-                    var initial = parseInt(slider.value, 10) || 0;
-                    window.tmwUpdateBannerOffset(previewFrame, initial);
-                    if (val) {
-                        val.textContent = Math.max(-1000, Math.min(1000, initial));
-                    }
-                }
+                applyFocus(slider.value);
             }
         })();
-        document.addEventListener('input', function(e){
-            if (!e || !e.target) {
-                return;
-            }
-            if (e.target.id === 'banner_offset_y' || e.target.id === 'tmwBannerSlider') {
-                var value = parseInt(e.target.value, 10) || 0;
-                var frame = document.querySelector('#tmw-banner-preview .tmw-banner-frame, #tmwBannerPreview .tmw-banner-frame');
-                if (frame && frame.style) {
-                    frame.style.setProperty('--offset-y', value + 'px');
-                }
-                var previewImg = document.querySelector('#tmw-banner-preview .tmw-banner-frame img, #tmwBannerPreview .tmw-banner-frame img');
-                if (previewImg && previewImg.style) {
-                    previewImg.style.setProperty('--offset-y', value + 'px');
-                }
-            }
-        });
     </script>
     <?php
     echo ob_get_clean();
@@ -253,7 +184,7 @@ if (!function_exists('tmw_render_banner_position_box')) {
 }
 
 add_action('add_meta_boxes', function () {
-  add_meta_box('model_banner_position', __('Banner Position (Vertical)', 'retrotube-child'), 'tmw_render_banner_position_box', 'model', 'normal', 'default');
+  add_meta_box('model_banner_position', __('Banner Focus (Vertical)', 'retrotube-child'), 'tmw_render_banner_position_box', 'model', 'normal', 'default');
 });
 
 add_action('save_post_model', function ($post_id) {
@@ -273,16 +204,16 @@ add_action('save_post_model', function ($post_id) {
     return;
   }
 
-  if (isset($_POST['banner_position_y'])) {
-    $value = wp_unslash($_POST['banner_position_y']);
-    $value = is_numeric($value) ? (int)$value : 0;
-    if ($value < -1000) {
-      $value = -1000;
+  if (isset($_POST['banner_focal_y'])) {
+    $value = wp_unslash($_POST['banner_focal_y']);
+    $value = is_numeric($value) ? (float) $value : 50;
+    if ($value < 0) {
+      $value = 0;
     }
-    if ($value > 1000) {
-      $value = 1000;
+    if ($value > 100) {
+      $value = 100;
     }
-    update_post_meta($post_id, '_banner_position_y', $value);
+    update_post_meta($post_id, '_banner_focal_y', $value);
   }
 });
 
@@ -747,4 +678,3 @@ JS;
       wp_die();
   });
 }
-

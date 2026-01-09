@@ -405,6 +405,60 @@ if (!function_exists('tmw_get_model_banner_url')) {
   }
 }
 
+if (!function_exists('tmw_offset_to_focal_percent')) {
+  /**
+   * Convert a legacy pixel offset into an object-position percentage.
+   *
+   * @param int $offset_px   Saved pixel offset (negative shows lower image).
+   * @param int $base_height Base banner height used for the legacy offset.
+   * @return float Percentage (0-100).
+   */
+  function tmw_offset_to_focal_percent($offset_px, $base_height = 350) {
+    $offset_px   = is_numeric($offset_px) ? (int) $offset_px : 0;
+    $base_height = is_numeric($base_height) ? (int) $base_height : 350;
+
+    if ($base_height <= 0) {
+      $base_height = 350;
+    }
+
+    $clamped = max(-$base_height, min($base_height, $offset_px));
+    $percent = 50 - ($clamped / $base_height * 50);
+
+    return max(0, min(100, $percent));
+  }
+}
+
+if (!function_exists('tmw_get_model_banner_focal_y')) {
+  /**
+   * Resolve the banner focal point percentage for a model.
+   *
+   * @param int $post_id Model post ID.
+   * @param int $base_height Legacy offset base height.
+   * @return float Percentage (0-100).
+   */
+  function tmw_get_model_banner_focal_y($post_id, $base_height = 350) {
+    $post_id = (int) $post_id;
+    if (!$post_id) {
+      return 50;
+    }
+
+    $stored = get_post_meta($post_id, '_banner_focal_y', true);
+    if ($stored !== '' && $stored !== null) {
+      $focal = is_numeric($stored) ? (float) $stored : 50;
+      return max(0, min(100, $focal));
+    }
+
+    $legacy = get_post_meta($post_id, '_banner_position_y', true);
+    if ($legacy !== '' && $legacy !== null) {
+      $focal = tmw_offset_to_focal_percent((int) $legacy, $base_height);
+      update_post_meta($post_id, '_banner_focal_y', $focal);
+      return $focal;
+    }
+
+    return 50;
+  }
+}
+
 /**
  * Render the unified model banner markup for both the front-end and admin preview.
  *
@@ -427,27 +481,11 @@ if (!function_exists('tmw_render_model_banner')) {
       return false;
     }
 
-    $url    = tmw_resolve_model_banner_url($model_id);
-    $offset = (int) get_post_meta($model_id, '_banner_position_y', true);
-    // Persist admin preview height as --offset-base for perfect scaling (fallback 350px).
-    $offset_base = (int) get_post_meta($model_id, '_tmw_offset_base', true);
-    if ($offset_base <= 0) {
-      $offset_base = 350;
-    }
+    $url     = tmw_resolve_model_banner_url($model_id);
+    $focal_y = tmw_get_model_banner_focal_y($model_id);
 
     if ($url) {
       $classes = array_filter(['tmw-banner-frame', $context]);
-
-      $style_parts = [
-        sprintf('--offset-y:%dpx', (int) $offset),
-        sprintf('--offset-base:%dpx', (int) $offset_base),
-        '--offset-scale:1',
-      ];
-
-      $style = implode('; ', $style_parts);
-      if ($style !== '') {
-        $style .= ';';
-      }
 
       $attachment_id = tmw_get_attachment_id_cached($url);
       $image_size    = apply_filters('tmw/model_banner/image_size', 'large');
@@ -461,6 +499,7 @@ if (!function_exists('tmw_render_model_banner')) {
         'decoding'      => 'async',
         'width'         => (int) $dimensions['width'],
         'height'        => (int) $dimensions['height'],
+        'style'         => sprintf('object-position: 50%% %s%%;', $focal_y),
       ];
 
       if ($context === 'frontend' && is_singular('model')) {
@@ -511,7 +550,7 @@ if (!function_exists('tmw_render_model_banner')) {
       }
 
       echo '<div class="tmw-banner-container">';
-      echo '  <div class="' . esc_attr(implode(' ', $classes)) . '" style="' . esc_attr($style) . '">';
+      echo '  <div class="' . esc_attr(implode(' ', $classes)) . '">';
       echo '    <img' . $attr_html . ' />';
       echo '  </div>';
       echo '</div>';
@@ -600,7 +639,7 @@ if (!function_exists('tmw_get_banner_style')) {
    * @param int   $offset_y Vertical offset in pixels.
    * @param int   $height   Banner height in pixels.
    * @param array $context  Optional context overrides.
-   * @return string CSS custom properties and styles (inline style string).
+   * @return string Inline object-position style string.
    */
   function tmw_get_banner_style($offset_y = 0, $height = 350, $context = []): string {
     $offset_y = is_numeric($offset_y) ? (int) $offset_y : 0;
@@ -617,137 +656,16 @@ if (!function_exists('tmw_get_banner_style')) {
       }
     }
 
-    $render_context = 'frontend';
-    if (!empty($context['render_context']) && is_string($context['render_context'])) {
-      $render_context = strtolower($context['render_context']);
-    } elseif (is_admin()) {
-      $render_context = 'admin';
+    $pos_x = 50;
+    if (isset($context['pos_x']) && is_numeric($context['pos_x'])) {
+      $pos_x = max(0, min(100, (float) $context['pos_x']));
     }
 
-    $frame_ratio = 1338 / 396;
-    $image_ratio = 0.0;
-    $image_url   = isset($context['image_url']) ? (string) $context['image_url'] : '';
-    $post_id     = isset($context['post_id']) ? (int) $context['post_id'] : 0;
-    $term_id     = isset($context['term_id']) ? (int) $context['term_id'] : 0;
+    $focal_y = function_exists('tmw_offset_to_focal_percent')
+      ? tmw_offset_to_focal_percent($offset_y, $height)
+      : 50;
 
-    if (!$post_id && function_exists('get_the_ID')) {
-      $maybe_post_id = get_the_ID();
-      if ($maybe_post_id) {
-        $post_id = (int) $maybe_post_id;
-      }
-    }
-
-    if (!$post_id && isset($GLOBALS['post']) && $GLOBALS['post'] instanceof WP_Post) {
-      $post_id = (int) $GLOBALS['post']->ID;
-    }
-
-    if (!$image_url) {
-      if ($post_id && function_exists('tmw_resolve_model_banner_url')) {
-        $image_url = (string) tmw_resolve_model_banner_url($post_id);
-      } elseif ($term_id && function_exists('tmw_resolve_model_banner_url')) {
-        $image_url = (string) tmw_resolve_model_banner_url(0, $term_id);
-      }
-    }
-
-    $image_width        = null;
-    $image_height       = null;
-    $meta_image_width   = null;
-    $meta_image_height  = null;
-    $used_meta_fallback = false;
-
-    if ($image_url) {
-      $attachment_id = tmw_get_attachment_id_cached($image_url);
-      if ($attachment_id) {
-        $meta = wp_get_attachment_metadata($attachment_id);
-        if (is_array($meta)) {
-          if (!empty($meta['width'])) {
-            $meta_image_width = (int) $meta['width'];
-            $image_width      = $meta_image_width;
-          }
-          if (!empty($meta['height'])) {
-            $meta_image_height = (int) $meta['height'];
-            $image_height      = $meta_image_height;
-          }
-        }
-      }
-
-      $size = null;
-      if (tmw_is_local_url($image_url)) {
-        if (function_exists('wp_getimagesize')) {
-          $size = wp_getimagesize($image_url);
-        } else {
-          $size = @getimagesize($image_url); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
-        }
-      }
-
-      if (is_array($size) && !empty($size[0]) && !empty($size[1])) {
-        $image_width  = (int) $size[0];
-        $image_height = (int) $size[1];
-      } elseif ($meta_image_width && $meta_image_height) {
-        $image_width        = $meta_image_width;
-        $image_height       = $meta_image_height;
-        $used_meta_fallback = true;
-      }
-
-      if ($image_width && $image_height) {
-        $image_ratio = $image_width / $image_height;
-      }
-    }
-
-    $object_fit            = 'cover';
-    $ratio_within_tolerance = false;
-
-    if ($image_ratio > 0) {
-      $ratio_within_tolerance = (abs($image_ratio - $frame_ratio) <= ($frame_ratio * 0.12));
-    }
-
-    if ($image_ratio <= 0) {
-      $object_fit = 'contain';
-    } elseif ($ratio_within_tolerance) {
-      $object_fit = 'contain';
-    } elseif ($image_ratio > 0 && $image_ratio < $frame_ratio) {
-      $object_fit = 'contain';
-    }
-
-    $max_offset = max(50, min(1000, abs($height)));
-    if ($offset_y > $max_offset) {
-      $offset_y = $max_offset;
-    }
-    if ($offset_y < -$max_offset) {
-      $offset_y = -$max_offset;
-    }
-
-    $offset_base = 350;
-    if (isset($context['offset_base']) && is_numeric($context['offset_base'])) {
-      $offset_base = max(1, (int) $context['offset_base']);
-    } elseif ($post_id) {
-      $maybe_base = (int) get_post_meta($post_id, '_tmw_offset_base', true);
-      if ($maybe_base > 0) {
-        $offset_base = $maybe_base;
-      }
-    }
-
-    $style_parts   = [];
-    $style_parts[] = sprintf('--offset-y:%s;', $offset_y . 'px');
-    $style_parts[] = sprintf('--offset-base:%s;', $offset_base . 'px');
-    $style_parts[] = '--offset-x:50%;';
-    $style_parts[] = '--banner-object-fit:' . $object_fit . ';';
-    $style_parts[] = '--banner-img-width:auto;';
-    $style_parts[] = '--banner-img-height:100%;';
-    $style_parts[] = '--banner-img-max-width:none;';
-    $style_parts[] = '--banner-img-max-height:none;';
-    $style_parts[] = '--banner-translate-x:0;';
-    $style_parts[] = '--banner-position:static;';
-    $style_parts[] = '--banner-left:auto;';
-
-    if (($used_meta_fallback || $image_ratio <= 0) && $image_url && ((defined('WP_DEBUG') && WP_DEBUG) || TMW_BANNER_DEBUG)) {
-          }
-
-    if ((defined('WP_DEBUG') && WP_DEBUG) || TMW_BANNER_DEBUG) {
-      $ratio_display = $image_ratio > 0 ? number_format((float) $image_ratio, 4) : 'n/a';
-          }
-
-    return implode('', $style_parts);
+    return sprintf('object-position: %s%% %s%%;', $pos_x, $focal_y);
   }
 }
 
@@ -1709,61 +1627,40 @@ add_action('admin_enqueue_scripts', function ($hook) {
       var $preview = $('#tmw-banner-preview');
       var $frame = $preview.find('.tmw-banner-frame');
       var $ph = $preview.find('.ph');
-      if (typeof window.tmwSetBannerOffsetY !== 'function') {
-        window.tmwSetBannerOffsetY = function(pxValue) {
-          var v = Number(pxValue) || 0;
-          var root = document.documentElement;
-          if (root && root.style) {
-            root.style.setProperty('--offset-y', v + 'px');
-          }
-          var defaultWrap = document.getElementById('tmw-banner-preview') || document.getElementById('tmwBannerPreview');
-          var defaultFrame = null;
-          if (defaultWrap) {
-            if (defaultWrap.classList && defaultWrap.classList.contains('tmw-banner-frame')) {
-              defaultFrame = defaultWrap;
-            } else {
-              defaultFrame = defaultWrap.querySelector('.tmw-banner-frame');
-            }
-          }
-          if (defaultFrame && defaultFrame.style) {
-            defaultFrame.style.setProperty('--offset-y', v + 'px');
-          }
-          return v;
-        };
-      }
-      window.tmwUpdateBannerOffset = window.tmwUpdateBannerOffset || function(preview, value, posX){
-        var numeric = parseInt(value, 10);
-        if (isNaN(numeric)) numeric = 0;
-        var clamped = Math.max(-1000, Math.min(1000, numeric));
-        var applied = (typeof window.tmwSetBannerOffsetY === 'function') ? window.tmwSetBannerOffsetY(clamped) : clamped;
-        var defaultWrap = document.getElementById('tmw-banner-preview') || document.getElementById('tmwBannerPreview');
-        var defaultFrame = null;
-        if (defaultWrap) {
-          if (defaultWrap.classList && defaultWrap.classList.contains('tmw-banner-frame')) {
-            defaultFrame = defaultWrap;
-          } else {
-            defaultFrame = defaultWrap.querySelector('.tmw-banner-frame');
-          }
+      function tmwOffsetToFocalPercent(pxValue, baseHeight) {
+        var height = Number(baseHeight) || 350;
+        if (height <= 0) {
+          height = 350;
         }
+        var numeric = parseInt(pxValue, 10);
+        if (isNaN(numeric)) {
+          numeric = 0;
+        }
+        var clamped = Math.max(-height, Math.min(height, numeric));
+        var percent = 50 - (clamped / height * 50);
+        return Math.max(0, Math.min(100, percent));
+      }
+
+      function tmwApplyBannerFocus(preview, value, posX, baseHeight) {
+        var focus = tmwOffsetToFocalPercent(value, baseHeight);
+        var x = (typeof posX === 'number' && !isNaN(posX)) ? posX : 50;
+        x = Math.max(0, Math.min(100, x));
         var target = preview;
         if (target && target.classList && !target.classList.contains('tmw-banner-frame')) {
           target = target.querySelector ? target.querySelector('.tmw-banner-frame') : null;
         }
         if (!target) {
-          target = defaultFrame;
+          target = document.querySelector('#tmw-banner-preview .tmw-banner-frame, #tmwBannerPreview .tmw-banner-frame');
         }
-        if (target && target.style && target !== defaultFrame) {
-          target.style.setProperty('--offset-y', applied + 'px');
+        if (!target) {
+          return focus;
         }
-        if (target && target.style) {
-          if (typeof posX === 'number' && !isNaN(posX)) {
-            target.style.setProperty('--offset-x', posX + '%');
-          } else if (!target.style.getPropertyValue('--offset-x')) {
-            target.style.setProperty('--offset-x', '50%');
-          }
+        var img = target.querySelector('img');
+        if (img && img.style) {
+          img.style.objectPosition = x + '% ' + focus + '%';
         }
-        return clamped;
-      };
+        return focus;
+      }
       // ===== TMW: Dock Height / X / Y controls directly above the preview =====
 (function(){
   // small toolbar styling
@@ -1846,16 +1743,16 @@ add_action('admin_enqueue_scripts', function ($hook) {
         if ($img.length){
           $img.attr('src', safeUrl).attr('aria-hidden', 'false').show();
         }
-        if (typeof window.tmwUpdateBannerOffset === 'function' && $frame.length){
-          window.tmwUpdateBannerOffset($frame[0], yPx, posX);
+        if ($frame.length) {
+          tmwApplyBannerFocus($frame[0], yPx, posX, h);
         }
         $ph.hide();
       }else{
         if ($img.length){
           $img.removeAttr('src').attr('aria-hidden', 'true').hide();
         }
-        if (typeof window.tmwUpdateBannerOffset === 'function' && $frame.length){
-          window.tmwUpdateBannerOffset($frame[0], 0);
+        if ($frame.length) {
+          tmwApplyBannerFocus($frame[0], 0, 50, h);
         }
         $ph.show();
       }
@@ -1999,15 +1896,16 @@ add_action('template_redirect', function(){
       <main class="tmw-model-main">
         <?php if ($banner_src): ?>
           <?php
-          $banner_style = function_exists('tmw_get_banner_style') ? tmw_get_banner_style($offset_y, $banner_h, [
-            'term_id'        => $term_id,
-            'image_url'      => $banner_src,
-            'render_context' => 'frontend',
-          ]) : '';
+          $focal_y = function_exists('tmw_offset_to_focal_percent')
+            ? tmw_offset_to_focal_percent($offset_y, $banner_h)
+            : 50;
+          $object_style = function_exists('tmw_get_banner_style')
+            ? tmw_get_banner_style($offset_y, $banner_h, ['pos_x' => $pos_x])
+            : sprintf('object-position: %s%% %s%%;', $pos_x, $focal_y);
           ?>
           <div class="tmw-model-banner">
-            <div class="tmw-model-banner-frame tmw-banner-frame" style="<?php echo esc_attr($banner_style); ?>">
-              <img src="<?php echo esc_url($banner_src); ?>" alt="<?php echo esc_attr($term->name); ?>" />
+            <div class="tmw-model-banner-frame tmw-banner-frame">
+              <img src="<?php echo esc_url($banner_src); ?>" alt="<?php echo esc_attr($term->name); ?>" style="<?php echo esc_attr($object_style); ?>" />
             </div>
           </div>
         <?php endif; ?>
