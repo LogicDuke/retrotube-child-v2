@@ -26,7 +26,7 @@
   width: 100% !important;
   height: 100% !important;             /* match frontend fill model  */
   object-fit: cover !important;        /* identical crop logic       */
-  object-position: 50% 50% !important;
+  object-position: 50% 50%;
   margin: 0;
   display: block;
   transition: object-position 0.25s ease;
