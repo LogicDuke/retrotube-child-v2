@@ -389,3 +389,79 @@ function tmw_child_should_use_lcp_image(): bool {
     $done = true;
     return true;
 }
+
+/**
+ * Ensure slot machine images have width/height attributes to reserve space.
+ */
+function tmw_child_inject_slot_machine_dimensions(string $html): string {
+    $html = (string) $html;
+    if (trim($html) === '' || stripos($html, '<img') === false) {
+        return $html;
+    }
+
+    $previous_libxml = libxml_use_internal_errors(true);
+    $doc = new DOMDocument();
+    $wrapped = '<!DOCTYPE html><html><body>' . $html . '</body></html>';
+    $loaded = $doc->loadHTML($wrapped, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+    libxml_clear_errors();
+    libxml_use_internal_errors($previous_libxml);
+
+    if (!$loaded) {
+        return $html;
+    }
+
+    $default_width = 110;
+    $default_height = 110;
+    $images = $doc->getElementsByTagName('img');
+
+    foreach ($images as $img) {
+        $width_attr = trim((string) $img->getAttribute('width'));
+        $height_attr = trim((string) $img->getAttribute('height'));
+
+        if ($width_attr !== '' && $height_attr !== '') {
+            continue;
+        }
+
+        $data_width = trim((string) $img->getAttribute('data-width'));
+        $data_height = trim((string) $img->getAttribute('data-height'));
+        $data_size = trim((string) $img->getAttribute('data-size'));
+        $data_dimensions = trim((string) $img->getAttribute('data-dimensions'));
+
+        if (($data_width === '' || $data_height === '') && $data_size !== '') {
+            if (preg_match('/(\d+)\s*[x×]\s*(\d+)/i', $data_size, $matches)) {
+                $data_width = $data_width ?: $matches[1];
+                $data_height = $data_height ?: $matches[2];
+            }
+        }
+
+        if (($data_width === '' || $data_height === '') && $data_dimensions !== '') {
+            if (preg_match('/(\d+)\s*[x×]\s*(\d+)/i', $data_dimensions, $matches)) {
+                $data_width = $data_width ?: $matches[1];
+                $data_height = $data_height ?: $matches[2];
+            }
+        }
+
+        $width_value = $data_width !== '' ? (int) $data_width : $default_width;
+        $height_value = $data_height !== '' ? (int) $data_height : $default_height;
+
+        if ($width_attr === '' && $width_value > 0) {
+            $img->setAttribute('width', (string) $width_value);
+        }
+
+        if ($height_attr === '' && $height_value > 0) {
+            $img->setAttribute('height', (string) $height_value);
+        }
+    }
+
+    $body = $doc->getElementsByTagName('body')->item(0);
+    if (!$body) {
+        return $html;
+    }
+
+    $output = '';
+    foreach ($body->childNodes as $child) {
+        $output .= $doc->saveHTML($child);
+    }
+
+    return $output !== '' ? $output : $html;
+}
