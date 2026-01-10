@@ -3,6 +3,9 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+/**
+ * Detect whether the current request is for a login/registration screen.
+ */
 function tmw_perf_is_login_page(): bool {
     if (!isset($GLOBALS['pagenow'])) {
         return false;
@@ -11,6 +14,9 @@ function tmw_perf_is_login_page(): bool {
     return in_array($GLOBALS['pagenow'], ['wp-login.php', 'wp-register.php'], true);
 }
 
+/**
+ * Determine whether frontend performance hooks should run for this request.
+ */
 function tmw_perf_should_run(): bool {
     if (is_admin() || wp_doing_ajax() || wp_doing_cron()) {
         return false;
@@ -27,21 +33,35 @@ function tmw_perf_should_run(): bool {
     return true;
 }
 
+/**
+ * Decide if third-party deferral should run on this request.
+ */
 function tmw_perf_should_delay_thirdparty(): bool {
     return tmw_perf_should_run() && is_singular('model');
 }
 
+/**
+ * Log performance debug messages with consistent prefixes.
+ */
 function tmw_perf_debug_log(string $message): void {
+    $normalized = preg_replace('/^\[TMW-PERF\]\s*/', '[PERF] ', $message);
+
     if (function_exists('tmw_debug_log')) {
-        tmw_debug_log($message);
+        tmw_debug_log($normalized);
         return;
     }
 
-    if (defined('TMW_DEBUG') && TMW_DEBUG && function_exists('error_log')) {
-        error_log($message);
+    if (defined('TMW_DEBUG') && TMW_DEBUG) {
+        error_log('[TMW] ' . $normalized);
     }
 }
 
+/**
+ * Case-insensitive substring matcher for asset source URLs.
+ *
+ * @param string $src Source URL to check.
+ * @param array  $needles Substrings to match.
+ */
 function tmw_perf_src_matches(string $src, array $needles): bool {
     foreach ($needles as $needle) {
         if (stripos($src, $needle) !== false) {
@@ -148,7 +168,13 @@ add_action('wp_enqueue_scripts', function () {
         return;
     }
 
-    $version = (string) filemtime($path);
+    $filemtime = filemtime($path);
+    if ($filemtime === false) {
+        tmw_perf_debug_log('[TMW-PERF] Unable to read loader mtime: js/tmw-thirdparty-delay.js');
+        $version = null;
+    } else {
+        $version = (string) $filemtime;
+    }
 
     wp_enqueue_script(
         'tmw-thirdparty-delay',
