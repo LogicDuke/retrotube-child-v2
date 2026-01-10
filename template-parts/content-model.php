@@ -56,9 +56,13 @@ if ( empty( $cta_label ) ) {
 		<div class="title-block box-shadow">
 			<?php the_title( '<h1 class="entry-title model-name" itemprop="name">', '</h1>' ); ?>
 			<?php if ( xbox_get_field_value( 'wpst-options', 'enable-rating-system' ) == 'on' ) : ?>
-				<div id="rating">
+				<?php
+				$rating_percent = wpst_get_post_like_rate( get_the_ID() );
+				$is_rated_yet   = ( $rating_percent === false ) ? ' not-rated-yet' : '';
+				$rating_percent = ( $rating_percent === false ) ? 0 : (float) $rating_percent;
+				?>
+				<div id="rating" class="<?php echo esc_attr( trim( $is_rated_yet ) ); ?>">
 					<span id="video-rate"><?php echo wpst_get_post_like_link( get_the_ID() ); ?></span>
-					<?php $is_rated_yet = ( wpst_get_post_like_rate( get_the_ID() ) === false ) ? ' not-rated-yet' : ''; ?>
 				</div>
 			<?php endif; ?>
 			<div id="video-tabs" class="tabs">
@@ -87,18 +91,26 @@ if ( empty( $cta_label ) ) {
         </header><!-- .entry-header -->
 
 		<div class="entry-content">
+			<?php
+			$views_count    = function_exists( 'wpst_get_post_views' ) ? wpst_get_post_views( get_the_ID() ) : 0;
+			$likes_count    = function_exists( 'wpst_get_post_likes' ) ? wpst_get_post_likes( get_the_ID() ) : 0;
+			$dislikes_count = function_exists( 'wpst_get_post_dislikes' ) ? wpst_get_post_dislikes( get_the_ID() ) : 0;
+			$views_count    = is_numeric( $views_count ) ? (int) $views_count : 0;
+			$likes_count    = is_numeric( $likes_count ) ? (int) $likes_count : 0;
+			$dislikes_count = is_numeric( $dislikes_count ) ? (int) $dislikes_count : 0;
+			?>
 			<?php if ( xbox_get_field_value( 'wpst-options', 'enable-views-system' ) == 'on' || xbox_get_field_value( 'wpst-options', 'enable-rating-system' ) == 'on' ) : ?>
 				<div id="rating-col">
 					<?php if ( xbox_get_field_value( 'wpst-options', 'enable-views-system' ) == 'on' ) : ?>
-						<div id="video-views"><span>0</span> <?php esc_html_e( 'views', 'wpst' ); ?></div>
+						<div id="video-views"><span><?php echo esc_html( $views_count ); ?></span> <?php esc_html_e( 'views', 'wpst' ); ?></div>
 					<?php endif; ?>
 					<?php if ( xbox_get_field_value( 'wpst-options', 'enable-rating-system' ) == 'on' ) : ?>
-						<div class="rating-bar"><div class="rating-bar-meter"></div></div>
+						<div class="rating-bar"><div class="rating-bar-meter" style="width: <?php echo esc_attr( $rating_percent ); ?>%;"></div></div>
 						<div class="rating-result">
-							<div class="percentage">0%</div>
+							<div class="percentage"><?php echo esc_html( $rating_percent ); ?>%</div>
 							<div class="likes">
-								<i class="fa fa-thumbs-up"></i> <span class="likes_count">0</span>
-								<i class="fa fa-thumbs-down fa-flip-horizontal"></i> <span class="dislikes_count">0</span>
+								<i class="fa fa-thumbs-up"></i> <span class="likes_count"><?php echo esc_html( $likes_count ); ?></span>
+								<i class="fa fa-thumbs-down fa-flip-horizontal"></i> <span class="dislikes_count"><?php echo esc_html( $dislikes_count ); ?></span>
 							</div>
 						</div>
 					<?php endif; ?>
