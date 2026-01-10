@@ -90,6 +90,9 @@ if ( empty( $cta_label ) ) {
                                 // [TMW-SLOT] v4.1.2 — Render slot machine under description (inside #video-about)
                                 $__exists = shortcode_exists('tmw_slot_machine') ? 'yes' : 'no';
                                 $__out    = do_shortcode('[tmw_slot_machine]');
+                                if (function_exists('tmw_child_inject_slot_machine_dimensions')) {
+                                        $__out = tmw_child_inject_slot_machine_dimensions($__out);
+                                }
                                 $__len    = strlen( trim( wp_strip_all_tags( $__out ) ) );
                                 if ($tmw_debug_enabled) {
                                         error_log(
@@ -97,17 +100,39 @@ if ( empty( $cta_label ) ) {
                                                 'post_type=' . get_post_type() . ' shortcode_exists=' . $__exists . ' output_len=' . $__len
                                         );
                                 }
+
+                                $tmw_slot_min_height = 0;
+                                if ($__len > 0) {
+                                        if (preg_match('/<iframe[^>]*\sheight=["\']?(\d{2,4})/i', $__out, $matches)) {
+                                                $tmw_slot_min_height = (int) $matches[1];
+                                        } elseif (preg_match('/<img[^>]*\sheight=["\']?(\d{2,4})/i', $__out, $matches)) {
+                                                $tmw_slot_min_height = (int) $matches[1];
+                                        } else {
+                                                $tmw_slot_fallback_classes = [
+                                                        'adsbygoogle',
+                                                        'ad-slot',
+                                                        'ad-banner',
+                                                        'slot-banner',
+                                                        'tmw-slot-machine',
+                                                ];
+                                                foreach ($tmw_slot_fallback_classes as $class_name) {
+                                                        if (stripos($__out, $class_name) !== false) {
+                                                                $tmw_slot_min_height = 600;
+                                                                break;
+                                                        }
+                                                }
+                                        }
+                                }
                                 ?>
-                                <div class="tmw-slot-banner">
-                                        <?php if ($__len === 0): ?>
-                                                <!-- [TMW-SLOT-AUDIT] shortcode returned empty -->
-                                                <div class="tmw-slot-audit-placeholder">
-                                                        [Slot shortcode returned empty]
+                                <?php if ($__len > 0): ?>
+                                        <div class="tmw-slot-banner-wrap"<?php echo $tmw_slot_min_height > 0 ? ' style="--tmw-slot-minh: ' . esc_attr($tmw_slot_min_height) . 'px"' : ''; ?>>
+                                                <div class="tmw-slot-banner">
+                                                        <?php echo wp_kses_post($__out); ?>
                                                 </div>
-                                        <?php else: ?>
-                                                <?php echo wp_kses_post($__out); ?>
-                                        <?php endif; ?>
-                                </div>
+                                        </div>
+                                <?php elseif ($tmw_debug_enabled): ?>
+                                        <?php error_log('[TMW-SLOT-AUDIT] shortcode returned empty on model=' . get_the_title()); ?>
+                                <?php endif; ?>
 
                                 <?php if ( xbox_get_field_value( 'wpst-options', 'show-categories-video-about' ) == 'on' || xbox_get_field_value( 'wpst-options', 'show-tags-video-about' ) == 'on' ) : ?>
                                         <div class="tags"><?php wpst_entry_footer(); ?></div>

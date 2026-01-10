@@ -849,6 +849,16 @@ a.tag-link {
 
 
 /* v4.4.0 — Center slot banner without JS transforms */
+.single-model .tmw-slot-banner-wrap {
+  min-height: var(--tmw-slot-minh, 300px);
+}
+
+@media (min-width: 841px) {
+  .single-model .tmw-slot-banner-wrap {
+    min-height: var(--tmw-slot-minh, 600px);
+  }
+}
+
 .single-model .tmw-slot-banner {
   max-width: 1035px;
   width: 100%;
