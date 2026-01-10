@@ -1146,3 +1146,26 @@ article.model {
 
 /* IMPORTANT: Do NOT set translate/width here for slot/tags/videos.
    The JS sync aligns them precisely to the hero width/position. */
+
+/* [TMW-LAYOUT] v4.4.0 — Model under-about full-width row */
+.single-model .video-meta-inline .tmw-model-under-about {
+  flex: 0 0 100%;
+  width: 100%;
+  max-width: 100%;
+  clear: both;
+}
+
+.single-model .tmw-model-under-about .tmw-slot-banner-wrap {
+  width: 100%;
+  max-width: 100%;
+}
+
+.single-model .tmw-model-under-about .tmw-model-tags {
+  width: 100%;
+  max-width: 100%;
+}
+
+.single-model .tmw-model-under-about .tmw-model-videos {
+  width: 100%;
+  max-width: 100%;
+}

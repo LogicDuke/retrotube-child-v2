@@ -6,6 +6,10 @@ add_action('wp_footer', function () {
         return;
     }
 
+    if (!defined('TMW_ENABLE_SLOT_WIDTH_SYNC') || TMW_ENABLE_SLOT_WIDTH_SYNC !== true) {
+        return;
+    }
+
     if (defined('WP_DEBUG') && WP_DEBUG) {
         error_log('[TMW-LAYOUT] slot-width-sync v4.3.1 ran for model ' . get_the_ID());
     }
