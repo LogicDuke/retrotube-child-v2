@@ -72,7 +72,10 @@ function tmw_perf_src_matches(string $src, array $needles): bool {
     return false;
 }
 
-add_action('wp_enqueue_scripts', function () {
+/**
+ * Dequeue VideoJS assets on non-video pages.
+ */
+function tmw_perf_dequeue_videojs_assets(): void {
     if (!tmw_perf_should_run() || is_singular('video')) {
         return;
     }
@@ -113,9 +116,17 @@ add_action('wp_enqueue_scripts', function () {
         $path = wp_parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?: '';
         tmw_perf_debug_log('[TMW-PERF] Dequeued VideoJS on non-video page: ' . esc_url_raw($path));
     }
-}, 999);
+}
 
-add_filter('script_loader_tag', function ($tag, $handle, $src) {
+/**
+ * Replace select third-party script tags with deferred placeholders.
+ *
+ * @param string $tag Script tag.
+ * @param string $handle Script handle.
+ * @param string $src Script source URL.
+ * @return string
+ */
+function tmw_perf_defer_thirdparty_script_tag(string $tag, string $handle, string $src): string {
     if (!tmw_perf_should_delay_thirdparty()) {
         return $tag;
     }
@@ -155,9 +166,12 @@ add_filter('script_loader_tag', function ($tag, $handle, $src) {
         esc_url($src),
         $attrs
     );
-}, 10, 3);
+}
 
-add_action('wp_enqueue_scripts', function () {
+/**
+ * Enqueue the deferred third-party loader when needed.
+ */
+function tmw_perf_enqueue_thirdparty_loader(): void {
     if (!tmw_perf_should_delay_thirdparty()) {
         return;
     }
@@ -183,4 +197,8 @@ add_action('wp_enqueue_scripts', function () {
         $version,
         true
     );
-}, 20);
+}
+
+add_action('wp_enqueue_scripts', 'tmw_perf_dequeue_videojs_assets', 999);
+add_filter('script_loader_tag', 'tmw_perf_defer_thirdparty_script_tag', 10, 3);
+add_action('wp_enqueue_scripts', 'tmw_perf_enqueue_thirdparty_loader', 20);
