@@ -98,7 +98,7 @@ if ( empty( $cta_label ) ) {
                                         );
                                 }
                                 ?>
-                                <div class="tmw-slot-banner" style="margin:15px 0 20px;text-align:center;">
+                                <div class="tmw-slot-banner">
                                         <?php if ($__len === 0): ?>
                                                 <!-- [TMW-SLOT-AUDIT] shortcode returned empty -->
                                                 <div class="tmw-slot-audit-placeholder"
