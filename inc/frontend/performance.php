@@ -389,3 +389,73 @@ function tmw_child_should_use_lcp_image(): bool {
     $done = true;
     return true;
 }
+
+/**
+ * Inject width/height into slot machine images to reduce CLS.
+ */
+function tmw_child_inject_slot_machine_dimensions(string $html): string {
+    if (trim($html) === '') {
+        return $html;
+    }
+
+    if (!class_exists('DOMDocument')) {
+        return $html;
+    }
+
+    $doc = new DOMDocument('1.0', 'UTF-8');
+    $internal_errors = libxml_use_internal_errors(true);
+    $loaded = $doc->loadHTML(
+        '<?xml encoding="UTF-8"?>' . $html,
+        LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD
+    );
+    libxml_clear_errors();
+    libxml_use_internal_errors($internal_errors);
+
+    if (!$loaded) {
+        return $html;
+    }
+
+    $default_width = 110;
+    $default_height = 110;
+
+    foreach ($doc->getElementsByTagName('img') as $img) {
+        $width_attr = $img->getAttribute('width');
+        $height_attr = $img->getAttribute('height');
+
+        $data_width = $img->getAttribute('data-width');
+        $data_height = $img->getAttribute('data-height');
+        $data_size = $img->getAttribute('data-size');
+        $data_dimensions = $img->getAttribute('data-dimensions');
+
+        if (($data_width === '' || $data_height === '') && ($data_size !== '' || $data_dimensions !== '')) {
+            $size_source = $data_size !== '' ? $data_size : $data_dimensions;
+            if (preg_match('/(\d+)\s*[xX]\s*(\d+)/', $size_source, $matches)) {
+                if ($data_width === '') {
+                    $data_width = $matches[1];
+                }
+                if ($data_height === '') {
+                    $data_height = $matches[2];
+                }
+            }
+        }
+
+        $width_value = $data_width !== '' ? (int) $data_width : $default_width;
+        $height_value = $data_height !== '' ? (int) $data_height : $default_height;
+
+        if ($width_value < 1 || $width_value > 5000) {
+            $width_value = $default_width;
+        }
+        if ($height_value < 1 || $height_value > 5000) {
+            $height_value = $default_height;
+        }
+
+        if ($width_attr === '' && $width_value > 0) {
+            $img->setAttribute('width', (string) $width_value);
+        }
+        if ($height_attr === '' && $height_value > 0) {
+            $img->setAttribute('height', (string) $height_value);
+        }
+    }
+
+    return $doc->saveHTML();
+}

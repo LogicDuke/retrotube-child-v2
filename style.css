@@ -857,22 +857,20 @@ a.tag-link {
   margin-top: 15px;
   margin-bottom: 20px;
   text-align: center;
-  min-height: 250px;
-  aspect-ratio: 1035 / 300;
+  min-height: var(--tmw-slot-minh, 300px);
 }
 
 @media (max-width: 840px) {
   .single-model .tmw-slot-banner {
     width: 100% !important;
     max-width: 100% !important;
-    min-height: 250px;
-    aspect-ratio: 300 / 250;
+    min-height: var(--tmw-slot-minh, 300px);
   }
 }
 
 @media (min-width: 841px) {
   .single-model .tmw-slot-banner {
-    min-height: 300px;
+    min-height: var(--tmw-slot-minh, 600px);
   }
 }
 
