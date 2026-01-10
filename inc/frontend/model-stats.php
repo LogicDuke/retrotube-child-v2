@@ -68,8 +68,14 @@ if ( ! function_exists( 'tmw_get_display_model_views' ) ) {
     }
 }
 
+// Count EVERY visit/page load: +1 per load (no dedup).
 add_action( 'wp', function () {
     if ( ! is_singular( 'model' ) ) {
+        return;
+    }
+
+    // Avoid counting admin screens / AJAX / REST (not real front-end visits).
+    if ( is_admin() || ( defined( 'DOING_AJAX' ) && DOING_AJAX ) || ( defined( 'REST_REQUEST' ) && REST_REQUEST ) ) {
         return;
     }
 
