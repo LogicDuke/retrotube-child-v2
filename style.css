@@ -18,6 +18,7 @@
   --tmw-hero-mobile-h: clamp(120px, calc(100vw * 0.338), 200px);
 }
 
+
 /* Header / Navigation helpers */
 #site-navigation .menu > li > a > i,
 .main-navigation .menu > li > a > i {
@@ -1073,4 +1074,43 @@ article.model {
 .video-meta-inline,
 #rating-col {
   contain: content;
+}
+
+/* =========================================================
+ * [TMW-LAYOUT-ALIGN] v5.0.2 — Model page column alignment fix
+ * Only affects: description width + slot banner + tags + model videos
+ * ========================================================= */
+.single-model #video-about .video-description,
+.single-model #video-about .video-description .desc {
+  max-width: none !important;
+  width: 100% !important;
+}
+
+/* Ensure these sections break out of the “text column” and start at the far-left of the content column */
+.single-model #video-about .tmw-slot-banner-wrap,
+.single-model #video-about .tmw-slot-banner,
+.single-model .tmw-model-tags,
+.single-model .tmw-model-videos {
+  clear: both !important;
+  float: none !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* Slot banner: remove centering/max-width behavior that pushes it into the text column feel */
+.single-model #video-about .tmw-slot-banner {
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* The section currently includes widget classes; ensure it behaves like content, not sidebar */
+.single-model .tmw-model-videos.widget,
+.single-model .tmw-model-videos.widget_videos_block {
+  float: none !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  clear: both !important;
 }
