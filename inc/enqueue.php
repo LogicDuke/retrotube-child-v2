@@ -166,6 +166,15 @@ add_action('wp_enqueue_scripts', function () {
   }
 }, 100);
 
+add_action('wp_enqueue_scripts', function () {
+  if (is_admin() || is_user_logged_in()) {
+    return;
+  }
+
+  wp_dequeue_style('dashicons');
+  wp_deregister_style('dashicons');
+}, 9999);
+
 // Model tag styles now inherit from the global stylesheet to match video tags.
 
 /* === TMW: Extend Video Widget for Model Filtering (Hybrid post/video) === */

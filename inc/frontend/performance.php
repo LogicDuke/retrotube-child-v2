@@ -9,6 +9,36 @@ if (!defined('ABSPATH')) { exit; }
  * Inline critical CSS for heavy media views to speed up banner/LCP.
  */
 add_action('wp_head', function () {
+    if (is_admin() || is_user_logged_in()) {
+        return;
+    }
+
+    if (!is_singular('model')) {
+        return;
+    }
+    ?>
+    <style id="tmw-critical-css">
+    /* Critical above-the-fold styles for model pages */
+    *,*::before,*::after{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,sans-serif}
+    img,video{max-width:100%;height:auto}
+    .tmw-banner-container,.tmw-banner-frame{
+        position:relative;width:100%;max-width:1035px;
+        aspect-ratio:1035/350;overflow:hidden;background:#111;
+        margin:0 auto 25px;border-radius:8px
+    }
+    .tmw-banner-frame img{
+        display:block;width:100%!important;height:100%!important;
+        object-fit:cover!important
+    }
+    .entry-header{contain:layout style}
+    .title-block{background:#1a1a1a;padding:15px;border-radius:8px}
+    h1.entry-title{margin:0;color:#fff;font-size:clamp(1.5rem,4vw,2rem)}
+    </style>
+    <?php
+}, 1);
+
+add_action('wp_head', function () {
     if (is_admin() || is_user_logged_in() || !tmw_child_is_heavy_media_view()) {
         return;
     }
@@ -36,7 +66,7 @@ add_action('wp_head', function () {
  * Remove jQuery migrate unless explicitly required.
  */
 add_action('wp_default_scripts', function ($scripts) {
-    if (!($scripts instanceof WP_Scripts)) {
+    if (is_admin() || !($scripts instanceof WP_Scripts)) {
         return;
     }
 
@@ -162,6 +192,53 @@ add_filter('style_loader_tag', function ($html, $handle, $href, $media) {
 }, 20, 4);
 
 /**
+ * Force font-display: swap on all Google Fonts and local fonts.
+ */
+add_filter('style_loader_tag', function ($html, $handle, $href) {
+    if (strpos($href, 'fonts.googleapis.com') !== false && strpos($href, 'display=') === false) {
+        $updated_href = add_query_arg('display', 'swap', $href);
+        $html = str_replace($href, $updated_href, $html);
+    }
+    return $html;
+}, 10, 3);
+
+/**
+ * Inject font-display: swap via CSS.
+ */
+add_action('wp_head', function () {
+    echo '<style>@font-face{font-display:swap!important}</style>';
+}, 1);
+
+/**
+ * Defer non-critical stylesheets.
+ */
+add_filter('style_loader_tag', function ($html, $handle, $href, $media) {
+    if (is_admin() || is_user_logged_in()) {
+        return $html;
+    }
+
+    $critical = [
+        'retrotube-parent',
+        'retrotube-child-style',
+    ];
+
+    if (in_array($handle, $critical, true)) {
+        return $html;
+    }
+
+    if (strpos($html, 'rel="preload"') !== false) {
+        return $html;
+    }
+
+    return sprintf(
+        '<link rel="preload" href="%s" as="style" onload="this.onload=null;this.rel=\'stylesheet\'" media="%s"><noscript>%s</noscript>',
+        esc_url($href),
+        esc_attr($media ?: 'all'),
+        $html
+    );
+}, 999, 4);
+
+/**
  * Add defer to non-critical scripts and delay third-party tags until interaction.
  */
 add_filter('script_loader_tag', function ($tag, $handle, $src) {
@@ -216,6 +293,70 @@ add_filter('script_loader_tag', function ($tag, $handle, $src) {
 
     return $tag;
 }, 10, 3);
+
+/**
+ * Convert third-party scripts to delayed loading.
+ * They only load after first user interaction (scroll, click, touch).
+ */
+add_filter('script_loader_tag', function ($tag, $handle, $src) {
+    if (is_admin() || is_user_logged_in()) {
+        return $tag;
+    }
+
+    if (strpos($tag, 'text/lazyload') !== false || strpos($tag, 'data-tmw-delay') !== false) {
+        return $tag;
+    }
+
+    $delay_patterns = [
+        'googletagmanager.com',
+        'google-analytics.com',
+        'analytics.google.com',
+        'googlesyndication.com',
+        'doubleclick.net',
+        'connect.facebook.net',
+        'facebook.com/tr',
+        'cloudflareinsights.com',
+        'gtranslate.net',
+    ];
+
+    foreach ($delay_patterns as $pattern) {
+        if (stripos($src, $pattern) !== false) {
+            return sprintf(
+                '<script type="text/lazyload" data-src="%s"></script>',
+                esc_url($src)
+            );
+        }
+    }
+
+    return $tag;
+}, 9999, 3);
+
+add_action('wp_footer', function () {
+    if (is_admin() || is_user_logged_in()) {
+        return;
+    }
+    ?>
+    <script>
+    (function(){
+        var loaded=false;
+        function loadScripts(){
+            if(loaded)return;
+            loaded=true;
+            document.querySelectorAll('script[type="text/lazyload"]').forEach(function(el){
+                var s=document.createElement('script');
+                s.src=el.getAttribute('data-src');
+                s.async=true;
+                el.parentNode.replaceChild(s,el);
+            });
+        }
+        ['scroll','click','touchstart','mousemove','keydown'].forEach(function(e){
+            window.addEventListener(e,loadScripts,{once:true,passive:true});
+        });
+        setTimeout(loadScripts,5000);
+    })();
+    </script>
+    <?php
+}, 999);
 
 add_action('wp_footer', function () {
     ?>
