@@ -34,6 +34,7 @@ require_once __DIR__ . '/frontend/comments.php';
 require_once __DIR__ . '/frontend/taxonomies.php';
 require_once __DIR__ . '/frontend/shortcodes.php';
 require_once __DIR__ . '/frontend/template-tags.php';
+require_once __DIR__ . '/frontend/model-stats.php';
 
 /** SEO helpers */
 require_once __DIR__ . '/seo/schema.php';

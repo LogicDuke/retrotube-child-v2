@@ -92,7 +92,9 @@ if ( empty( $cta_label ) ) {
 
 		<div class="entry-content">
 			<?php
-			$views_count    = function_exists( 'wpst_get_post_views' ) ? wpst_get_post_views( get_the_ID() ) : 0;
+			$views_count    = function_exists( 'tmw_get_display_model_views' )
+				? tmw_get_display_model_views( (int) get_the_ID() )
+				: ( function_exists( 'wpst_get_post_views' ) ? wpst_get_post_views( get_the_ID() ) : 0 );
 			$likes_count    = function_exists( 'wpst_get_post_likes' ) ? wpst_get_post_likes( get_the_ID() ) : 0;
 			$dislikes_count = function_exists( 'wpst_get_post_dislikes' ) ? wpst_get_post_dislikes( get_the_ID() ) : 0;
 			$views_count    = is_numeric( $views_count ) ? (int) $views_count : 0;
