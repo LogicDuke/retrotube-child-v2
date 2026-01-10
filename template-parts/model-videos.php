@@ -60,13 +60,16 @@ $original_post = $post;
       $thumb     = get_the_post_thumbnail($post, 'wpst_thumb_large', [
         'class' => 'video-thumb-img',
         'alt'   => $title,
+        'loading' => 'lazy',
+        'decoding' => 'async',
+        'fetchpriority' => 'low',
       ]);
 
       if (empty($thumb)) {
         $thumb_meta = get_post_meta($post->ID, 'thumb', true);
         if (is_string($thumb_meta) && $thumb_meta !== '') {
           $thumb = sprintf(
-            '<img class="video-thumb-img" src="%s" alt="%s" loading="lazy" />',
+            '<img class="video-thumb-img" src="%s" alt="%s" loading="lazy" decoding="async" fetchpriority="low" />',
             esc_url($thumb_meta),
             esc_attr($title)
           );

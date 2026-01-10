@@ -217,6 +217,12 @@ add_action('wp_footer', function () {
         ['scroll', 'pointerdown', 'click', 'touchstart', 'keydown'].forEach(function (eventName) {
             window.addEventListener(eventName, loadDelayedScripts, { once: true, passive: true });
         });
+
+        if ('requestIdleCallback' in window) {
+            window.requestIdleCallback(loadDelayedScripts, { timeout: 2500 });
+        } else {
+            window.setTimeout(loadDelayedScripts, 2500);
+        }
     })();
     </script>
     <?php
