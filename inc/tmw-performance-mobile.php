@@ -1,16 +1,33 @@
 <?php
 if (!defined('ABSPATH')) { exit; }
 
+/**
+ * Determine whether the current request should receive perf tweaks.
+ *
+ * @return bool
+ */
 function tmw_perf_mobile_is_target_request() {
     return !is_admin() && !is_user_logged_in() && is_singular('model');
 }
 
+/**
+ * Write a debug log entry when TMW_DEBUG is enabled.
+ *
+ * @param string $message
+ * @return void
+ */
 function tmw_perf_mobile_log($message) {
     if (defined('TMW_DEBUG') && TMW_DEBUG) {
         error_log($message);
     }
 }
 
+/**
+ * Check if a stylesheet URL should be async-loaded on model pages.
+ *
+ * @param string $href
+ * @return bool
+ */
 function tmw_perf_mobile_should_async_css($href) {
     if (empty($href)) {
         return false;
@@ -48,7 +65,7 @@ function tmw_perf_mobile_should_async_css($href) {
     );
 
     foreach ($keywords as $keyword) {
-        if (strpos($href, $keyword) !== false) {
+        if (stripos($href, $keyword) !== false) {
             return true;
         }
     }
@@ -56,6 +73,12 @@ function tmw_perf_mobile_should_async_css($href) {
     return false;
 }
 
+/**
+ * Determine if a script source should be delayed.
+ *
+ * @param string $src
+ * @return bool
+ */
 function tmw_perf_mobile_should_delay_src($src) {
     if (empty($src)) {
         return false;
@@ -80,6 +103,55 @@ function tmw_perf_mobile_should_delay_src($src) {
     return false;
 }
 
+/**
+ * Parse HTML attributes from a tag string.
+ *
+ * @param string $html
+ * @return array
+ */
+function tmw_perf_mobile_parse_attributes($html) {
+    if (!preg_match('#<\w+\s+([^>]+)>#i', $html, $matches)) {
+        return array();
+    }
+
+    $raw = $matches[1];
+    $parsed = wp_kses_hair($raw, wp_allowed_protocols());
+    $attrs = array();
+
+    foreach ($parsed as $name => $data) {
+        if (!is_array($data)) {
+            continue;
+        }
+        $attrs[$name] = array_key_exists('value', $data) ? $data['value'] : '';
+    }
+
+    return $attrs;
+}
+
+/**
+ * Build a tag attribute string from an array.
+ *
+ * @param array $attrs
+ * @return string
+ */
+function tmw_perf_mobile_build_attributes($attrs) {
+    $parts = array();
+
+    foreach ($attrs as $name => $value) {
+        $name = trim((string) $name);
+        if ($name === '') {
+            continue;
+        }
+        if ($value === '') {
+            $parts[] = esc_attr($name);
+            continue;
+        }
+        $parts[] = sprintf('%s="%s"', esc_attr($name), esc_attr($value));
+    }
+
+    return implode(' ', $parts);
+}
+
 add_filter('style_loader_tag', function ($html, $handle, $href, $media) {
     if (!tmw_perf_mobile_is_target_request()) {
         return $html;
@@ -95,11 +167,23 @@ add_filter('style_loader_tag', function ($html, $handle, $href, $media) {
         $logged = true;
     }
 
-    $media_attr = ($media && $media !== 'all') ? ' media="' . esc_attr($media) . '"' : '';
+    $attrs = tmw_perf_mobile_parse_attributes($html);
     $href_attr = esc_url($href);
 
-    $preload = '<link rel="preload" as="style" href="' . $href_attr . '"' . $media_attr . ' onload="this.onload=null;this.rel=\'stylesheet\'">';
-    $noscript = '<noscript><link rel="stylesheet" href="' . $href_attr . '"' . $media_attr . '></noscript>';
+    $preload_attrs = $attrs;
+    $preload_attrs['rel'] = 'preload';
+    $preload_attrs['as'] = 'style';
+    $preload_attrs['href'] = $href_attr;
+    $preload_attrs['data-tmw-async'] = '1';
+    unset($preload_attrs['onload']);
+
+    $noscript_attrs = $attrs;
+    $noscript_attrs['rel'] = 'stylesheet';
+    $noscript_attrs['href'] = $href_attr;
+    unset($noscript_attrs['onload'], $noscript_attrs['as'], $noscript_attrs['data-tmw-async']);
+
+    $preload = '<link ' . tmw_perf_mobile_build_attributes($preload_attrs) . '>';
+    $noscript = '<noscript><link ' . tmw_perf_mobile_build_attributes($noscript_attrs) . '></noscript>';
 
     return $preload . $noscript;
 }, 10, 4);
@@ -113,9 +197,24 @@ add_filter('script_loader_tag', function ($tag, $handle, $src) {
         return $tag;
     }
 
-    return '<script type="text/plain" data-tmw-delay="1" data-src="' . esc_url($src) . '"></script>';
+    $delayed_src = esc_url($src);
+    $tag = preg_replace('#\s+src=(["\"]).*?\1#i', '', $tag);
+    $tag = preg_replace('#\s+type=(["\"]).*?\1#i', '', $tag);
+
+    return preg_replace(
+        '#^<script\b#i',
+        '<script type="text/plain" data-tmw-delay="1" data-src="' . $delayed_src . '"',
+        $tag,
+        1
+    );
 }, 10, 3);
 
+/**
+ * Rewrite third-party script tags in the output buffer for delayed loading.
+ *
+ * @param string $buffer
+ * @return string
+ */
 function tmw_perf_mobile_buffer_rewrite_scripts($buffer) {
     $count = 0;
 
@@ -136,7 +235,11 @@ function tmw_perf_mobile_buffer_rewrite_scripts($buffer) {
             }
 
             $count++;
-            return '<script type="text/plain" data-tmw-delay="1" data-src="' . esc_url($src) . '"></script>';
+            $delayed_src = esc_url($src);
+            $attrs_clean = preg_replace('#\s+type=(["\"]).*?\1#i', '', $attrs);
+            $attrs_clean = preg_replace('#\s+src=(["\"]).*?\1#i', '', $attrs_clean);
+
+            return '<script type="text/plain" data-tmw-delay="1" data-src="' . $delayed_src . '" ' . trim($attrs_clean) . '></script>';
         },
         $buffer
     );
@@ -153,8 +256,18 @@ add_action('template_redirect', function () {
         return;
     }
 
+    $GLOBALS['tmw_perf_mobile_buffer_started'] = true;
     ob_start('tmw_perf_mobile_buffer_rewrite_scripts');
-}, 0);
+}, PHP_INT_MIN);
+
+add_action('shutdown', function () {
+    if (empty($GLOBALS['tmw_perf_mobile_buffer_started'])) {
+        return;
+    }
+    if (ob_get_level() > 0) {
+        ob_end_flush();
+    }
+}, PHP_INT_MIN);
 
 add_action('wp_enqueue_scripts', function () {
     if (!tmw_perf_mobile_is_target_request()) {
