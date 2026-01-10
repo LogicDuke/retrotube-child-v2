@@ -128,61 +128,68 @@ if ( empty( $cta_label ) ) {
                                         <?php endif; ?>
                                 </div>
 
-                                <?php
-                                // [TMW-SLOT] v4.1.2 — Render slot machine under description (inside #video-about)
-                                $__exists = shortcode_exists('tmw_slot_machine') ? 'yes' : 'no';
-                                $__out    = do_shortcode('[tmw_slot_machine]');
-                                if (function_exists('tmw_child_inject_slot_machine_dimensions')) {
-                                        $__out = tmw_child_inject_slot_machine_dimensions($__out);
-                                }
-                                $__len    = strlen( trim( wp_strip_all_tags( $__out ) ) );
-                                if ($tmw_debug_enabled) {
-                                        error_log(
-                                                '[TMW-SLOT-AUDIT] under #video-about model="' . get_the_title() . '" ' .
-                                                'post_type=' . get_post_type() . ' shortcode_exists=' . $__exists . ' output_len=' . $__len
-                                        );
-                                }
+								<?php
+								// [TMW-SLOT] v4.4.1 — Prepare slot machine HTML to render AFTER the accordion (outside #video-about)
+								$tmw_slot_exists = shortcode_exists('tmw_slot_machine') ? 'yes' : 'no';
+								$tmw_slot_html   = do_shortcode('[tmw_slot_machine]');
 
-                                $tmw_slot_min_height = 0;
-                                if ($__len > 0) {
-                                        if (preg_match('/<iframe[^>]*\sheight=["\']?(\d{2,4})/i', $__out, $matches)) {
-                                                $tmw_slot_min_height = (int) $matches[1];
-                                        } elseif (preg_match('/<img[^>]*\sheight=["\']?(\d{2,4})/i', $__out, $matches)) {
-                                                $tmw_slot_min_height = (int) $matches[1];
-                                        } else {
-                                                $tmw_slot_fallback_classes = [
-                                                        'adsbygoogle',
-                                                        'ad-slot',
-                                                        'ad-banner',
-                                                        'slot-banner',
-                                                        'tmw-slot-machine',
-                                                ];
-                                                foreach ($tmw_slot_fallback_classes as $class_name) {
-                                                        if (stripos($__out, $class_name) !== false) {
-                                                                $tmw_slot_min_height = 600;
-                                                                break;
-                                                        }
-                                                }
-                                        }
-                                }
-                                ?>
-                                <?php if ($__len > 0): ?>
-                                        <div class="tmw-slot-banner-wrap"<?php echo $tmw_slot_min_height > 0 ? ' style="--tmw-slot-minh: ' . esc_attr($tmw_slot_min_height) . 'px"' : ''; ?>>
-                                                <div class="tmw-slot-banner">
-                                                        <?php echo wp_kses_post($__out); ?>
-                                                </div>
-                                        </div>
-                                <?php elseif ($tmw_debug_enabled): ?>
-                                        <?php error_log('[TMW-SLOT-AUDIT] shortcode returned empty on model=' . get_the_title()); ?>
-                                <?php endif; ?>
+								if (function_exists('tmw_child_inject_slot_machine_dimensions')) {
+										$tmw_slot_html = tmw_child_inject_slot_machine_dimensions($tmw_slot_html);
+								}
+
+								$tmw_slot_len = strlen(trim(wp_strip_all_tags($tmw_slot_html)));
+
+								if ($tmw_debug_enabled) {
+										error_log(
+												'[TMW-SLOT-AUDIT] prepared (post-accordion) model="' . get_the_title() . '" ' .
+												'post_type=' . get_post_type() . ' shortcode_exists=' . $tmw_slot_exists . ' output_len=' . $tmw_slot_len
+										);
+								}
+
+								$tmw_slot_min_height = 0;
+
+								if ($tmw_slot_len > 0) {
+										if (preg_match('/<iframe[^>]*\sheight=["\']?(\d{2,4})/i', $tmw_slot_html, $matches)) {
+												$tmw_slot_min_height = (int) $matches[1];
+										} elseif (preg_match('/<img[^>]*\sheight=["\']?(\d{2,4})/i', $tmw_slot_html, $matches)) {
+												$tmw_slot_min_height = (int) $matches[1];
+										} else {
+												$tmw_slot_fallback_classes = [
+														'adsbygoogle',
+														'ad-slot',
+														'ad-banner',
+														'slot-banner',
+														'tmw-slot-machine',
+												];
+												foreach ($tmw_slot_fallback_classes as $class_name) {
+														if (stripos($tmw_slot_html, $class_name) !== false) {
+																$tmw_slot_min_height = 600;
+																break;
+														}
+												}
+										}
+								}
+								?>
 
                                 <?php if ( xbox_get_field_value( 'wpst-options', 'show-categories-video-about' ) == 'on' || xbox_get_field_value( 'wpst-options', 'show-tags-video-about' ) == 'on' ) : ?>
                                         <div class="tags"><?php wpst_entry_footer(); ?></div>
                                 <?php endif; ?>
-                        </div>
+						</div>
 
-                        <?php
-                        $model_slug = get_post_field('post_name', get_the_ID());
+						<?php if ($tmw_slot_len > 0) : ?>
+								<div class="width<?php echo esc_attr($width); ?>">
+										<div class="tmw-slot-banner-wrap"<?php echo $tmw_slot_min_height > 0 ? ' style="--tmw-slot-minh: ' . esc_attr($tmw_slot_min_height) . 'px"' : ''; ?>>
+												<div class="tmw-slot-banner">
+														<?php echo wp_kses_post($tmw_slot_html); ?>
+												</div>
+										</div>
+								</div>
+						<?php elseif ($tmw_debug_enabled) : ?>
+								<?php error_log('[TMW-SLOT-AUDIT] shortcode returned empty on model=' . get_the_title()); ?>
+						<?php endif; ?>
+
+						<?php
+						$model_slug = get_post_field('post_name', get_the_ID());
                         if (!is_string($model_slug) || $model_slug === '') {
                                 if ($tmw_debug_enabled) {
                                         error_log('[TMW-MODEL-AUDIT] Unable to determine model slug in content-model.php');
