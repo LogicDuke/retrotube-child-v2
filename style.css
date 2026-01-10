@@ -1114,3 +1114,35 @@ article.model {
   max-width: 100% !important;
   clear: both !important;
 }
+
+/* =========================================================
+ * [TMW-LAYOUT-FIX] v5.0.3 — Model column alignment (ONLY model pages)
+ * Fixes: text width to sidebar; slot/tags/videos align to hero via JS sync
+ * ========================================================= */
+.single-model .video-meta-inline {
+  /* allow transformed children to be visible */
+  overflow: visible !important;
+}
+
+.single-model .video-meta-inline .tab-content {
+  /* ensure the text container can actually stretch */
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+}
+
+.single-model #video-about {
+  /* keep about content stretchable and allow full-row sections to shift */
+  width: 100% !important;
+  max-width: none !important;
+  overflow: visible !important;
+}
+
+/* remove any inherited max-width clamps on the actual text block */
+.single-model #video-about .video-description,
+.single-model #video-about .desc {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+/* IMPORTANT: Do NOT set translate/width here for slot/tags/videos.
+   The JS sync aligns them precisely to the hero width/position. */
