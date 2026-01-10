@@ -136,6 +136,12 @@ if ( empty( $cta_label ) ) {
 						</div>
 
 						<?php
+						if ( function_exists( 'tmw_render_model_slot_banner' ) ) {
+							echo tmw_render_model_slot_banner( (int) get_the_ID() );
+						}
+						?>
+
+						<?php
 						$model_slug = get_post_field('post_name', get_the_ID());
                         if (!is_string($model_slug) || $model_slug === '') {
                                 if ($tmw_debug_enabled) {
