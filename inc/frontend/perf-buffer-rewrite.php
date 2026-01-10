@@ -1,6 +1,9 @@
 <?php
 if (!defined('ABSPATH')) { exit; }
 
+/**
+ * Determine whether the performance buffer rewrite should run.
+ */
 function tmw_child_perf_buffer_should_run(): bool {
     if (is_admin() || is_user_logged_in() || is_preview()) {
         return false;
@@ -9,6 +12,9 @@ function tmw_child_perf_buffer_should_run(): bool {
     return function_exists('tmw_child_is_heavy_media_view') && tmw_child_is_heavy_media_view();
 }
 
+/**
+ * Start the output buffer rewrite for inline script tags.
+ */
 function tmw_child_perf_buffer_start(): void {
     if (!tmw_child_perf_buffer_should_run()) {
         return;
@@ -34,6 +40,9 @@ function tmw_child_perf_buffer_start(): void {
     ob_start('tmw_child_perf_buffer_rewrite');
 
     register_shutdown_function(function () {
+        if (!defined('TMW_DEBUG') || !TMW_DEBUG) {
+            return;
+        }
         if (empty($GLOBALS['tmw_perf_buffer_counts'])) {
             return;
         }
@@ -57,6 +66,9 @@ function tmw_child_perf_buffer_start(): void {
 }
 add_action('template_redirect', 'tmw_child_perf_buffer_start', 0);
 
+/**
+ * Rewrite matching script tags in the buffered HTML output.
+ */
 function tmw_child_perf_buffer_rewrite(string $html): string {
     if (stripos($html, '<script') === false) {
         return $html;
@@ -96,11 +108,7 @@ function tmw_child_perf_buffer_rewrite(string $html): string {
             return $tag;
         }
 
-        if (!empty($GLOBALS['tmw_perf_buffer_counts'][$key])) {
-            $GLOBALS['tmw_perf_buffer_counts'][$key]++;
-        } else {
-            $GLOBALS['tmw_perf_buffer_counts'][$key] = 1;
-        }
+        $GLOBALS['tmw_perf_buffer_counts'][$key]++;
 
         $flags = [
             'async' => preg_match('/\basync\b/i', $tag) === 1,
@@ -111,6 +119,9 @@ function tmw_child_perf_buffer_rewrite(string $html): string {
     }, $html);
 }
 
+/**
+ * Convert a script tag to a delayed loader placeholder.
+ */
 function tmw_child_perf_buffer_build_tag(string $tag, string $src, array $flags): string {
     $tag = preg_replace('/\s+src\s*=\s*(["\']).*?\1/i', '', $tag);
     $tag = preg_replace('/\s+\basync\b/i', '', $tag);

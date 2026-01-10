@@ -13,7 +13,9 @@ add_action('wp_head', function () {
         return;
     }
 
-    error_log('[TMW-PERF] Inline critical CSS active.');
+    if (defined('TMW_DEBUG') && TMW_DEBUG) {
+        error_log('[TMW-PERF] Inline critical CSS active.');
+    }
     ?>
     <style>
     #masthead,
@@ -83,13 +85,6 @@ add_action('wp_enqueue_scripts', function () {
         return;
     }
 
-    if (!is_user_logged_in()) {
-        if (wp_style_is('dashicons', 'enqueued')) {
-            wp_dequeue_style('dashicons');
-            wp_deregister_style('dashicons');
-        }
-    }
-
     if (is_front_page()) {
         $tml_handles = ['theme-my-login', 'tml', 'theme-my-login-widget'];
         foreach ($tml_handles as $handle) {
@@ -151,7 +146,9 @@ add_filter('style_loader_tag', function ($html, $handle, $href, $media) {
         $log_hooked = true;
         add_action('wp_footer', function () use (&$delay_count) {
             if ($delay_count > 0) {
-                error_log(sprintf('[TMW-PERF] Async CSS applied: %d.', $delay_count));
+                if (defined('TMW_DEBUG') && TMW_DEBUG) {
+                    error_log(sprintf('[TMW-PERF] Async CSS applied: %d.', $delay_count));
+                }
             }
         }, 999);
     }

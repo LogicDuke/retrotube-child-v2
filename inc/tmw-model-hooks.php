@@ -968,7 +968,7 @@ if (!function_exists('tmw_bg_style')) {
     } else {
       $safe = esc_url($url);
       if (preg_match('~/gold-black-(?:bg|hero)\.webp$~i', $safe)) {
-        $safe = add_query_arg('v', '20260110', $safe);
+        $safe = add_query_arg('v', TMW_BG_CACHE_VERSION, $safe);
       }
     }
     return 'background-image:url('. $safe .');';

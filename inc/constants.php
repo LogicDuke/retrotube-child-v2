@@ -21,3 +21,8 @@ if (!defined('TMW_REG_AUDIT')) {
 }
 
 define('TMW_CHILD_ASSETS', TMW_CHILD_URL . '/assets');
+
+// Cache-bust version for background images.
+if (!defined('TMW_BG_CACHE_VERSION')) {
+    define('TMW_BG_CACHE_VERSION', '20260110');
+}
