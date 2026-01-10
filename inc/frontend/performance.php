@@ -6,6 +6,31 @@ if (!defined('ABSPATH')) { exit; }
  */
 
 /**
+ * Inline critical CSS for heavy media views to speed up banner/LCP.
+ */
+add_action('wp_head', function () {
+    if (is_admin() || is_user_logged_in() || !tmw_child_is_heavy_media_view()) {
+        return;
+    }
+
+    error_log('[TMW-PERF] Inline critical CSS active.');
+    ?>
+    <style>
+    #masthead,
+    .site-header{background:#111;color:#fff}
+    .site-header .site-branding{display:flex;align-items:center;gap:12px}
+    .main-navigation{display:block}
+    .tmw-model-hero{margin:0 0 18px;position:relative}
+    .tmw-banner-container,
+    .tmw-banner-frame{position:relative;width:100%;max-width:1035px;aspect-ratio:1035/350;overflow:hidden;background:#000;margin:0 auto 25px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.5)}
+    .tmw-banner-frame img,
+    .tmw-banner-frame picture>img,
+    .tmw-banner-frame .wp-post-image{display:block;width:100%!important;height:100%!important;object-fit:cover!important;object-position:50% 50%}
+    </style>
+    <?php
+}, 2);
+
+/**
  * Remove jQuery migrate unless explicitly required.
  */
 add_action('wp_default_scripts', function ($scripts) {
@@ -27,12 +52,32 @@ function tmw_child_is_heavy_media_view(): bool {
         || is_post_type_archive('model')
         || is_tax('models')
         || is_page_template('page-models-grid.php')
-        || is_page_template('template-models-flipboxes.php');
+        || is_page_template('template-models-flipboxes.php')
+        || is_page_template('page-videos.php')
+        || is_singular('video');
 }
 
 /**
  * Dequeue non-critical styles on heavy media views.
  */
+add_action('wp_enqueue_scripts', function () {
+    if (is_admin() || is_user_logged_in()) {
+        return;
+    }
+
+    remove_action('wp_head', 'print_emoji_detection_script', 7);
+    remove_action('wp_print_styles', 'print_emoji_styles');
+
+    if (wp_script_is('wp-embed', 'enqueued')) {
+        wp_dequeue_script('wp-embed');
+    }
+
+    if (wp_style_is('dashicons', 'enqueued')) {
+        wp_dequeue_style('dashicons');
+        wp_deregister_style('dashicons');
+    }
+}, 5);
+
 add_action('wp_enqueue_scripts', function () {
     if (!tmw_child_is_heavy_media_view()) {
         return;
@@ -66,11 +111,9 @@ add_action('wp_enqueue_scripts', function () {
  * Delay non-critical styles on heavy media views without changing final appearance.
  */
 add_filter('style_loader_tag', function ($html, $handle, $href, $media) {
-    if (is_admin() || !tmw_child_is_heavy_media_view()) {
+    if (is_admin() || is_user_logged_in() || !tmw_child_is_heavy_media_view()) {
         return $html;
     }
-
-    $host = parse_url($href, PHP_URL_HOST);
 
     $critical_handles = [
         'retrotube-parent',
@@ -82,57 +125,42 @@ add_filter('style_loader_tag', function ($html, $handle, $href, $media) {
         return $html;
     }
 
-    $delay_handles = [
-        'jquery-fancybox',
-        'fancybox',
-        'fancybox-css',
-        'font-awesome',
-        'fontawesome',
-        'fontawesome-all',
-        'videojs',
-        'video-js',
-        'videojs-quality',
-        'videojs-quality-selector',
-    ];
+    $matched = false;
 
-    $delay_prefixes = [
-        'autoptimize_',
-        'autoptimize-',
-        'ao-',
-    ];
-
-    $delay_hosts = [
-        'vjs.zencdn.net',
-        'unpkg.com',
-    ];
-
-    $should_delay = in_array($handle, $delay_handles, true);
-
-    if (!$should_delay) {
-        foreach ($delay_prefixes as $prefix) {
-            if (strpos($handle, $prefix) === 0) {
-                $should_delay = true;
-                break;
-            }
-        }
+    if (strpos($href, '/wp-content/cache/autoptimize/css/autoptimize_single_') !== false) {
+        $matched = true;
     }
 
-    if (!$should_delay) {
-        if ($host && in_array($host, $delay_hosts, true)) {
-            $should_delay = true;
-        }
+    if (!$matched && strpos($href, '/wp-content/plugins/wps-cookie-consent/') !== false) {
+        $matched = strpos($href, 'cookie-consent.css') !== false;
     }
 
-    if (!$should_delay) {
+    if (!$matched && strpos($href, '/wp-content/plugins/tmw-slot-machine/') !== false) {
+        $matched = strpos($href, 'slot-machine.css') !== false;
+    }
+
+    if (!$matched) {
         return $html;
+    }
+
+    static $delay_count = 0;
+    static $log_hooked = false;
+    $delay_count++;
+
+    if (!$log_hooked) {
+        $log_hooked = true;
+        add_action('wp_footer', function () use (&$delay_count) {
+            if ($delay_count > 0) {
+                error_log(sprintf('[TMW-PERF] Async CSS applied: %d.', $delay_count));
+            }
+        }, 999);
     }
 
     $media_attr = $media ?: 'all';
     $escaped_href = esc_url($href);
     $escaped_id = esc_attr($handle) . '-css';
 
-    return '<link rel="preload" as="style" href="' . $escaped_href . '" />'
-        . '<link rel="stylesheet" id="' . $escaped_id . '" href="' . $escaped_href . '" media="print" onload="this.media=\'all\'">'
+    return '<link rel="preload" as="style" id="' . $escaped_id . '" href="' . $escaped_href . '" media="' . esc_attr($media_attr) . '" onload="this.onload=null;this.rel=\'stylesheet\'">'
         . '<noscript><link rel="stylesheet" id="' . $escaped_id . '" href="' . $escaped_href . '" media="' . esc_attr($media_attr) . '"></noscript>';
 }, 20, 4);
 
@@ -200,29 +228,50 @@ add_action('wp_footer', function () {
         function loadDelayedScripts() {
             if (loaded) { return; }
             loaded = true;
-            var delayed = document.querySelectorAll('script[data-tmw-delay]');
-            delayed.forEach(function (node) {
+            var delayed = Array.prototype.slice.call(document.querySelectorAll('script[data-tmw-delay]'));
+            var total = delayed.length;
+            var index = 0;
+
+            function injectNext() {
+                if (index >= delayed.length) {
+                    if (typeof console !== 'undefined' && total > 0) {
+                        console.log('[TMW-PERF-LAZY] Delayed scripts injected: ' + total + '.');
+                    }
+                    return;
+                }
+                var node = delayed[index++];
                 var src = node.getAttribute('data-src');
-                if (!src) { return; }
+                if (!src) {
+                    injectNext();
+                    return;
+                }
                 var s = document.createElement('script');
                 s.src = src;
-                s.async = true;
-                if (node.getAttribute('data-tmw-defer') === 'true') {
+                s.async = node.getAttribute('data-async') === '1';
+                if (node.getAttribute('data-defer') === '1' || node.getAttribute('data-tmw-defer') === 'true') {
                     s.defer = true;
                 }
+                s.onload = s.onerror = injectNext;
                 node.parentNode.insertBefore(s, node.nextSibling);
-            });
+            }
+
+            injectNext();
+        }
+
+        function scheduleLoad() {
+            if ('requestIdleCallback' in window) {
+                window.requestIdleCallback(loadDelayedScripts, { timeout: 2000 });
+            } else {
+                window.setTimeout(loadDelayedScripts, 2000);
+            }
         }
 
         ['scroll', 'pointerdown', 'click', 'touchstart', 'keydown'].forEach(function (eventName) {
-            window.addEventListener(eventName, loadDelayedScripts, { once: true, passive: true });
+            window.addEventListener(eventName, scheduleLoad, { once: true, passive: true });
         });
 
-        if ('requestIdleCallback' in window) {
-            window.requestIdleCallback(loadDelayedScripts, { timeout: 2500 });
-        } else {
-            window.setTimeout(loadDelayedScripts, 2500);
-        }
+        window.addEventListener('load', scheduleLoad, { once: true });
+        window.setTimeout(scheduleLoad, 2500);
     })();
     </script>
     <?php
