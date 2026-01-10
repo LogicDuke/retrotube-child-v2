@@ -854,12 +854,24 @@ a.tag-link {
   width: 100%;
   margin-left: auto;
   margin-right: auto;
+  margin-top: 15px;
+  margin-bottom: 20px;
+  text-align: center;
+  min-height: 250px;
+  aspect-ratio: 1035 / 300;
 }
 
 @media (max-width: 840px) {
   .single-model .tmw-slot-banner {
     width: 100% !important;
     max-width: 100% !important;
+    min-height: 250px;
+    aspect-ratio: 300 / 250;
+  }
+}
+
+@media (min-width: 841px) {
+  .single-model .tmw-slot-banner {
     min-height: 300px;
   }
 }
@@ -885,6 +897,7 @@ a.tag-link {
   display: block;
   max-width: 100%;
   height: auto;
+  aspect-ratio: 1 / 1;
 }
 
 .single-model .tmw-slot-machine .slot-container img,

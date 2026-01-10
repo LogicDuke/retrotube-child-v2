@@ -136,41 +136,6 @@ add_filter('style_loader_tag', function ($html, $handle, $href, $media) {
         . '<noscript><link rel="stylesheet" id="' . $escaped_id . '" href="' . $escaped_href . '" media="' . esc_attr($media_attr) . '"></noscript>';
 }, 20, 4);
 
-add_action('wp_footer', function () {
-    if (!is_singular('model')) {
-        return;
-    }
-    ?>
-    <script>
-    (function () {
-        function stabilizeSlotImages() {
-            var imgs = document.querySelectorAll('.tmw-slot-machine img');
-            imgs.forEach(function (img) {
-                if (!img.hasAttribute('loading')) {
-                    img.setAttribute('loading', 'lazy');
-                }
-                if (!img.hasAttribute('decoding')) {
-                    img.setAttribute('decoding', 'async');
-                }
-                if (!img.hasAttribute('width') && img.naturalWidth) {
-                    img.setAttribute('width', img.naturalWidth);
-                }
-                if (!img.hasAttribute('height') && img.naturalHeight) {
-                    img.setAttribute('height', img.naturalHeight);
-                }
-            });
-        }
-
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', stabilizeSlotImages, { once: true });
-        } else {
-            stabilizeSlotImages();
-        }
-    })();
-    </script>
-    <?php
-}, 60);
-
 /**
  * Add defer to non-critical scripts and delay third-party tags until interaction.
  */
