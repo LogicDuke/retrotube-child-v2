@@ -49,35 +49,65 @@ if ( empty( $cta_label ) ) {
                         <?php endif; ?>
                 </div>
 
-                <div class="title-block box-shadow">
-                        <div class="tmw-model-header">
-                                <?php the_title( '<h1 class="entry-title model-name" itemprop="name">', '</h1>' ); ?>
-                                <?php if ( xbox_get_field_value( 'wpst-options', 'enable-rating-system' ) == 'on' ) : ?>
-                                        <div class="tmw-model-actions">
-                                                <span id="video-rate"><?php echo wpst_get_post_like_link( get_the_ID() ); ?></span>
-                                        </div>
-                                <?php endif; ?>
-                        </div>
-                        <div id="video-tabs" class="tabs">
-                                <button class="tab-link active about" data-tab-id="video-about">
-                                        <i class="fa fa-info-circle"></i> <?php esc_html_e( 'About', 'wpst' ); ?>
-                                </button>
-                                <?php if ( xbox_get_field_value( 'wpst-options', 'enable-video-share' ) == 'on' ) : ?>
-                                        <button class="tab-link share" data-tab-id="video-share">
-                                                <i class="fa fa-share"></i> <?php esc_html_e( 'Share', 'wpst' ); ?>
-                                        </button>
-                                <?php endif; ?>
-                        </div>
-                </div>
+		<?php if ( $tmw_debug_enabled ) : ?>
+			<?php error_log( '[TMW-MODEL-HEADER] Using video-style header block on model=' . $model_name ); ?>
+		<?php endif; ?>
 
-                               <div class="clear"></div>
+		<div class="title-block box-shadow">
+			<?php the_title( '<h1 class="entry-title model-name" itemprop="name">', '</h1>' ); ?>
+			<?php if ( xbox_get_field_value( 'wpst-options', 'enable-rating-system' ) == 'on' ) : ?>
+				<div id="rating">
+					<span id="video-rate"><?php echo wpst_get_post_like_link( get_the_ID() ); ?></span>
+					<?php $is_rated_yet = ( wpst_get_post_like_rate( get_the_ID() ) === false ) ? ' not-rated-yet' : ''; ?>
+				</div>
+			<?php endif; ?>
+			<div id="video-tabs" class="tabs">
+				<button class="tab-link active about" data-tab-id="video-about">
+					<i class="fa fa-info-circle"></i> <?php esc_html_e( 'About', 'wpst' ); ?>
+				</button>
+				<?php if ( xbox_get_field_value( 'wpst-options', 'enable-video-share' ) == 'on' ) : ?>
+					<button class="tab-link share" data-tab-id="video-share">
+						<i class="fa fa-share"></i> <?php esc_html_e( 'Share', 'wpst' ); ?>
+					</button>
+				<?php endif; ?>
+			</div>
+		</div>
+
+		<div class="video-meta-inline">
+			<?php
+			echo '<span class="video-meta-item video-meta-model"><i class="fa fa-star"></i> Model:&nbsp;' . esc_html( $model_name ) . '</span>';
+			echo '<span class="video-meta-item video-meta-author"><i class="fa fa-user"></i> From:&nbsp;<a href="' . esc_url( get_author_posts_url( get_the_author_meta( 'ID' ) ) ) . '">' . esc_html( get_the_author() ) . '</a></span>';
+			echo '<span class="video-meta-item video-meta-date"><i class="fa fa-calendar"></i> Date:&nbsp;' . esc_html( get_the_date() ) . '</span>';
+			?>
+		</div>
+
+		<div class="clear"></div>
 
 
         </header><!-- .entry-header -->
 
-        <div class="entry-content">
-                <div class="tab-content">
-                        <div id="video-about" class="width100">
+		<div class="entry-content">
+			<?php if ( xbox_get_field_value( 'wpst-options', 'enable-views-system' ) == 'on' || xbox_get_field_value( 'wpst-options', 'enable-rating-system' ) == 'on' ) : ?>
+				<div id="rating-col">
+					<?php if ( xbox_get_field_value( 'wpst-options', 'enable-views-system' ) == 'on' ) : ?>
+						<div id="video-views"><span>0</span> <?php esc_html_e( 'views', 'wpst' ); ?></div>
+					<?php endif; ?>
+					<?php if ( xbox_get_field_value( 'wpst-options', 'enable-rating-system' ) == 'on' ) : ?>
+						<div class="rating-bar"><div class="rating-bar-meter"></div></div>
+						<div class="rating-result">
+							<div class="percentage">0%</div>
+							<div class="likes">
+								<i class="fa fa-thumbs-up"></i> <span class="likes_count">0</span>
+								<i class="fa fa-thumbs-down fa-flip-horizontal"></i> <span class="dislikes_count">0</span>
+							</div>
+						</div>
+					<?php endif; ?>
+				</div>
+			<?php endif; ?>
+
+			<div class="tab-content">
+				<?php $width = ( xbox_get_field_value( 'wpst-options', 'enable-views-system' ) == 'off' && xbox_get_field_value( 'wpst-options', 'enable-rating-system' ) == 'off' ) ? '100' : '70'; ?>
+				<div id="video-about" class="width<?php echo $width; ?>">
                                 <div class="video-description">
                                         <?php if ( xbox_get_field_value( 'wpst-options', 'show-description-video-about' ) == 'on' ) : ?>
                                                 <div class="desc <?php echo ( xbox_get_field_value( 'wpst-options', 'truncate-description' ) == 'on' ) ? 'more' : ''; ?>">
