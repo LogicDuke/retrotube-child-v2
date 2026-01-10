@@ -18,7 +18,6 @@
   --tmw-hero-mobile-h: clamp(120px, calc(100vw * 0.338), 200px);
 }
 
-
 /* Header / Navigation helpers */
 #site-navigation .menu > li > a > i,
 .main-navigation .menu > li > a > i {
@@ -672,29 +671,10 @@ a.tag-link {
    v3.3.9 — FEATURED MODELS: center the ribbon itself, nothing else
    Works site-wide. Does NOT change container alignment or children.
    ============================================================ */
-/* [TMW-LAYOUT] Restore original scope for featured heading (do NOT clear floats globally) */
-.model-flipbox .tmwfm-heading{
-  float: none;
-  clear: none;
-  text-align: center;
+:is(.tmwfm-heading, .tmw-featured-slot .section-title){
   /* neutralize theme floats/widths */
-  width: auto !important;
-  /* make the ribbon shrink-to-fit and center the element itself */
-  display: inline-block !important;
-  position: relative !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-  /* spacing kept local to the ribbon */
-  margin: 0 0 12px !important;
-  /* do NOT set text-align on parent containers */
-}
-
-/* [TMW-LAYOUT] Keep featured slot title centered without clearing floats */
-.tmw-featured-slot .section-title{
-  float: none;
-  clear: none;
-  text-align: center;
-  /* neutralize theme floats/widths */
+  float: none !important;
+  clear: both !important;
   width: auto !important;
   /* make the ribbon shrink-to-fit and center the element itself */
   display: inline-block !important;
@@ -882,26 +862,30 @@ a.tag-link {
 }
 
 .single-model .tmw-slot-banner {
-  position: relative;
-  overflow: visible;
-}
-
-.single-model .tmw-slot-banner-wrap,
-.single-model .tmw-slot-banner,
-.single-model .tmw-model-tags,
-.single-model .tmw-model-videos {
-  clear: both;
-  float: none;
-}
-
-.single-model .tmw-slot-banner-wrap {
+  max-width: 1035px;
   width: 100%;
-  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 15px;
+  margin-bottom: 20px;
+  text-align: center;
+  min-height: 250px;
+  aspect-ratio: 1035 / 300;
 }
 
-.single-model .tmw-slot-banner-wrap .tmw-slot-banner {
-  width: 100%;
-  max-width: 100%;
+@media (max-width: 840px) {
+  .single-model .tmw-slot-banner {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 250px;
+    aspect-ratio: 300 / 250;
+  }
+}
+
+@media (min-width: 841px) {
+  .single-model .tmw-slot-banner {
+    min-height: 300px;
+  }
 }
 
 /* Slot machine: reserve space & stabilize assets (CLS guard) */
@@ -1071,150 +1055,4 @@ a.tag-link {
     transform: scale(1);
     opacity: 0.85;
   }
-}
-
-/* === PERFORMANCE: Contain layout thrashing === */
-.model-banner,
-.tmw-banner-container,
-.video-player,
-.entry-content,
-article.model {
-  contain: layout style;
-}
-
-/* Reserve space for banner to prevent CLS */
-.tmw-banner-frame {
-  min-height: 200px;
-  contain: strict;
-}
-
-/* Reduce paint area */
-.tab-content,
-.video-meta-inline,
-#rating-col {
-  contain: content;
-}
-
-/* =========================================================
- * [TMW-LAYOUT-ALIGN] v5.0.2 — Model page column alignment fix
- * Only affects: description width + slot banner + tags + model videos
- * ========================================================= */
-.single-model #video-about .video-description,
-.single-model #video-about .video-description .desc {
-  max-width: none !important;
-  width: 100% !important;
-}
-
-/* Ensure these sections break out of the “text column” and start at the far-left of the content column */
-.single-model #video-about .tmw-slot-banner-wrap,
-.single-model #video-about .tmw-slot-banner,
-.single-model .tmw-model-tags,
-.single-model .tmw-model-videos {
-  clear: both !important;
-  float: none !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-}
-
-/* Slot banner: remove centering/max-width behavior that pushes it into the text column feel */
-.single-model #video-about .tmw-slot-banner {
-  max-width: 100% !important;
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-}
-
-/* The section currently includes widget classes; ensure it behaves like content, not sidebar */
-.single-model .tmw-model-videos.widget,
-.single-model .tmw-model-videos.widget_videos_block {
-  float: none !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  clear: both !important;
-}
-
-/* =========================================================
- * [TMW-LAYOUT-FIX] v5.0.3 — Model column alignment (ONLY model pages)
- * Fixes: text width to sidebar; slot/tags/videos align to hero via JS sync
- * ========================================================= */
-.single-model .video-meta-inline {
-  /* allow transformed children to be visible */
-  overflow: visible !important;
-}
-
-.single-model .video-meta-inline .tab-content {
-  /* ensure the text container can actually stretch */
-  flex: 1 1 0 !important;
-  min-width: 0 !important;
-}
-
-.single-model #video-about {
-  /* keep about content stretchable and allow full-row sections to shift */
-  width: 100% !important;
-  max-width: none !important;
-  overflow: visible !important;
-}
-
-/* remove any inherited max-width clamps on the actual text block */
-.single-model #video-about .video-description,
-.single-model #video-about .desc {
-  width: 100% !important;
-  max-width: none !important;
-}
-
-/* IMPORTANT: Do NOT set translate/width here for slot/tags/videos.
-   The JS sync aligns them precisely to the hero width/position. */
-
-/* [TMW-LAYOUT] Under-about blocks must span the full content column (not centered, not offset) */
-.single-model .video-meta-inline .tmw-model-under-about{
-  flex: 0 0 100%;
-  max-width: 100%;
-  width: 100%;
-  align-self: stretch;
-  margin: 12px 0 0;
-  padding: 0;
-  clear: none !important; /* do not clear floats; avoid sidebar dropping */
-}
-
-/* Ensure children also occupy full width of the content column */
-.single-model .video-meta-inline .tmw-model-under-about > *{
-  width: 100%;
-  max-width: 100%;
-  clear: none !important;
-}
-
-/* Slot banner: full width, left aligned */
-.single-model .tmw-model-under-about .tmw-slot-banner{
-  width: 100%;
-  max-width: 100%;
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-  text-align: left;
-  clear: none !important;
-}
-
-/* Tags: left aligned, not centered, and NOT clearing floats */
-.single-model .tmw-model-under-about .tmw-model-tags{
-  width: 100%;
-  max-width: 100%;
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-  text-align: left;
-  clear: none !important;
-}
-
-/* If tags are flex/inline-flex anywhere, force left alignment */
-.single-model .tmw-model-under-about .tmw-model-tags{
-  justify-content: flex-start !important;
-}
-
-/* Videos Featuring: full width + left aligned */
-.single-model .tmw-model-under-about .tmw-model-videos{
-  width: 100%;
-  max-width: 100%;
-  margin-left: 0 !important;
-  margin-right: 0 !important;
-  text-align: left;
-  clear: none !important;
 }

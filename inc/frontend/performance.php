@@ -6,75 +6,10 @@ if (!defined('ABSPATH')) { exit; }
  */
 
 /**
- * Inline critical CSS for heavy media views to speed up banner/LCP.
- */
-add_action('wp_head', function () {
-    if (is_admin() || is_user_logged_in()) {
-        return;
-    }
-
-    if (!is_singular('model')) {
-        return;
-    }
-    ?>
-    <style id="tmw-critical-css">
-    /* Critical above-the-fold styles for model pages */
-    *,*::before,*::after{box-sizing:border-box}
-    body{margin:0}
-    img,video{max-width:100%;height:auto}
-    .tmw-banner-container,.tmw-banner-frame{
-        position:relative;width:100%;max-width:1035px;
-        aspect-ratio:1035/350;overflow:hidden;background:#111;
-        margin:0 auto 25px;border-radius:8px
-    }
-    .tmw-banner-frame img{
-        display:block;width:100%!important;height:100%!important;
-        object-fit:cover!important
-    }
-    .entry-header{contain:layout style}
-    .title-block{background:#1a1a1a;padding:15px;border-radius:8px}
-    h1.entry-title{margin:0;color:#fff;font-size:clamp(1.5rem,4vw,2rem)}
-    </style>
-    <?php
-}, 1);
-
-add_action('wp_head', function () {
-    if (is_admin() || is_user_logged_in() || !tmw_child_is_heavy_media_view()) {
-        return;
-    }
-
-    if (defined('TMW_DEBUG') && TMW_DEBUG) {
-        error_log('[TMW-PERF] Inline critical CSS active.');
-    }
-    ?>
-    <style>
-    #masthead,
-    .site-header{background:#111;color:#fff}
-    .site-header .site-branding{display:flex;align-items:center;gap:12px}
-    .main-navigation{display:block}
-    .tmw-model-hero{margin:0 0 18px;position:relative}
-    .tmw-banner-container,
-    .tmw-banner-frame{position:relative;width:100%;max-width:1035px;aspect-ratio:1035/350;overflow:hidden;background:#000;margin:0 auto 25px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.5)}
-    .tmw-banner-frame img,
-    .tmw-banner-frame picture>img,
-    .tmw-banner-frame .wp-post-image{display:block;width:100%!important;height:100%!important;object-fit:cover!important;object-position:50% 50%}
-    </style>
-    <?php
-}, 2);
-
-/**
  * Remove jQuery migrate unless explicitly required.
  */
 add_action('wp_default_scripts', function ($scripts) {
-    if (is_admin() || !($scripts instanceof WP_Scripts)) {
-        return;
-    }
-
-    if (!tmw_child_is_heavy_media_view()) {
-        return;
-    }
-
-    if (!apply_filters('tmw_perf_remove_jquery_migrate', true)) {
+    if (!($scripts instanceof WP_Scripts)) {
         return;
     }
 
@@ -92,35 +27,22 @@ function tmw_child_is_heavy_media_view(): bool {
         || is_post_type_archive('model')
         || is_tax('models')
         || is_page_template('page-models-grid.php')
-        || is_page_template('template-models-flipboxes.php')
-        || is_page_template('page-videos.php')
-        || is_singular('video');
+        || is_page_template('template-models-flipboxes.php');
 }
 
 /**
  * Dequeue non-critical styles on heavy media views.
  */
 add_action('wp_enqueue_scripts', function () {
-    if (is_admin() || is_user_logged_in()) {
-        return;
-    }
-
-    remove_action('wp_head', 'print_emoji_detection_script', 7);
-    remove_action('wp_print_styles', 'print_emoji_styles');
-
-    if (wp_script_is('wp-embed', 'enqueued')) {
-        wp_dequeue_script('wp-embed');
-    }
-
-    if (wp_style_is('dashicons', 'enqueued')) {
-        wp_dequeue_style('dashicons');
-        wp_deregister_style('dashicons');
-    }
-}, 5);
-
-add_action('wp_enqueue_scripts', function () {
     if (!tmw_child_is_heavy_media_view()) {
         return;
+    }
+
+    if (!is_user_logged_in()) {
+        if (wp_style_is('dashicons', 'enqueued')) {
+            wp_dequeue_style('dashicons');
+            wp_deregister_style('dashicons');
+        }
     }
 
     if (is_front_page()) {
@@ -144,9 +66,11 @@ add_action('wp_enqueue_scripts', function () {
  * Delay non-critical styles on heavy media views without changing final appearance.
  */
 add_filter('style_loader_tag', function ($html, $handle, $href, $media) {
-    if (is_admin() || is_user_logged_in() || !tmw_child_is_heavy_media_view()) {
+    if (is_admin() || !tmw_child_is_heavy_media_view()) {
         return $html;
     }
+
+    $host = parse_url($href, PHP_URL_HOST);
 
     $critical_handles = [
         'retrotube-parent',
@@ -158,86 +82,59 @@ add_filter('style_loader_tag', function ($html, $handle, $href, $media) {
         return $html;
     }
 
-    $matched = false;
+    $delay_handles = [
+        'jquery-fancybox',
+        'fancybox',
+        'fancybox-css',
+        'font-awesome',
+        'fontawesome',
+        'fontawesome-all',
+        'videojs',
+        'video-js',
+        'videojs-quality',
+        'videojs-quality-selector',
+    ];
 
-    if (strpos($href, '/wp-content/cache/autoptimize/css/autoptimize_single_') !== false) {
-        $matched = true;
-    }
+    $delay_prefixes = [
+        'autoptimize_',
+        'autoptimize-',
+        'ao-',
+    ];
 
-    if (!$matched && strpos($href, '/wp-content/plugins/wps-cookie-consent/') !== false) {
-        $matched = strpos($href, 'cookie-consent.css') !== false;
-    }
+    $delay_hosts = [
+        'vjs.zencdn.net',
+        'unpkg.com',
+    ];
 
-    if (!$matched && strpos($href, '/wp-content/plugins/tmw-slot-machine/') !== false) {
-        $matched = strpos($href, 'slot-machine.css') !== false;
-    }
+    $should_delay = in_array($handle, $delay_handles, true);
 
-    if (!$matched) {
-        return $html;
-    }
-
-    static $delay_count = 0;
-    static $log_hooked = false;
-    $delay_count++;
-
-    if (!$log_hooked) {
-        $log_hooked = true;
-        add_action('wp_footer', function () use (&$delay_count) {
-            if ($delay_count > 0) {
-                if (defined('TMW_DEBUG') && TMW_DEBUG) {
-                    error_log(sprintf('[TMW-PERF] Async CSS applied: %d.', $delay_count));
-                }
+    if (!$should_delay) {
+        foreach ($delay_prefixes as $prefix) {
+            if (strpos($handle, $prefix) === 0) {
+                $should_delay = true;
+                break;
             }
-        }, 999);
+        }
+    }
+
+    if (!$should_delay) {
+        if ($host && in_array($host, $delay_hosts, true)) {
+            $should_delay = true;
+        }
+    }
+
+    if (!$should_delay) {
+        return $html;
     }
 
     $media_attr = $media ?: 'all';
     $escaped_href = esc_url($href);
     $escaped_id = esc_attr($handle) . '-css';
 
-    return '<link rel="preload" as="style" id="' . $escaped_id . '" href="' . $escaped_href . '" media="' . esc_attr($media_attr) . '" onload="this.onload=null;this.rel=\'stylesheet\'">'
+    return '<link rel="preload" as="style" href="' . $escaped_href . '" />'
+        . '<link rel="stylesheet" id="' . $escaped_id . '" href="' . $escaped_href . '" media="print" onload="this.media=\'all\'">'
         . '<noscript><link rel="stylesheet" id="' . $escaped_id . '" href="' . $escaped_href . '" media="' . esc_attr($media_attr) . '"></noscript>';
 }, 20, 4);
-
-/**
- * Force font-display: swap on all Google Fonts and local fonts.
- */
-add_filter('style_loader_tag', function ($html, $handle, $href) {
-    if (strpos($href, 'fonts.googleapis.com') !== false && strpos($href, 'display=') === false) {
-        $updated_href = add_query_arg('display', 'swap', $href);
-        $html = str_replace($href, $updated_href, $html);
-    }
-    return $html;
-}, 10, 3);
-
-/**
- * Defer non-critical stylesheets.
- */
-add_filter('style_loader_tag', function ($html, $handle, $href, $media) {
-    if (is_admin() || is_user_logged_in() || !tmw_child_is_heavy_media_view()) {
-        return $html;
-    }
-
-    $critical = [
-        'retrotube-parent',
-        'retrotube-child-style',
-    ];
-
-    if (in_array($handle, $critical, true)) {
-        return $html;
-    }
-
-    if (strpos($html, 'rel="preload"') !== false) {
-        return $html;
-    }
-
-    return sprintf(
-        '<link rel="preload" href="%s" as="style" onload="this.onload=null;this.rel=\'stylesheet\'" media="%s"><noscript>%s</noscript>',
-        esc_url($href),
-        esc_attr($media ?: 'all'),
-        $html
-    );
-}, 999, 4);
 
 /**
  * Add defer to non-critical scripts and delay third-party tags until interaction.
@@ -295,106 +192,6 @@ add_filter('script_loader_tag', function ($tag, $handle, $src) {
     return $tag;
 }, 10, 3);
 
-/**
- * Convert third-party scripts to delayed loading.
- * They only load after first user interaction (scroll, click, touch).
- */
-add_filter('script_loader_tag', function ($tag, $handle, $src) {
-    if (is_admin() || is_user_logged_in()) {
-        return $tag;
-    }
-
-    if (strpos($tag, 'text/lazyload') !== false || strpos($tag, 'data-tmw-delay') !== false) {
-        return $tag;
-    }
-
-    $attrs = [];
-    if (preg_match('/\scrossorigin(=(["\'])(.*?)\2)?/i', $tag, $match)) {
-        $value = isset($match[3]) && $match[3] !== '' ? $match[3] : 'anonymous';
-        $attrs['data-crossorigin'] = $value;
-    }
-    if (preg_match('/\sreferrerpolicy=(["\'])(.*?)\1/i', $tag, $match)) {
-        $attrs['data-referrerpolicy'] = $match[2];
-    }
-    if (preg_match('/\snonce=(["\'])(.*?)\1/i', $tag, $match)) {
-        $attrs['data-nonce'] = $match[2];
-    }
-    if (preg_match('/\sintegrity=(["\'])(.*?)\1/i', $tag, $match)) {
-        $attrs['data-integrity'] = $match[2];
-    }
-
-    $delay_patterns = [
-        'googletagmanager.com',
-        'google-analytics.com',
-        'analytics.google.com',
-        'googlesyndication.com',
-        'doubleclick.net',
-        'connect.facebook.net',
-        'facebook.com/tr',
-        'cloudflareinsights.com',
-        'gtranslate.net',
-    ];
-
-    foreach ($delay_patterns as $pattern) {
-        if (stripos($src, $pattern) !== false) {
-            $data_attrs = '';
-            foreach ($attrs as $key => $value) {
-                $data_attrs .= ' ' . $key . '="' . esc_attr($value) . '"';
-            }
-            return sprintf(
-                '<script type="text/lazyload" data-src="%s"%s></script>',
-                esc_url($src),
-                $data_attrs
-            );
-        }
-    }
-
-    return $tag;
-}, 9999, 3);
-
-add_action('wp_footer', function () {
-    if (is_admin() || is_user_logged_in()) {
-        return;
-    }
-    ?>
-    <script>
-    (function(){
-        var loaded=false;
-        function loadScripts(){
-            if(loaded)return;
-            loaded=true;
-            document.querySelectorAll('script[type="text/lazyload"]').forEach(function(el){
-                var s=document.createElement('script');
-                s.src=el.getAttribute('data-src');
-                s.async=true;
-                var nonce = el.getAttribute('data-nonce');
-                if (nonce) {
-                    s.setAttribute('nonce', nonce);
-                }
-                var integrity = el.getAttribute('data-integrity');
-                if (integrity) {
-                    s.integrity = integrity;
-                }
-                var crossOrigin = el.getAttribute('data-crossorigin');
-                if (crossOrigin) {
-                    s.crossOrigin = crossOrigin;
-                }
-                var referrerPolicy = el.getAttribute('data-referrerpolicy');
-                if (referrerPolicy) {
-                    s.referrerPolicy = referrerPolicy;
-                }
-                el.parentNode.replaceChild(s,el);
-            });
-        }
-        ['scroll','click','touchstart','mousemove','keydown'].forEach(function(e){
-            window.addEventListener(e,loadScripts,{once:true,passive:true});
-        });
-        setTimeout(loadScripts,5000);
-    })();
-    </script>
-    <?php
-}, 999);
-
 add_action('wp_footer', function () {
     ?>
     <script>
@@ -403,50 +200,29 @@ add_action('wp_footer', function () {
         function loadDelayedScripts() {
             if (loaded) { return; }
             loaded = true;
-            var delayed = Array.prototype.slice.call(document.querySelectorAll('script[data-tmw-delay]'));
-            var total = delayed.length;
-            var index = 0;
-
-            function injectNext() {
-                if (index >= delayed.length) {
-                    if (typeof console !== 'undefined' && total > 0) {
-                        console.log('[TMW-PERF-LAZY] Delayed scripts injected: ' + total + '.');
-                    }
-                    return;
-                }
-                var node = delayed[index++];
+            var delayed = document.querySelectorAll('script[data-tmw-delay]');
+            delayed.forEach(function (node) {
                 var src = node.getAttribute('data-src');
-                if (!src) {
-                    injectNext();
-                    return;
-                }
+                if (!src) { return; }
                 var s = document.createElement('script');
                 s.src = src;
-                s.async = node.getAttribute('data-async') === '1';
-                if (node.getAttribute('data-defer') === '1' || node.getAttribute('data-tmw-defer') === 'true') {
+                s.async = true;
+                if (node.getAttribute('data-tmw-defer') === 'true') {
                     s.defer = true;
                 }
-                s.onload = s.onerror = injectNext;
                 node.parentNode.insertBefore(s, node.nextSibling);
-            }
-
-            injectNext();
-        }
-
-        function scheduleLoad() {
-            if ('requestIdleCallback' in window) {
-                window.requestIdleCallback(loadDelayedScripts, { timeout: 2000 });
-            } else {
-                window.setTimeout(loadDelayedScripts, 2000);
-            }
+            });
         }
 
         ['scroll', 'pointerdown', 'click', 'touchstart', 'keydown'].forEach(function (eventName) {
-            window.addEventListener(eventName, scheduleLoad, { once: true, passive: true });
+            window.addEventListener(eventName, loadDelayedScripts, { once: true, passive: true });
         });
 
-        window.addEventListener('load', scheduleLoad, { once: true });
-        window.setTimeout(scheduleLoad, 2500);
+        if ('requestIdleCallback' in window) {
+            window.requestIdleCallback(loadDelayedScripts, { timeout: 2500 });
+        } else {
+            window.setTimeout(loadDelayedScripts, 2500);
+        }
     })();
     </script>
     <?php

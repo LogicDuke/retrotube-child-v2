@@ -41,12 +41,6 @@ define('TMW_CHILD_URL',  get_stylesheet_directory_uri());
 // Single include: all logic is now in /inc/bootstrap.php
 require_once TMW_CHILD_PATH . '/inc/bootstrap.php';
 require_once __DIR__ . '/inc/tmw-tml-bridge.php';
-require_once TMW_CHILD_PATH . '/inc/tmw-performance.php';
-require_once get_stylesheet_directory() . '/inc/slot-width-sync.php';
-$__tmw_perf_mobile = TMW_CHILD_PATH . '/inc/tmw-performance-mobile.php';
-if (file_exists($__tmw_perf_mobile)) {
-    require_once $__tmw_perf_mobile;
-}
 
 // Ensure legacy experiments don't affect the default reset email contents.
 remove_all_filters('retrieve_password_message');
@@ -125,8 +119,12 @@ add_action('wp_head', function () {
         return;
     }
 
+    if (!function_exists('tmw_resolve_model_banner_url')) {
+        return;
+    }
+
     $model_id = get_queried_object_id();
-    if (!$model_id || !function_exists('tmw_resolve_model_banner_url')) {
+    if (!$model_id) {
         return;
     }
 
@@ -134,49 +132,37 @@ add_action('wp_head', function () {
     if (!$banner_url) {
         return;
     }
-
-    printf(
-        '<link rel="preload" as="image" href="%s" fetchpriority="high" />',
-        esc_url($banner_url)
-    );
+    ?>
+    <link rel="preload" as="image" href="<?php echo esc_url($banner_url); ?>" fetchpriority="high">
+    <?php
 }, 1);
 
-/**
- * Force width/height on custom logo to prevent CLS.
- */
-add_filter('get_custom_logo', function ($html) {
-    if (empty($html)) {
-        return $html;
-    }
-
-    if (
-        preg_match('/<img\b[^>]*\s+width\s*=(["\']?)\d+\1/i', $html)
-        && preg_match('/<img\b[^>]*\s+height\s*=(["\']?)\d+\1/i', $html)
-    ) {
-        return $html;
-    }
-
-    $custom_logo_id = get_theme_mod('custom_logo');
+// Ensure logo images retain explicit dimensions and async decoding without moving markup.
+add_filter('get_custom_logo_image_attributes', function ($attrs, $custom_logo_id) {
     if (!$custom_logo_id) {
-        return $html;
+        return $attrs;
     }
 
     $meta = wp_get_attachment_metadata($custom_logo_id);
-    if (!is_array($meta) || empty($meta['width']) || empty($meta['height'])) {
-        $meta = ['width' => 200, 'height' => 50];
+    if (is_array($meta)) {
+        if (empty($attrs['width']) && !empty($meta['width'])) {
+            $attrs['width'] = (int) $meta['width'];
+        }
+        if (empty($attrs['height']) && !empty($meta['height'])) {
+            $attrs['height'] = (int) $meta['height'];
+        }
     }
 
-    $width = (int) $meta['width'];
-    $height = (int) $meta['height'];
-    $html = preg_replace(
-        '/<img\b(?![^>]*\bwidth=)(?![^>]*\bheight=)([^>]*?)(\s*\/?)>/i',
-        '<img$1 width="' . esc_attr((string) $width) . '" height="' . esc_attr((string) $height) . '"$2>',
-        $html,
-        1
-    );
+    if (!isset($attrs['loading'])) {
+        $attrs['loading'] = 'lazy';
+    }
 
-    return $html;
-}, 20);
+    if (empty($attrs['decoding'])) {
+        $attrs['decoding'] = 'async';
+    }
+
+    return $attrs;
+}, 10, 2);
 
 // Ensure grayscale logo variants keep explicit dimensions without altering templates.
 add_filter('wp_get_attachment_image_attributes', function ($attr, $attachment, $size) {
