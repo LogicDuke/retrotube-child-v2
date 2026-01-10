@@ -897,13 +897,20 @@ a.tag-link {
   display: block;
   max-width: 100%;
   height: auto;
-  aspect-ratio: 1 / 1;
 }
 
 .single-model .tmw-slot-machine .slot-container img,
 .single-model .tmw-slot-machine .slot-right img {
   width: 110px;
   aspect-ratio: 1 / 1;
+}
+
+.single-model .tmw-slot-audit-placeholder {
+  display: inline-block;
+  padding: 8px 12px;
+  border: 1px dashed #db011a;
+  color: #db011a;
+  border-radius: 4px;
 }
 
 .single-model .tmw-slot-machine .tmw-result.slot-result {
