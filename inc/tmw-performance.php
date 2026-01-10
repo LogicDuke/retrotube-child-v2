@@ -57,6 +57,8 @@ add_action('wp_enqueue_scripts', function () {
         return;
     }
 
+    $did_dequeue = false;
+
     global $wp_scripts;
     if ($wp_scripts instanceof WP_Scripts && !empty($wp_scripts->queue)) {
         foreach ($wp_scripts->queue as $handle) {
@@ -67,6 +69,7 @@ add_action('wp_enqueue_scripts', function () {
             $src = (string) $wp_scripts->registered[$handle]->src;
             if ($src && tmw_perf_src_matches($src, ['vjs.zencdn.net', 'video.min.js'])) {
                 wp_dequeue_script($handle);
+                $did_dequeue = true;
             }
         }
     }
@@ -81,11 +84,15 @@ add_action('wp_enqueue_scripts', function () {
             $src = (string) $wp_styles->registered[$handle]->src;
             if ($src && tmw_perf_src_matches($src, ['vjs.zencdn.net', 'video-js.css'])) {
                 wp_dequeue_style($handle);
+                $did_dequeue = true;
             }
         }
     }
 
-    tmw_perf_debug_log('[TMW-PERF] Dequeued VideoJS on non-video page: ' . esc_url_raw($_SERVER['REQUEST_URI'] ?? ''));
+    if ($did_dequeue) {
+        $path = wp_parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?: '';
+        tmw_perf_debug_log('[TMW-PERF] Dequeued VideoJS on non-video page: ' . esc_url_raw($path));
+    }
 }, 999);
 
 add_filter('script_loader_tag', function ($tag, $handle, $src) {
@@ -114,6 +121,12 @@ add_filter('script_loader_tag', function ($tag, $handle, $src) {
     if (preg_match('/\sreferrerpolicy=(["\"]).*?\1/i', $tag, $match)) {
         $attrs .= ' ' . trim($match[0]);
     }
+    if (preg_match('/\snonce=(["\"]).*?\1/i', $tag, $match)) {
+        $attrs .= ' ' . trim($match[0]);
+    }
+    if (preg_match('/\sintegrity=(["\"]).*?\1/i', $tag, $match)) {
+        $attrs .= ' ' . trim($match[0]);
+    }
 
     tmw_perf_debug_log('[TMW-PERF] Deferred 3P script: ' . esc_url_raw($src));
 
@@ -130,7 +143,12 @@ add_action('wp_enqueue_scripts', function () {
     }
 
     $path = get_stylesheet_directory() . '/js/tmw-thirdparty-delay.js';
-    $version = file_exists($path) ? (string) filemtime($path) : null;
+    if (!file_exists($path)) {
+        tmw_perf_debug_log('[TMW-PERF] Missing loader: js/tmw-thirdparty-delay.js');
+        return;
+    }
+
+    $version = (string) filemtime($path);
 
     wp_enqueue_script(
         'tmw-thirdparty-delay',
