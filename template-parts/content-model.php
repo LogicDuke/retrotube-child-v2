@@ -88,14 +88,16 @@ if ( empty( $cta_label ) ) {
 
                                 <?php
                                 // [TMW-SLOT] v4.1.2 — Render slot machine under description (inside #video-about)
-                                $__exists = shortcode_exists('tmw_slot_machine') ? 'yes' : 'no';
-                                $__out    = do_shortcode('[tmw_slot_machine]');
+                                $tmw_shortcode_exists = shortcode_exists('tmw_slot_machine');
+                                $__exists = $tmw_shortcode_exists ? 'yes' : 'no';
+                                $__out    = $tmw_shortcode_exists ? do_shortcode('[tmw_slot_machine]') : '';
                                 if (function_exists('tmw_child_inject_slot_machine_dimensions')) {
                                         $__out = tmw_child_inject_slot_machine_dimensions($__out);
                                 }
-                                $__len    = strlen(trim(wp_strip_all_tags($__out)));
+                                $__len    = strlen(trim($__out));
+                                $tmw_slot_has_markup = $__len > 0 && preg_match('/<(img|iframe|div|span|section|script|style|picture|source)\b/i', $__out);
                                 $tmw_slot_min_height = 0;
-                                if ($__len > 0) {
+                                if ($tmw_slot_has_markup) {
                                         if (preg_match('/<iframe[^>]*\sheight=["\']?(\d+)/i', $__out, $matches)) {
                                                 $height = (int) $matches[1];
                                                 $tmw_slot_min_height = ($height > 0 && $height <= 2000) ? $height : 0;
@@ -109,21 +111,34 @@ if ( empty( $cta_label ) ) {
                                 if ($tmw_debug_enabled) {
                                         error_log(
                                                 '[TMW-SLOT-AUDIT] under #video-about model="' . get_the_title() . '" ' .
-                                                'post_type=' . get_post_type() . ' shortcode_exists=' . $__exists . ' output_len=' . $__len . ' min_height=' . $tmw_slot_min_height
+                                                'post_type=' . get_post_type() . ' shortcode_exists=' . $__exists . ' output_len=' . $__len . ' has_markup=' . ($tmw_slot_has_markup ? '1' : '0') . ' min_height=' . $tmw_slot_min_height
                                         );
                                 }
                                 ?>
-                                <?php if ($__len > 0) : ?>
+                                <?php if ($tmw_slot_has_markup) : ?>
                                         <?php
                                         $tmw_slot_style = '';
                                         if ($tmw_slot_min_height > 0) {
                                                 $tmw_slot_style = ' style="--tmw-slot-minh: ' . esc_attr((string) $tmw_slot_min_height) . 'px;"';
                                         }
+                                        $tmw_slot_allowed = wp_kses_allowed_html('post');
+                                        $tmw_slot_allowed['iframe'] = [
+                                                'src' => true,
+                                                'srcdoc' => true,
+                                                'width' => true,
+                                                'height' => true,
+                                                'frameborder' => true,
+                                                'allow' => true,
+                                                'allowfullscreen' => true,
+                                                'loading' => true,
+                                                'title' => true,
+                                                'referrerpolicy' => true,
+                                        ];
                                         ?>
                                         <div class="tmw-slot-banner"<?php echo $tmw_slot_style; ?>>
-                                                <?php echo wp_kses_post($__out); ?>
+                                                <?php echo wp_kses($__out, $tmw_slot_allowed); ?>
                                         </div>
-                                <?php elseif ($tmw_debug_enabled) : ?>
+                                <?php elseif ($tmw_debug_enabled && $tmw_shortcode_exists) : ?>
                                         <?php error_log('[TMW-SLOT-AUDIT] shortcode returned empty in content-model.php'); ?>
                                 <?php endif; ?>
 

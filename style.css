@@ -870,7 +870,7 @@ a.tag-link {
 
 @media (min-width: 841px) {
   .single-model .tmw-slot-banner {
-    min-height: var(--tmw-slot-minh, 600px);
+    min-height: max(var(--tmw-slot-minh, 600px), 600px);
   }
 }
 

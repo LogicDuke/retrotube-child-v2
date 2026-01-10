@@ -457,5 +457,10 @@ function tmw_child_inject_slot_machine_dimensions(string $html): string {
         }
     }
 
-    return $doc->saveHTML();
+    $output = $doc->saveHTML();
+    if (is_string($output)) {
+        $output = preg_replace('/^\s*<\?xml[^>]*\?>\s*/i', '', $output);
+    }
+
+    return $output ?: $html;
 }
