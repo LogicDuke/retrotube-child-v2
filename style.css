@@ -418,17 +418,7 @@ body.tmw-no-embed .entry-content:before {
   }
 }
 
-/* === Remove legacy model rating/view visuals === */
-.single-model #rating-col,
-.single-model .rating-col,
-.single-model .rating-bar,
-.single-model .rating-bar-meter,
-.single-model .rating-result,
-.single-model #video-views,
-.single-model .video-views {
-  display: none !important;
-}
-
+/* Legacy model rating/view hide block removed to allow video-style visuals. */
 /* === Keep Like/Dislike with model name === */
 .single-model .tmw-model-header {
   display: flex;
