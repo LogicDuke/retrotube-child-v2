@@ -101,12 +101,11 @@ if ( empty( $cta_label ) ) {
                                 <div class="tmw-slot-banner">
                                         <?php if ($__len === 0): ?>
                                                 <!-- [TMW-SLOT-AUDIT] shortcode returned empty -->
-                                                <div class="tmw-slot-audit-placeholder"
-                                                     style="display:inline-block;padding:8px 12px;border:1px dashed #db011a;color:#db011a;border-radius:4px;">
+                                                <div class="tmw-slot-audit-placeholder">
                                                         [Slot shortcode returned empty]
                                                 </div>
                                         <?php else: ?>
-                                                <?php echo $__out; ?>
+                                                <?php echo wp_kses_post($__out); ?>
                                         <?php endif; ?>
                                 </div>
 
