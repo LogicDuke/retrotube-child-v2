@@ -672,10 +672,29 @@ a.tag-link {
    v3.3.9 — FEATURED MODELS: center the ribbon itself, nothing else
    Works site-wide. Does NOT change container alignment or children.
    ============================================================ */
-:is(.tmwfm-heading, .tmw-featured-slot .section-title){
+/* [TMW-LAYOUT] Restore original scope for featured heading (do NOT clear floats globally) */
+.model-flipbox .tmwfm-heading{
+  float: none;
+  clear: none;
+  text-align: center;
   /* neutralize theme floats/widths */
-  float: none !important;
-  clear: both !important;
+  width: auto !important;
+  /* make the ribbon shrink-to-fit and center the element itself */
+  display: inline-block !important;
+  position: relative !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  /* spacing kept local to the ribbon */
+  margin: 0 0 12px !important;
+  /* do NOT set text-align on parent containers */
+}
+
+/* [TMW-LAYOUT] Keep featured slot title centered without clearing floats */
+.tmw-featured-slot .section-title{
+  float: none;
+  clear: none;
+  text-align: center;
+  /* neutralize theme floats/widths */
   width: auto !important;
   /* make the ribbon shrink-to-fit and center the element itself */
   display: inline-block !important;
@@ -1147,25 +1166,55 @@ article.model {
 /* IMPORTANT: Do NOT set translate/width here for slot/tags/videos.
    The JS sync aligns them precisely to the hero width/position. */
 
-/* [TMW-LAYOUT] v4.4.0 — Model under-about full-width row */
-.single-model .video-meta-inline .tmw-model-under-about {
+/* [TMW-LAYOUT] Under-about blocks must span the full content column (not centered, not offset) */
+.single-model .video-meta-inline .tmw-model-under-about{
   flex: 0 0 100%;
-  width: 100%;
   max-width: 100%;
-  clear: both;
+  width: 100%;
+  align-self: stretch;
+  margin: 12px 0 0;
+  padding: 0;
+  clear: none !important; /* do not clear floats; avoid sidebar dropping */
 }
 
-.single-model .tmw-model-under-about .tmw-slot-banner-wrap {
+/* Ensure children also occupy full width of the content column */
+.single-model .video-meta-inline .tmw-model-under-about > *{
   width: 100%;
   max-width: 100%;
+  clear: none !important;
 }
 
-.single-model .tmw-model-under-about .tmw-model-tags {
+/* Slot banner: full width, left aligned */
+.single-model .tmw-model-under-about .tmw-slot-banner{
   width: 100%;
   max-width: 100%;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  text-align: left;
+  clear: none !important;
 }
 
-.single-model .tmw-model-under-about .tmw-model-videos {
+/* Tags: left aligned, not centered, and NOT clearing floats */
+.single-model .tmw-model-under-about .tmw-model-tags{
   width: 100%;
   max-width: 100%;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  text-align: left;
+  clear: none !important;
+}
+
+/* If tags are flex/inline-flex anywhere, force left alignment */
+.single-model .tmw-model-under-about .tmw-model-tags{
+  justify-content: flex-start !important;
+}
+
+/* Videos Featuring: full width + left aligned */
+.single-model .tmw-model-under-about .tmw-model-videos{
+  width: 100%;
+  max-width: 100%;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  text-align: left;
+  clear: none !important;
 }
