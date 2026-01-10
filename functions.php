@@ -148,7 +148,10 @@ add_filter('get_custom_logo', function ($html) {
         return $html;
     }
 
-    if (preg_match('/width=/', $html) && preg_match('/height=/', $html)) {
+    if (
+        preg_match('/<img\b[^>]*\s+width\s*=(["\']?)\d+\1/i', $html)
+        && preg_match('/<img\b[^>]*\s+height\s*=(["\']?)\d+\1/i', $html)
+    ) {
         return $html;
     }
 
@@ -162,10 +165,13 @@ add_filter('get_custom_logo', function ($html) {
         $meta = ['width' => 200, 'height' => 50];
     }
 
+    $width = (int) $meta['width'];
+    $height = (int) $meta['height'];
     $html = preg_replace(
-        '/<img([^>]*)>/i',
-        '<img$1 width="' . esc_attr($meta['width']) . '" height="' . esc_attr($meta['height']) . '">',
-        $html
+        '/<img\b(?![^>]*\bwidth=)(?![^>]*\bheight=)([^>]*?)(\s*\/?)>/i',
+        '<img$1 width="' . esc_attr((string) $width) . '" height="' . esc_attr((string) $height) . '"$2>',
+        $html,
+        1
     );
 
     return $html;

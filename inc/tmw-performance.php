@@ -90,14 +90,23 @@ add_action('wp_enqueue_scripts', function () {
         'retrotube-videojs',
         'wpst-videojs',
     ];
+    $videojs_patterns = [
+        'videojs',
+        'video-js',
+        'vjs.zencdn.net',
+        'videojs.com',
+        'videojs.net',
+        '/video.js',
+        '/video.min.js',
+    ];
 
     global $wp_scripts;
     if ($wp_scripts instanceof WP_Scripts) {
         foreach ($wp_scripts->registered as $handle => $script) {
             $src = $script->src ?? '';
-            if (stripos($src, 'video') !== false
-                || stripos($src, 'vjs.zencdn.net') !== false
-                || in_array($handle, $videojs_scripts, true)
+            if (
+                in_array($handle, $videojs_scripts, true)
+                || tmw_perf_src_matches($src, $videojs_patterns)
             ) {
                 wp_dequeue_script($handle);
                 wp_deregister_script($handle);
@@ -109,9 +118,7 @@ add_action('wp_enqueue_scripts', function () {
     if ($wp_styles instanceof WP_Styles) {
         foreach ($wp_styles->registered as $handle => $style) {
             $src = $style->src ?? '';
-            if (stripos($src, 'video') !== false
-                || stripos($src, 'vjs.zencdn.net') !== false
-            ) {
+            if (tmw_perf_src_matches($src, $videojs_patterns)) {
                 wp_dequeue_style($handle);
                 wp_deregister_style($handle);
             }
