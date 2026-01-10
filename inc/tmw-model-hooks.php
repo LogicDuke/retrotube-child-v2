@@ -963,7 +963,14 @@ if (!function_exists('tmw_bg_style')) {
    */
   function tmw_bg_style($url){
     if (!$url) return '';
-    $safe = (strpos($url, 'data:image') === 0) ? $url : esc_url($url);
+    if (strpos($url, 'data:image') === 0) {
+      $safe = $url;
+    } else {
+      $safe = esc_url($url);
+      if (preg_match('~/gold-black-(?:bg|hero)\.webp$~i', $safe)) {
+        $safe = add_query_arg('v', TMW_BG_CACHE_VERSION, $safe);
+      }
+    }
     return 'background-image:url('. $safe .');';
   }
 }

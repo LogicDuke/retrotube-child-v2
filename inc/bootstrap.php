@@ -24,6 +24,7 @@ require_once __DIR__ . '/setup.php';
 require_once __DIR__ . '/enqueue.php';
 require_once __DIR__ . '/frontend/performance.php';
 require_once __DIR__ . '/frontend/banner-performance.php';
+require_once __DIR__ . '/frontend/perf-buffer-rewrite.php';
 
 /** Front-end features */
 require_once __DIR__ . '/frontend/accessibility.php';
