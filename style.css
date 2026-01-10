@@ -1056,3 +1056,25 @@ a.tag-link {
     opacity: 0.85;
   }
 }
+
+/* === PERFORMANCE: Contain layout thrashing === */
+.model-banner,
+.tmw-banner-container,
+.video-player,
+.entry-content,
+article.model {
+  contain: layout style;
+}
+
+/* Reserve space for banner to prevent CLS */
+.tmw-banner-frame {
+  min-height: 200px;
+  contain: strict;
+}
+
+/* Reduce paint area */
+.tab-content,
+.video-meta-inline,
+#rating-col {
+  contain: content;
+}

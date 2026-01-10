@@ -124,12 +124,8 @@ add_action('wp_head', function () {
         return;
     }
 
-    if (!function_exists('tmw_resolve_model_banner_url')) {
-        return;
-    }
-
     $model_id = get_queried_object_id();
-    if (!$model_id) {
+    if (!$model_id || !function_exists('tmw_resolve_model_banner_url')) {
         return;
     }
 
@@ -137,37 +133,49 @@ add_action('wp_head', function () {
     if (!$banner_url) {
         return;
     }
-    ?>
-    <link rel="preload" as="image" href="<?php echo esc_url($banner_url); ?>" fetchpriority="high">
-    <?php
+
+    printf(
+        '<link rel="preload" as="image" href="%s" fetchpriority="high" />',
+        esc_url($banner_url)
+    );
 }, 1);
 
-// Ensure logo images retain explicit dimensions and async decoding without moving markup.
-add_filter('get_custom_logo_image_attributes', function ($attrs, $custom_logo_id) {
+/**
+ * Force width/height on custom logo to prevent CLS.
+ */
+add_filter('get_custom_logo', function ($html) {
+    if (empty($html)) {
+        return $html;
+    }
+
+    if (
+        preg_match('/<img\b[^>]*\s+width\s*=(["\']?)\d+\1/i', $html)
+        && preg_match('/<img\b[^>]*\s+height\s*=(["\']?)\d+\1/i', $html)
+    ) {
+        return $html;
+    }
+
+    $custom_logo_id = get_theme_mod('custom_logo');
     if (!$custom_logo_id) {
-        return $attrs;
+        return $html;
     }
 
     $meta = wp_get_attachment_metadata($custom_logo_id);
-    if (is_array($meta)) {
-        if (empty($attrs['width']) && !empty($meta['width'])) {
-            $attrs['width'] = (int) $meta['width'];
-        }
-        if (empty($attrs['height']) && !empty($meta['height'])) {
-            $attrs['height'] = (int) $meta['height'];
-        }
+    if (!is_array($meta) || empty($meta['width']) || empty($meta['height'])) {
+        $meta = ['width' => 200, 'height' => 50];
     }
 
-    if (!isset($attrs['loading'])) {
-        $attrs['loading'] = 'lazy';
-    }
+    $width = (int) $meta['width'];
+    $height = (int) $meta['height'];
+    $html = preg_replace(
+        '/<img\b(?![^>]*\bwidth=)(?![^>]*\bheight=)([^>]*?)(\s*\/?)>/i',
+        '<img$1 width="' . esc_attr((string) $width) . '" height="' . esc_attr((string) $height) . '"$2>',
+        $html,
+        1
+    );
 
-    if (empty($attrs['decoding'])) {
-        $attrs['decoding'] = 'async';
-    }
-
-    return $attrs;
-}, 10, 2);
+    return $html;
+}, 20);
 
 // Ensure grayscale logo variants keep explicit dimensions without altering templates.
 add_filter('wp_get_attachment_image_attributes', function ($attr, $attachment, $size) {

@@ -73,50 +73,58 @@ function tmw_perf_src_matches(string $src, array $needles): bool {
 }
 
 /**
- * Dequeue VideoJS assets on non-video pages.
+ * AGGRESSIVELY dequeue VideoJS on ALL non-video pages.
+ * Priority 9999 to ensure it runs LAST.
  */
-function tmw_perf_dequeue_videojs_assets(): void {
+add_action('wp_enqueue_scripts', function () {
     if (!tmw_perf_should_run() || is_singular('video')) {
         return;
     }
 
-    $did_dequeue = false;
+    $videojs_scripts = [
+        'video-js',
+        'videojs',
+        'videojs-core',
+        'videojs-quality',
+        'videojs-quality-selector',
+        'retrotube-videojs',
+        'wpst-videojs',
+    ];
+    $videojs_patterns = [
+        'videojs',
+        'video-js',
+        'vjs.zencdn.net',
+        'videojs.com',
+        'videojs.net',
+        '/video.js',
+        '/video.min.js',
+    ];
 
     global $wp_scripts;
-    if ($wp_scripts instanceof WP_Scripts && !empty($wp_scripts->queue)) {
-        foreach ($wp_scripts->queue as $handle) {
-            if (!isset($wp_scripts->registered[$handle])) {
-                continue;
-            }
-
-            $src = (string) $wp_scripts->registered[$handle]->src;
-            if ($src && tmw_perf_src_matches($src, ['vjs.zencdn.net', 'video.min.js'])) {
+    if ($wp_scripts instanceof WP_Scripts) {
+        foreach ($wp_scripts->registered as $handle => $script) {
+            $src = $script->src ?? '';
+            if (
+                in_array($handle, $videojs_scripts, true)
+                || tmw_perf_src_matches($src, $videojs_patterns)
+            ) {
                 wp_dequeue_script($handle);
-                $did_dequeue = true;
+                wp_deregister_script($handle);
             }
         }
     }
 
     global $wp_styles;
-    if ($wp_styles instanceof WP_Styles && !empty($wp_styles->queue)) {
-        foreach ($wp_styles->queue as $handle) {
-            if (!isset($wp_styles->registered[$handle])) {
-                continue;
-            }
-
-            $src = (string) $wp_styles->registered[$handle]->src;
-            if ($src && tmw_perf_src_matches($src, ['vjs.zencdn.net', 'video-js.css'])) {
+    if ($wp_styles instanceof WP_Styles) {
+        foreach ($wp_styles->registered as $handle => $style) {
+            $src = $style->src ?? '';
+            if (tmw_perf_src_matches($src, $videojs_patterns)) {
                 wp_dequeue_style($handle);
-                $did_dequeue = true;
+                wp_deregister_style($handle);
             }
         }
     }
-
-    if ($did_dequeue) {
-        $path = wp_parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?: '';
-        tmw_perf_debug_log('[TMW-PERF] Dequeued VideoJS on non-video page: ' . esc_url_raw($path));
-    }
-}
+}, 9999);
 
 /**
  * Replace select third-party script tags with deferred placeholders.
@@ -199,6 +207,5 @@ function tmw_perf_enqueue_thirdparty_loader(): void {
     );
 }
 
-add_action('wp_enqueue_scripts', 'tmw_perf_dequeue_videojs_assets', 999);
 add_filter('script_loader_tag', 'tmw_perf_defer_thirdparty_script_tag', 10, 3);
 add_action('wp_enqueue_scripts', 'tmw_perf_enqueue_thirdparty_loader', 20);
