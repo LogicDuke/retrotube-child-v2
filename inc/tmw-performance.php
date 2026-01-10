@@ -1,0 +1,142 @@
+<?php
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+function tmw_perf_is_login_page(): bool {
+    if (!isset($GLOBALS['pagenow'])) {
+        return false;
+    }
+
+    return in_array($GLOBALS['pagenow'], ['wp-login.php', 'wp-register.php'], true);
+}
+
+function tmw_perf_should_run(): bool {
+    if (is_admin() || wp_doing_ajax() || wp_doing_cron()) {
+        return false;
+    }
+
+    if (defined('REST_REQUEST') && REST_REQUEST) {
+        return false;
+    }
+
+    if (tmw_perf_is_login_page()) {
+        return false;
+    }
+
+    return true;
+}
+
+function tmw_perf_should_delay_thirdparty(): bool {
+    return tmw_perf_should_run() && is_singular('model');
+}
+
+function tmw_perf_debug_log(string $message): void {
+    if (function_exists('tmw_debug_log')) {
+        tmw_debug_log($message);
+        return;
+    }
+
+    if (defined('TMW_DEBUG') && TMW_DEBUG && function_exists('error_log')) {
+        error_log($message);
+    }
+}
+
+function tmw_perf_src_matches(string $src, array $needles): bool {
+    foreach ($needles as $needle) {
+        if (stripos($src, $needle) !== false) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+add_action('wp_enqueue_scripts', function () {
+    if (!tmw_perf_should_run() || is_singular('video')) {
+        return;
+    }
+
+    global $wp_scripts;
+    if ($wp_scripts instanceof WP_Scripts && !empty($wp_scripts->queue)) {
+        foreach ($wp_scripts->queue as $handle) {
+            if (!isset($wp_scripts->registered[$handle])) {
+                continue;
+            }
+
+            $src = (string) $wp_scripts->registered[$handle]->src;
+            if ($src && tmw_perf_src_matches($src, ['vjs.zencdn.net', 'video.min.js'])) {
+                wp_dequeue_script($handle);
+            }
+        }
+    }
+
+    global $wp_styles;
+    if ($wp_styles instanceof WP_Styles && !empty($wp_styles->queue)) {
+        foreach ($wp_styles->queue as $handle) {
+            if (!isset($wp_styles->registered[$handle])) {
+                continue;
+            }
+
+            $src = (string) $wp_styles->registered[$handle]->src;
+            if ($src && tmw_perf_src_matches($src, ['vjs.zencdn.net', 'video-js.css'])) {
+                wp_dequeue_style($handle);
+            }
+        }
+    }
+
+    tmw_perf_debug_log('[TMW-PERF] Dequeued VideoJS on non-video page: ' . esc_url_raw($_SERVER['REQUEST_URI'] ?? ''));
+}, 999);
+
+add_filter('script_loader_tag', function ($tag, $handle, $src) {
+    if (!tmw_perf_should_delay_thirdparty()) {
+        return $tag;
+    }
+
+    $targets = [
+        'googletagmanager.com/gtag/js',
+        'pagead2.googlesyndication.com/pagead/js/adsbygoogle.js',
+        'connect.facebook.net',
+    ];
+
+    if (!tmw_perf_src_matches($src, $targets)) {
+        return $tag;
+    }
+
+    if (stripos($src, 'connect.facebook.net') !== false && stripos($src, '/sdk.js') === false) {
+        return $tag;
+    }
+
+    $attrs = '';
+    if (preg_match('/\scrossorigin(=(["\"]).*?\2)?/i', $tag, $match)) {
+        $attrs .= ' ' . trim($match[0]);
+    }
+    if (preg_match('/\sreferrerpolicy=(["\"]).*?\1/i', $tag, $match)) {
+        $attrs .= ' ' . trim($match[0]);
+    }
+
+    tmw_perf_debug_log('[TMW-PERF] Deferred 3P script: ' . esc_url_raw($src));
+
+    return sprintf(
+        '<script type="text/tmw-deferred" data-src="%s"%s></script>',
+        esc_url($src),
+        $attrs
+    );
+}, 10, 3);
+
+add_action('wp_enqueue_scripts', function () {
+    if (!tmw_perf_should_delay_thirdparty()) {
+        return;
+    }
+
+    $path = get_stylesheet_directory() . '/js/tmw-thirdparty-delay.js';
+    $version = file_exists($path) ? (string) filemtime($path) : null;
+
+    wp_enqueue_script(
+        'tmw-thirdparty-delay',
+        get_stylesheet_directory_uri() . '/js/tmw-thirdparty-delay.js',
+        [],
+        $version,
+        true
+    );
+}, 20);
