@@ -859,6 +859,16 @@ a.tag-link {
   }
 }
 
+/* v4.4.1 — Reduce initial render cost for offscreen model sections */
+.single-model .tmw-model-videos,
+.single-model .tmw-related-videos,
+.single-model .related-videos,
+.single-model .entry-related,
+.single-model .related-posts {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 800px;
+}
+
 .single-model .tmw-slot-banner {
   max-width: 1035px;
   width: 100%;
