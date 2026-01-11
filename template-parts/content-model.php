@@ -154,7 +154,9 @@ if ( empty( $cta_label ) ) {
                                 <div class="video-description">
                                         <?php if ( xbox_get_field_value( 'wpst-options', 'show-description-video-about' ) == 'on' ) : ?>
                                                 <div class="desc <?php echo ( xbox_get_field_value( 'wpst-options', 'truncate-description' ) == 'on' ) ? 'more' : ''; ?>">
+													<!-- [TMW-SLOT-AUDIT] BEGIN the_content -->
                                                         <?php the_content(); ?>
+													<!-- [TMW-SLOT-AUDIT] END the_content -->
                                                 </div>
                                         <?php endif; ?>
                                 </div>
@@ -175,18 +177,22 @@ if ( empty( $cta_label ) ) {
 										error_log( '[TMW-SLOT-AUDIT] model_id=' . get_the_ID() . ' slot_len=' . $slot_len );
 									}
 
-									echo '<div class="tmw-slot-banner-wrap tmw-slot-banner-between-desc-tags">';
+									echo "\n<!-- [TMW-SLOT-AUDIT] BEGIN slot_anchor between-desc-tags -->\n";
+									echo '<div class="tmw-slot-banner-wrap tmw-slot-banner-between-desc-tags" data-tmw-slot-anchor="between-desc-tags">';
 									if ( $slot_len > 0 ) {
 										echo $slot_output;
 									} elseif ( $tmw_debug_enabled ) {
 										echo '<div class="tmw-slot-banner-empty" aria-hidden="true"></div>';
 									}
 									echo '</div>';
+									echo "\n<!-- [TMW-SLOT-AUDIT] END slot_anchor between-desc-tags -->\n";
 								}
 								?>
 
                                 <?php if ( xbox_get_field_value( 'wpst-options', 'show-categories-video-about' ) == 'on' || xbox_get_field_value( 'wpst-options', 'show-tags-video-about' ) == 'on' ) : ?>
+										<!-- [TMW-SLOT-AUDIT] BEGIN tags -->
                                         <div class="tags"><?php wpst_entry_footer(); ?></div>
+										<!-- [TMW-SLOT-AUDIT] END tags -->
                                 <?php endif; ?>
 						</div>
 
