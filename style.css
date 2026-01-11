@@ -838,21 +838,16 @@ a.tag-link {
 }
 
 
-/* v4.4.0 — Center slot banner without JS transforms */
+/* v4.5.0 — Slot banner: zero footprint when disabled */
+.single-model .tmw-slot-banner-wrap:empty {
+  display: none;
+}
+
 .single-model .tmw-slot-banner-wrap {
-  min-height: var(--tmw-slot-minh, 300px);
-}
-
-.single-model .tmw-slot-banner-empty {
-  border: 2px dashed #e05656;
-  min-height: 120px;
-  margin: 12px 0 18px;
-}
-
-@media (min-width: 841px) {
-  .single-model .tmw-slot-banner-wrap {
-    min-height: var(--tmw-slot-minh, 600px);
-  }
+  width: 100%;
+  max-width: 100%;
+  margin: 20px 0;
+  box-sizing: border-box;
 }
 
 /* v4.4.1 — Reduce initial render cost for offscreen model sections */
@@ -872,11 +867,7 @@ a.tag-link {
   width: 100%;
   margin-left: auto;
   margin-right: auto;
-  margin-top: 15px;
-  margin-bottom: 20px;
   text-align: center;
-  min-height: 250px;
-  aspect-ratio: 1035 / 300;
 }
 
 .single-model .tmw-slot-banner-between-desc-tags {
@@ -889,20 +880,6 @@ a.tag-link {
   clear: both;
 }
 
-@media (max-width: 840px) {
-  .single-model .tmw-slot-banner {
-    width: 100% !important;
-    max-width: 100% !important;
-    min-height: 250px;
-    aspect-ratio: 300 / 250;
-  }
-}
-
-@media (min-width: 841px) {
-  .single-model .tmw-slot-banner {
-    min-height: 300px;
-  }
-}
 
 /* Slot machine: reserve space & stabilize assets (CLS guard) */
 .single-model .tmw-slot-machine {
