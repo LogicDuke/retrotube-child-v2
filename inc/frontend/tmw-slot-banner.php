@@ -13,15 +13,13 @@ if (!function_exists('tmw_model_slot_get_shortcode')) {
 	function tmw_model_slot_get_shortcode(int $post_id): string {
 		$sc = (string) get_post_meta($post_id, '_tmw_slot_shortcode', true);
 		$sc = trim($sc);
-		return ($sc !== '') ? $sc : '[tmw_slot_machine]';
+		return $sc;
 	}
 }
 
 if (!function_exists('tmw_render_model_slot_banner')) {
 	function tmw_render_model_slot_banner(int $post_id): string {
 		$debug = defined('TMW_DEBUG') && TMW_DEBUG;
-		$slot_enabled_raw = get_post_meta($post_id, '_tmw_slot_enabled', true);
-		$slot_shortcode_raw = get_post_meta($post_id, '_tmw_slot_shortcode', true);
 
 		if (!tmw_model_slot_is_enabled($post_id)) {
 			if ($debug) {
@@ -31,6 +29,9 @@ if (!function_exists('tmw_render_model_slot_banner')) {
 		}
 
 		$shortcode = tmw_model_slot_get_shortcode($post_id);
+		if ($shortcode === '') {
+			return '';
+		}
 
 		// Render via shortcode only
 		$out = do_shortcode($shortcode);

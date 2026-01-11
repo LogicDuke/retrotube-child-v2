@@ -129,21 +129,21 @@ if ( empty( $cta_label ) ) {
 				<?php $width = ( xbox_get_field_value( 'wpst-options', 'enable-views-system' ) == 'off' && xbox_get_field_value( 'wpst-options', 'enable-rating-system' ) == 'off' ) ? '100' : '70'; ?>
 				<div id="video-about" class="width<?php echo $width; ?>">
 								<!-- TMW-AUDIT:BEGIN about -->
-                                <div class="video-description">
-                                        <?php if ( xbox_get_field_value( 'wpst-options', 'show-description-video-about' ) == 'on' ) : ?>
-                                                <div class="desc <?php echo ( xbox_get_field_value( 'wpst-options', 'truncate-description' ) == 'on' ) ? 'more' : ''; ?>">
-                                                        <?php the_content(); ?>
-                                                </div>
-                                        <?php endif; ?>
-                                </div>
+								<div class="video-description">
+										<?php if ( xbox_get_field_value( 'wpst-options', 'show-description-video-about' ) == 'on' ) : ?>
+												<div class="desc <?php echo ( xbox_get_field_value( 'wpst-options', 'truncate-description' ) == 'on' ) ? 'more' : ''; ?>">
+														<?php the_content(); ?>
+												</div>
+										<?php endif; ?>
+								</div>
 								<!-- TMW-AUDIT:END about -->
 
-                                <?php if ( xbox_get_field_value( 'wpst-options', 'show-categories-video-about' ) == 'on' || xbox_get_field_value( 'wpst-options', 'show-tags-video-about' ) == 'on' ) : ?>
+								<?php if ( xbox_get_field_value( 'wpst-options', 'show-categories-video-about' ) == 'on' || xbox_get_field_value( 'wpst-options', 'show-tags-video-about' ) == 'on' ) : ?>
 										<!-- TMW-AUDIT:BEGIN tags -->
-                                        <div class="tags"><?php wpst_entry_footer(); ?></div>
+										<div class="tags"><?php wpst_entry_footer(); ?></div>
 										<!-- TMW-AUDIT:END tags -->
-                                <?php endif; ?>
-						</div>
+								<?php endif; ?>
+						</div><!-- #video-about -->
 
 						<?php
 						$model_slug = get_post_field('post_name', get_the_ID());
@@ -176,12 +176,11 @@ if ( empty( $cta_label ) ) {
                         ?>
 
 						<?php
-						if ( function_exists( 'tmw_render_model_slot_banner' ) ) {
-							echo '<!-- TMW-AUDIT:BEGIN slot -->';
-							echo '<div class="tmw-slot-banner-between-desc-tags" data-tmw-slot-anchor="between-desc-tags">';
-							echo tmw_render_model_slot_banner( (int) get_the_ID() );
-							echo '</div>';
-							echo '<!-- TMW-AUDIT:END slot -->';
+						$slot_html = function_exists( 'tmw_render_model_slot_banner' )
+							? (string) tmw_render_model_slot_banner( (int) get_the_ID() )
+							: '';
+						if ( trim( $slot_html ) !== '' ) {
+							echo $slot_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 						}
 						?>
 
