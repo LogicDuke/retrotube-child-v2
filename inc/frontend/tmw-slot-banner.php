@@ -54,6 +54,6 @@ if (!function_exists('tmw_render_model_slot_banner')) {
 		}
 
 		// Keep wrappers minimal and stable; no layout changes elsewhere
-		return '<div class="tmw-slot-banner-wrap"><div class="tmw-slot-banner">' . wp_kses_post($out) . '</div></div>';
+		return '<div class="tmw-slot-banner">' . wp_kses_post($out) . '</div>';
 	}
 }
