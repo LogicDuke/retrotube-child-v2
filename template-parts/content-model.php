@@ -174,15 +174,19 @@ if ( empty( $cta_label ) ) {
                         $tmw_model_tags_count = get_query_var('tmw_model_tags_count', null);
                         $tmw_model_tags       = get_query_var('tmw_model_tags_data', []);
                         ?>
+				</div><!-- .tab-content -->
 
-						<?php
-						$slot_html = function_exists( 'tmw_render_model_slot_banner' )
-							? (string) tmw_render_model_slot_banner( (int) get_the_ID() )
-							: '';
-						if ( trim( $slot_html ) !== '' ) {
-							echo $slot_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-						}
-						?>
+				<?php
+				// Slot banner zone: between accordion description and full-width model tags.
+				if ( function_exists( 'tmw_render_model_slot_banner' ) ) {
+					$slot_html = tmw_render_model_slot_banner( (int) get_the_ID() );
+					if ( is_string( $slot_html ) && trim( $slot_html ) !== '' ) {
+						echo "\n<!-- [TMW-SLOT] BEGIN between-accordion-and-tags -->\n";
+						echo $slot_html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+						echo "\n<!-- [TMW-SLOT] END between-accordion-and-tags -->\n";
+					}
+				}
+				?>
 
                         <?php if ( $tmw_model_tags_count !== null ) : ?>
 								<!-- TMW-AUDIT:BEGIN tags -->
