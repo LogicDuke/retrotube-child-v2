@@ -129,21 +129,7 @@ if ( empty( $cta_label ) ) {
 				<?php $width = ( xbox_get_field_value( 'wpst-options', 'enable-views-system' ) == 'off' && xbox_get_field_value( 'wpst-options', 'enable-rating-system' ) == 'off' ) ? '100' : '70'; ?>
 				<div id="video-about" class="width<?php echo $width; ?>">
 								<!-- TMW-AUDIT:BEGIN about -->
-                                <div class="video-description">
-                                        <?php if ( xbox_get_field_value( 'wpst-options', 'show-description-video-about' ) == 'on' ) : ?>
-                                                <div class="desc <?php echo ( xbox_get_field_value( 'wpst-options', 'truncate-description' ) == 'on' ) ? 'more' : ''; ?>">
-                                                        <?php the_content(); ?>
-                                                </div>
-                                        <?php endif; ?>
-                                </div>
-								<!-- TMW-AUDIT:END about -->
 
-                                <?php if ( xbox_get_field_value( 'wpst-options', 'show-categories-video-about' ) == 'on' || xbox_get_field_value( 'wpst-options', 'show-tags-video-about' ) == 'on' ) : ?>
-										<!-- TMW-AUDIT:BEGIN tags -->
-                                        <div class="tags"><?php wpst_entry_footer(); ?></div>
-										<!-- TMW-AUDIT:END tags -->
-                                <?php endif; ?>
-						</div>
 
 						<?php
 						$model_slug = get_post_field('post_name', get_the_ID());
@@ -174,19 +160,8 @@ if ( empty( $cta_label ) ) {
                         $tmw_model_tags_count = get_query_var('tmw_model_tags_count', null);
                         $tmw_model_tags       = get_query_var('tmw_model_tags_data', []);
                         ?>
+				</div><!-- .tab-content -->
 
-						<?php
-						if ( function_exists( 'tmw_render_model_slot_banner' ) ) {
-							$slot_output = tmw_render_model_slot_banner( (int) get_the_ID() );
-							if ( is_string( $slot_output ) && trim( $slot_output ) !== '' ) {
-								echo '<!-- TMW-AUDIT:BEGIN slot -->';
-								echo '<div class="tmw-slot-banner-wrap tmw-slot-banner-between-desc-tags" data-tmw-slot-anchor="between-desc-tags">';
-								echo $slot_output;
-								echo '</div>';
-								echo '<!-- TMW-AUDIT:END slot -->';
-							}
-						}
-						?>
 
                         <?php if ( $tmw_model_tags_count !== null ) : ?>
 								<!-- TMW-AUDIT:BEGIN tags -->

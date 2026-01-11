@@ -838,15 +838,6 @@ a.tag-link {
 }
 
 
-/* v4.5.0 — Slot banner: zero footprint when disabled */
-.single-model .tmw-slot-banner-wrap:empty {
-  display: none;
-}
-
-.single-model .tmw-slot-banner-wrap {
-  width: 100%;
-  max-width: 100%;
-  margin: 20px 0;
   box-sizing: border-box;
 }
 
@@ -862,41 +853,7 @@ a.tag-link {
   }
 }
 
-.single-model .tmw-slot-banner {
-  max-width: 1035px;
-  width: 100%;
-  margin-left: auto;
-  margin-right: auto;
-  text-align: center;
-}
 
-.single-model .tmw-slot-banner-between-desc-tags {
-  position: relative;
-}
-
-.single-model .tmw-slot-banner-between-desc-tags::after {
-  content: "";
-  display: table;
-  clear: both;
-}
-
-
-/* Slot machine: reserve space & stabilize assets (CLS guard) */
-.single-model .tmw-slot-machine {
-  min-height: 300px;
-}
-
-@media (min-width: 768px) {
-  .single-model .tmw-slot-machine {
-    min-height: 360px;
-  }
-}
-
-.single-model .tmw-slot-machine .slot-body,
-.single-model .tmw-slot-machine .slot-container,
-.single-model .tmw-slot-machine .slot-right {
-  min-height: 240px;
-}
 
 .single-model .tmw-slot-machine img {
   display: block;
@@ -908,14 +865,6 @@ a.tag-link {
 .single-model .tmw-slot-machine .slot-right img {
   width: 110px;
   aspect-ratio: 1 / 1;
-}
-
-.single-model .tmw-slot-audit-placeholder {
-  display: inline-block;
-  padding: 8px 12px;
-  border: 1px dashed #db011a;
-  color: #db011a;
-  border-radius: 4px;
 }
 
 .single-model .tmw-slot-machine .tmw-result.slot-result {
