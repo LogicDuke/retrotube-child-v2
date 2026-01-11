@@ -3,39 +3,6 @@ $model_id   = get_the_ID();
 $model_name = get_the_title();
 $tmw_debug_enabled = defined('TMW_DEBUG') && TMW_DEBUG;
 
-if ($tmw_debug_enabled) {
-	$model_slug = get_post_field('post_name', $model_id);
-	$slot_enabled_exists = metadata_exists('post', $model_id, '_tmw_slot_enabled');
-	$slot_shortcode_exists = metadata_exists('post', $model_id, '_tmw_slot_shortcode');
-	$slot_enabled_value = $slot_enabled_exists ? get_post_meta($model_id, '_tmw_slot_enabled', true) : '';
-	$slot_shortcode_value = $slot_shortcode_exists ? get_post_meta($model_id, '_tmw_slot_shortcode', true) : '';
-	$slot_is_enabled = function_exists('tmw_model_slot_is_enabled') ? tmw_model_slot_is_enabled((int) $model_id) : ($slot_enabled_value === '1');
-	$slot_shortcode = function_exists('tmw_model_slot_get_shortcode')
-		? tmw_model_slot_get_shortcode((int) $model_id)
-		: ($slot_shortcode_value !== '' ? $slot_shortcode_value : '[tmw_slot_machine]');
-	$slot_raw_len = 0;
-	$slot_sanitized_len = 0;
-	if (function_exists('tmw_render_model_slot_banner')) {
-		$slot_output = do_shortcode($slot_shortcode);
-		$slot_raw_len = is_string($slot_output) ? strlen(trim($slot_output)) : 0;
-		$slot_sanitized = wp_kses_post($slot_output);
-		$slot_sanitized_len = is_string($slot_sanitized) ? strlen(trim($slot_sanitized)) : 0;
-	}
-	$wpst_like_exists = function_exists('wpst_get_post_like_link');
-	$wpst_rate_exists = function_exists('wpst_get_post_like_rate');
-	$like_html = $wpst_like_exists ? wpst_get_post_like_link($model_id) : '';
-	$like_html_len = is_string($like_html) ? strlen(trim($like_html)) : 0;
-	$like_has_markup = $like_html_len > 0 && strpos($like_html, '<') !== false;
-
-	error_log('[TMW-SLOT-AUDIT] model_id=' . $model_id . ' slug=' . ($model_slug !== '' ? $model_slug : 'unknown'));
-	if ($slot_enabled_exists || $slot_shortcode_exists) {
-		error_log('[TMW-SLOT-AUDIT] slot_meta enabled_exists=' . ($slot_enabled_exists ? 'yes' : 'no') . ' enabled_value=' . ($slot_enabled_value !== '' ? $slot_enabled_value : 'empty') . ' shortcode_exists=' . ($slot_shortcode_exists ? 'yes' : 'no') . ' shortcode_value=' . ($slot_shortcode_value !== '' ? $slot_shortcode_value : 'empty'));
-	}
-	error_log('[TMW-SLOT-AUDIT] slot_enabled=' . ($slot_is_enabled ? 'yes' : 'no') . ' shortcode=' . $slot_shortcode . ' raw_len=' . $slot_raw_len . ' sanitized_len=' . $slot_sanitized_len);
-	error_log('[TMW-LIKE-AUDIT] wpst_get_post_like_link_exists=' . ($wpst_like_exists ? 'yes' : 'no') . ' wpst_get_post_like_rate_exists=' . ($wpst_rate_exists ? 'yes' : 'no') . ' like_html_len=' . $like_html_len . ' has_vote_markup=' . ($like_has_markup ? 'yes' : 'no'));
-	error_log('[TMW-MODEL-AUDIT] template-parts/content-model.php loaded for ' . $model_name);
-}
-
 $banner_url      = tmw_resolve_model_banner_url( $model_id );
 
 $cta_url   = function_exists( 'get_field' ) ? get_field( 'model_link', $model_id ) : '';
@@ -161,34 +128,6 @@ if ( empty( $cta_label ) ) {
                                         <?php endif; ?>
                                 </div>
 
-								<?php
-								// TMW slot banner: between description and tags (model template).
-								if ( function_exists( 'tmw_render_model_slot_banner' ) ) {
-									ob_start();
-									$slot_return = tmw_render_model_slot_banner( (int) get_the_ID() );
-									$slot_echo   = ob_get_clean();
-									$slot_output = $slot_echo;
-									if ( is_string( $slot_return ) ) {
-										$slot_output .= $slot_return;
-									}
-									$slot_len = is_string( $slot_output ) ? strlen( trim( $slot_output ) ) : 0;
-
-									if ( $tmw_debug_enabled ) {
-										error_log( '[TMW-SLOT-AUDIT] model_id=' . get_the_ID() . ' slot_len=' . $slot_len );
-									}
-
-									echo "\n<!-- [TMW-SLOT-AUDIT] BEGIN slot_anchor between-desc-tags -->\n";
-									echo '<div class="tmw-slot-banner-wrap tmw-slot-banner-between-desc-tags" data-tmw-slot-anchor="between-desc-tags">';
-									if ( $slot_len > 0 ) {
-										echo $slot_output;
-									} elseif ( $tmw_debug_enabled ) {
-										echo '<div class="tmw-slot-banner-empty" aria-hidden="true"></div>';
-									}
-									echo '</div>';
-									echo "\n<!-- [TMW-SLOT-AUDIT] END slot_anchor between-desc-tags -->\n";
-								}
-								?>
-
                                 <?php if ( xbox_get_field_value( 'wpst-options', 'show-categories-video-about' ) == 'on' || xbox_get_field_value( 'wpst-options', 'show-tags-video-about' ) == 'on' ) : ?>
 										<!-- [TMW-SLOT-AUDIT] BEGIN tags -->
                                         <div class="tags"><?php wpst_entry_footer(); ?></div>
@@ -225,6 +164,14 @@ if ( empty( $cta_label ) ) {
                         $tmw_model_tags_count = get_query_var('tmw_model_tags_count', null);
                         $tmw_model_tags       = get_query_var('tmw_model_tags_data', []);
                         ?>
+
+						<?php
+						if ( function_exists( 'tmw_render_model_slot_banner' ) ) {
+							echo '<div class="tmw-slot-banner-between-desc-tags" data-tmw-slot-anchor="between-desc-tags">';
+							echo tmw_render_model_slot_banner( (int) get_the_ID() );
+							echo '</div>';
+						}
+						?>
 
                         <?php if ( $tmw_model_tags_count !== null ) : ?>
                                 <!-- === TMW-TAGS-BULLETPROOF-RESTORE === -->

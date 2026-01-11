@@ -23,12 +23,6 @@ if (!function_exists('tmw_render_model_slot_banner')) {
 		$slot_enabled_raw = get_post_meta($post_id, '_tmw_slot_enabled', true);
 		$slot_shortcode_raw = get_post_meta($post_id, '_tmw_slot_shortcode', true);
 
-		if ($debug) {
-			$enabled_log_value = ($slot_enabled_raw === '' || $slot_enabled_raw === null) ? 'empty' : (string) $slot_enabled_raw;
-			$shortcode_log_value = ($slot_shortcode_raw === '' || $slot_shortcode_raw === null) ? 'empty' : (string) $slot_shortcode_raw;
-			error_log('[TMW-SLOT-AUDIT] model_id=' . $post_id . ' slot_enabled_raw=' . $enabled_log_value . ' slot_shortcode_raw=' . $shortcode_log_value);
-		}
-
 		if (!tmw_model_slot_is_enabled($post_id)) {
 			if ($debug) {
 				error_log('[TMW-SLOT] disabled model_id=' . $post_id);
@@ -46,7 +40,6 @@ if (!function_exists('tmw_render_model_slot_banner')) {
 
 		if ($debug) {
 			error_log('[TMW-SLOT] render model_id=' . $post_id . ' shortcode=' . $shortcode . ' raw_len=' . $raw_len);
-			error_log('[TMW-SLOT-AUDIT] model_id=' . $post_id . ' do_shortcode_len=' . $raw_len);
 		}
 
 		if ($raw_len <= 0) {
