@@ -161,34 +161,6 @@ if ( empty( $cta_label ) ) {
                                         <?php endif; ?>
                                 </div>
 
-								<?php
-								// TMW slot banner: between description and tags (model template).
-								if ( function_exists( 'tmw_render_model_slot_banner' ) ) {
-									ob_start();
-									$slot_return = tmw_render_model_slot_banner( (int) get_the_ID() );
-									$slot_echo   = ob_get_clean();
-									$slot_output = $slot_echo;
-									if ( is_string( $slot_return ) ) {
-										$slot_output .= $slot_return;
-									}
-									$slot_len = is_string( $slot_output ) ? strlen( trim( $slot_output ) ) : 0;
-
-									if ( $tmw_debug_enabled ) {
-										error_log( '[TMW-SLOT-AUDIT] model_id=' . get_the_ID() . ' slot_len=' . $slot_len );
-									}
-
-									echo "\n<!-- [TMW-SLOT-AUDIT] BEGIN slot_anchor between-desc-tags -->\n";
-									echo '<div class="tmw-slot-banner-wrap tmw-slot-banner-between-desc-tags" data-tmw-slot-anchor="between-desc-tags">';
-									if ( $slot_len > 0 ) {
-										echo $slot_output;
-									} elseif ( $tmw_debug_enabled ) {
-										echo '<div class="tmw-slot-banner-empty" aria-hidden="true"></div>';
-									}
-									echo '</div>';
-									echo "\n<!-- [TMW-SLOT-AUDIT] END slot_anchor between-desc-tags -->\n";
-								}
-								?>
-
                                 <?php if ( xbox_get_field_value( 'wpst-options', 'show-categories-video-about' ) == 'on' || xbox_get_field_value( 'wpst-options', 'show-tags-video-about' ) == 'on' ) : ?>
 										<!-- [TMW-SLOT-AUDIT] BEGIN tags -->
                                         <div class="tags"><?php wpst_entry_footer(); ?></div>
@@ -197,6 +169,26 @@ if ( empty( $cta_label ) ) {
 						</div>
 
 						<?php
+						// TMW slot banner: between description and tags (model template).
+						if ( function_exists( 'tmw_render_model_slot_banner' ) ) {
+							ob_start();
+							$slot_return = tmw_render_model_slot_banner( (int) get_the_ID() );
+							$slot_echo   = ob_get_clean();
+							$slot_output = $slot_echo;
+							if ( is_string( $slot_return ) ) {
+								$slot_output .= $slot_return;
+							}
+							$slot_len = is_string( $slot_output ) ? strlen( trim( $slot_output ) ) : 0;
+
+							if ( $slot_len > 0 ) {
+								echo "\n<!-- [TMW-SLOT-AUDIT] BEGIN slot_anchor between-desc-tags -->\n";
+								echo '<div class="tmw-slot-banner-wrap tmw-slot-banner-between-desc-tags" data-tmw-slot-anchor="between-desc-tags">';
+								echo $slot_output;
+								echo '</div>';
+								echo "\n<!-- [TMW-SLOT-AUDIT] END slot_anchor between-desc-tags -->\n";
+							}
+						}
+
 						$model_slug = get_post_field('post_name', get_the_ID());
                         if (!is_string($model_slug) || $model_slug === '') {
                                 if ($tmw_debug_enabled) {
