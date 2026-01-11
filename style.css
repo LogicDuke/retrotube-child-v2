@@ -843,6 +843,12 @@ a.tag-link {
   min-height: var(--tmw-slot-minh, 300px);
 }
 
+.single-model .tmw-slot-banner-empty {
+  border: 2px dashed #e05656;
+  min-height: 120px;
+  margin: 12px 0 18px;
+}
+
 @media (min-width: 841px) {
   .single-model .tmw-slot-banner-wrap {
     min-height: var(--tmw-slot-minh, 600px);
@@ -871,6 +877,16 @@ a.tag-link {
   text-align: center;
   min-height: 250px;
   aspect-ratio: 1035 / 300;
+}
+
+.single-model .tmw-slot-banner-between-desc-tags {
+  position: relative;
+}
+
+.single-model .tmw-slot-banner-between-desc-tags::after {
+  content: "";
+  display: table;
+  clear: both;
 }
 
 @media (max-width: 840px) {

@@ -165,9 +165,6 @@ if ( has_post_thumbnail() && wp_get_attachment_url( get_post_thumbnail_id() ) ) 
 
 				<?php /* ✅ Removed duplicate "Model / From / Date" block inside accordion */ ?>
 
-				<?php if ( xbox_get_field_value( 'wpst-options', 'show-categories-video-about' ) == 'on' || xbox_get_field_value( 'wpst-options', 'show-tags-video-about' ) == 'on' ) : ?>
-					<div class="tags"><?php wpst_entry_footer(); ?></div>
-				<?php endif; ?>
 			</div>
 
 			<?php if ( xbox_get_field_value( 'wpst-options', 'enable-video-share' ) == 'on' ) : ?>
@@ -178,6 +175,19 @@ if ( has_post_thumbnail() && wp_get_attachment_url( get_post_thumbnail_id() ) ) 
 
 	<?php if ( xbox_get_field_value( 'wpst-options', 'display-related-videos' ) == 'on' ) : ?>
 		<?php get_template_part( 'template-parts/content', 'related' ); ?>
+	<?php endif; ?>
+
+	<?php
+	// [TMW-VIDEO-TAGS] v4.4.2 — Tags moved out of accordion to sit above comments (Leave a Reply)
+	$tmw_debug_enabled = defined( 'TMW_DEBUG' ) && TMW_DEBUG;
+
+	if ( xbox_get_field_value( 'wpst-options', 'show-categories-video-about' ) == 'on' || xbox_get_field_value( 'wpst-options', 'show-tags-video-about' ) == 'on' ) : ?>
+		<div class="tags"><?php wpst_entry_footer(); ?></div>
+		<?php
+		if ( $tmw_debug_enabled ) {
+			error_log( '[TMW-VIDEO-TAGS] rendered above comments on video=' . get_the_title() . ' (ID=' . get_the_ID() . ')' );
+		}
+		?>
 	<?php endif; ?>
 
 	<?php

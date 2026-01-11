@@ -21,7 +21,8 @@ add_action('init', function () {
         }
 
         $post_type = get_post_type();
-        error_log('[TMW-SLOT-AUDIT] shortcode entry; allowed_on_post_type=' . ($post_type ?: 'null') . '; is_singular=' . (is_singular() ? '1' : '0'));
+        $location = doing_filter('the_content') ? 'the_content' : 'template_or_other';
+        error_log('[TMW-SLOT-AUDIT] shortcode entry; allowed_on_post_type=' . ($post_type ?: 'null') . '; is_singular=' . (is_singular() ? '1' : '0') . '; location=' . $location);
 
         return $return;
     }, 10, 4);
