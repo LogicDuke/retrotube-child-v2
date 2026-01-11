@@ -839,6 +839,7 @@ a.tag-link {
 
 
 /* v4.4.0 — Center slot banner without JS transforms */
+/* TMW-AUDIT: wrapper min-height reserves space for slot render; slot expected between about and tags. */
 .single-model .tmw-slot-banner-wrap {
   min-height: var(--tmw-slot-minh, 300px);
 }
