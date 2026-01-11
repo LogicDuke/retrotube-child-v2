@@ -159,16 +159,19 @@ if ( empty( $cta_label ) ) {
                                         <?php endif; ?>
                                 </div>
 
+								<?php
+								// TMW slot banner: between description and tags (model template).
+								if ( function_exists( 'tmw_render_model_slot_banner' ) ) {
+									echo '<div class="tmw-slot-banner-wrap tmw-slot-banner-between-desc-tags">';
+									echo tmw_render_model_slot_banner( (int) get_the_ID() );
+									echo '</div>';
+								}
+								?>
+
                                 <?php if ( xbox_get_field_value( 'wpst-options', 'show-categories-video-about' ) == 'on' || xbox_get_field_value( 'wpst-options', 'show-tags-video-about' ) == 'on' ) : ?>
                                         <div class="tags"><?php wpst_entry_footer(); ?></div>
                                 <?php endif; ?>
 						</div>
-
-						<?php
-						if ( function_exists( 'tmw_render_model_slot_banner' ) ) {
-							echo tmw_render_model_slot_banner( (int) get_the_ID() );
-						}
-						?>
 
 						<?php
 						$model_slug = get_post_field('post_name', get_the_ID());
