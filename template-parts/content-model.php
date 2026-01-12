@@ -169,13 +169,13 @@ if ( empty( $cta_label ) ) {
 						</div>
 
 						<?php
-						// === TMW SLOT BANNER ZONE (v4.5.0) ===
+						// === TMW SLOT BANNER ZONE (v4.5.1) ===
 						// Positioned OUTSIDE accordion, at full content width.
+						// FIXED: Removed wp_kses_post() which was stripping slot machine attributes.
 						$tmw_slot_post_id = (int) get_the_ID();
 						$tmw_slot_enabled = function_exists( 'tmw_model_slot_is_enabled' ) ? tmw_model_slot_is_enabled( $tmw_slot_post_id ) : false;
-						$tmw_slot_output  = '';
 
-						echo "\n<!-- TMW-SLOT-ZONE model_id={$tmw_slot_post_id} enabled=" . ( $tmw_slot_enabled ? 'yes' : 'no' ) . " -->\n";
+						echo "\n<!-- TMW-SLOT-ZONE v4.5.1 model_id={$tmw_slot_post_id} enabled=" . ( $tmw_slot_enabled ? 'yes' : 'no' ) . " -->\n";
 
 						if ( $tmw_slot_enabled && function_exists( 'tmw_model_slot_get_shortcode' ) ) {
 							$tmw_slot_shortcode = tmw_model_slot_get_shortcode( $tmw_slot_post_id );
@@ -186,18 +186,25 @@ if ( empty( $cta_label ) ) {
 							echo "<!-- TMW-SLOT-ZONE shortcode='{$tmw_slot_shortcode}' output_len={$tmw_slot_len} -->\n";
 
 							if ( $tmw_slot_len > 0 ) {
+								// Output the slot banner zone wrapper
 								echo '<div class="tmw-slot-banner-zone">';
 								echo '<div class="tmw-slot-banner">';
-								echo wp_kses_post( $tmw_slot_output );
+								// CRITICAL FIX: Output directly without wp_kses_post()
+								// The shortcode is from our trusted TMW Slot Machine plugin
+								// wp_kses_post() was stripping data-* attributes and breaking the slot
+								// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Trusted plugin shortcode output
+								echo $tmw_slot_output;
 								echo '</div>';
 								echo '</div>';
+								echo "<!-- TMW-SLOT-ZONE: rendered successfully -->\n";
 							} else {
-								echo "<!-- TMW-SLOT-ZONE: shortcode returned empty, check if plugin is active -->\n";
+								echo "<!-- TMW-SLOT-ZONE: shortcode returned empty -->\n";
+								echo "<!-- Check: 1) TMW Slot Machine plugin activated? 2) Plugin settings configured? -->\n";
 							}
 						} elseif ( ! $tmw_slot_enabled ) {
-							echo "<!-- TMW-SLOT-ZONE: disabled for this model -->\n";
+							echo "<!-- TMW-SLOT-ZONE: disabled for this model (checkbox not checked) -->\n";
 						} else {
-							echo "<!-- TMW-SLOT-ZONE: required functions not available -->\n";
+							echo "<!-- TMW-SLOT-ZONE: required functions not available (tmw-slot-banner.php not loaded) -->\n";
 						}
 						// === END TMW SLOT BANNER ZONE ===
 
