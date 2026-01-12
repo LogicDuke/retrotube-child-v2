@@ -150,64 +150,34 @@ if ( empty( $cta_label ) ) {
 
 			<div class="tab-content">
 				<?php $width = ( xbox_get_field_value( 'wpst-options', 'enable-views-system' ) == 'off' && xbox_get_field_value( 'wpst-options', 'enable-rating-system' ) == 'off' ) ? '100' : '70'; ?>
-				<div id="video-about" class="width<?php echo $width; ?>">
-                                <div class="video-description">
-                                        <?php if ( xbox_get_field_value( 'wpst-options', 'show-description-video-about' ) == 'on' ) : ?>
-                                                <div class="desc <?php echo ( xbox_get_field_value( 'wpst-options', 'truncate-description' ) == 'on' ) ? 'more' : ''; ?>">
-													<!-- [TMW-SLOT-AUDIT] BEGIN the_content -->
-                                                        <?php the_content(); ?>
-													<!-- [TMW-SLOT-AUDIT] END the_content -->
-                                                </div>
-                                        <?php endif; ?>
-                                </div>
-
-                                <?php if ( xbox_get_field_value( 'wpst-options', 'show-categories-video-about' ) == 'on' || xbox_get_field_value( 'wpst-options', 'show-tags-video-about' ) == 'on' ) : ?>
-										<!-- [TMW-SLOT-AUDIT] BEGIN tags -->
-                                        <div class="tags"><?php wpst_entry_footer(); ?></div>
-								<!-- [TMW-SLOT-AUDIT] END tags -->
-                                <?php endif; ?>
+					<div id="video-about" class="width<?php echo $width; ?>">
+						<div class="video-description">
+							<?php if ( xbox_get_field_value( 'wpst-options', 'show-description-video-about' ) == 'on' ) : ?>
+								<div class="desc <?php echo ( xbox_get_field_value( 'wpst-options', 'truncate-description' ) == 'on' ) ? 'more' : ''; ?>">
+									<!-- [TMW-SLOT-AUDIT] BEGIN the_content -->
+									<?php the_content(); ?>
+									<!-- [TMW-SLOT-AUDIT] END the_content -->
+								</div>
+							<?php endif; ?>
 						</div>
+					</div>
+				</div>
 
-						<?php
-						// === TMW SLOT BANNER ZONE (v4.5.1) ===
-						// Positioned OUTSIDE accordion, at full content width.
-						// FIXED: Removed wp_kses_post() which was stripping slot machine attributes.
-						$tmw_slot_post_id = (int) get_the_ID();
-						$tmw_slot_enabled = function_exists( 'tmw_model_slot_is_enabled' ) ? tmw_model_slot_is_enabled( $tmw_slot_post_id ) : false;
+				<?php
+				$tmw_slot_html = function_exists( 'tmw_model_slot_render_html' ) ? tmw_model_slot_render_html( (int) get_the_ID() ) : '';
+				if ( $tmw_slot_html !== '' ) {
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- trusted shortcode output from admin-defined meta
+					echo $tmw_slot_html;
+				}
+				?>
 
-						echo "\n<!-- TMW-SLOT-ZONE v4.5.1 model_id={$tmw_slot_post_id} enabled=" . ( $tmw_slot_enabled ? 'yes' : 'no' ) . " -->\n";
+				<?php if ( xbox_get_field_value( 'wpst-options', 'show-categories-video-about' ) == 'on' || xbox_get_field_value( 'wpst-options', 'show-tags-video-about' ) == 'on' ) : ?>
+					<!-- [TMW-SLOT-AUDIT] BEGIN tags -->
+					<div class="tags"><?php wpst_entry_footer(); ?></div>
+					<!-- [TMW-SLOT-AUDIT] END tags -->
+				<?php endif; ?>
 
-						if ( $tmw_slot_enabled && function_exists( 'tmw_model_slot_get_shortcode' ) ) {
-							$tmw_slot_shortcode = tmw_model_slot_get_shortcode( $tmw_slot_post_id );
-							$tmw_slot_output    = do_shortcode( $tmw_slot_shortcode );
-							$tmw_slot_output    = is_string( $tmw_slot_output ) ? trim( $tmw_slot_output ) : '';
-							$tmw_slot_len       = strlen( $tmw_slot_output );
-
-							echo "<!-- TMW-SLOT-ZONE shortcode='{$tmw_slot_shortcode}' output_len={$tmw_slot_len} -->\n";
-
-							if ( $tmw_slot_len > 0 ) {
-								// Output the slot banner zone wrapper
-								echo '<div class="tmw-slot-banner-zone">';
-								echo '<div class="tmw-slot-banner">';
-								// CRITICAL FIX: Output directly without wp_kses_post()
-								// The shortcode is from our trusted TMW Slot Machine plugin
-								// wp_kses_post() was stripping data-* attributes and breaking the slot
-								// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Trusted plugin shortcode output
-								echo $tmw_slot_output;
-								echo '</div>';
-								echo '</div>';
-								echo "<!-- TMW-SLOT-ZONE: rendered successfully -->\n";
-							} else {
-								echo "<!-- TMW-SLOT-ZONE: shortcode returned empty -->\n";
-								echo "<!-- Check: 1) TMW Slot Machine plugin activated? 2) Plugin settings configured? -->\n";
-							}
-						} elseif ( ! $tmw_slot_enabled ) {
-							echo "<!-- TMW-SLOT-ZONE: disabled for this model (checkbox not checked) -->\n";
-						} else {
-							echo "<!-- TMW-SLOT-ZONE: required functions not available (tmw-slot-banner.php not loaded) -->\n";
-						}
-						// === END TMW SLOT BANNER ZONE ===
-
+				<?php
 						$model_slug = get_post_field('post_name', get_the_ID());
                         if (!is_string($model_slug) || $model_slug === '') {
                                 if ($tmw_debug_enabled) {

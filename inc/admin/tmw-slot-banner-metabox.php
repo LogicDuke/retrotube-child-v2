@@ -14,9 +14,6 @@ add_action('add_meta_boxes', function () {
 
 			$enabled = (get_post_meta($post->ID, '_tmw_slot_enabled', true) === '1');
 			$shortcode = (string) get_post_meta($post->ID, '_tmw_slot_shortcode', true);
-			if (trim($shortcode) === '') {
-				$shortcode = '[tmw_slot_machine]';
-			}
 
 			wp_nonce_field('tmw_slot_banner_save', 'tmw_slot_banner_nonce');
 			?>
@@ -67,28 +64,13 @@ add_action('save_post_model', function ($post_id) {
 	}
 
 	$enabled = isset($_POST['tmw_slot_enabled']) ? '1' : '0';
-
 	$shortcode = '';
+
 	if (isset($_POST['tmw_slot_shortcode'])) {
 		$shortcode = sanitize_text_field(wp_unslash($_POST['tmw_slot_shortcode']));
 		$shortcode = trim($shortcode);
 	}
 
-	// Only store shortcode-looking strings; empty means “use default” in renderer.
-	if ($shortcode !== '' && $shortcode[0] !== '[') {
-		// Soft normalize: if user pasted without brackets, keep it but won’t render unless it’s a valid shortcode.
-		// We still save it; renderer will handle empty output safely.
-	}
-
-	if ($enabled === '1') {
-		update_post_meta($post_id, '_tmw_slot_enabled', '1');
-	} else {
-		delete_post_meta($post_id, '_tmw_slot_enabled');
-	}
-
-	if ($shortcode !== '') {
-		update_post_meta($post_id, '_tmw_slot_shortcode', $shortcode);
-	} else {
-		delete_post_meta($post_id, '_tmw_slot_shortcode');
-	}
+	update_post_meta($post_id, '_tmw_slot_enabled', $enabled);
+	update_post_meta($post_id, '_tmw_slot_shortcode', $shortcode);
 });
