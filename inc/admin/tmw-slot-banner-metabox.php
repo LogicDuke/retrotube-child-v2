@@ -8,36 +8,6 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// Register meta for REST API (required for Gutenberg)
-add_action('init', function () {
-    $args = [
-        'show_in_rest'      => true,
-        'single'            => true,
-        'type'              => 'string',
-        'auth_callback'     => function () {
-            return current_user_can('edit_posts');
-        },
-    ];
-
-    register_post_meta('model', '_tmw_slot_enabled', array_merge($args, [
-        'sanitize_callback' => function ($v) {
-            return $v === '1' ? '1' : '';
-        },
-    ]));
-
-    register_post_meta('model', '_tmw_slot_mode', array_merge($args, [
-        'sanitize_callback' => function ($v) {
-            return in_array($v, ['widget', 'shortcode']) ? $v : 'shortcode';
-        },
-        'default'           => 'shortcode',
-    ]));
-
-    register_post_meta('model', '_tmw_slot_shortcode', array_merge($args, [
-        'sanitize_callback' => 'sanitize_textarea_field',
-        'default'           => '[tmw_slot_machine]',
-    ]));
-});
-
 // Add metabox
 add_action('add_meta_boxes', function () {
     add_meta_box(
@@ -128,77 +98,36 @@ add_action('save_post_model', function ($post_id) {
         return;
     }
 
-    // Save enabled
     $enabled = isset($_POST['tmw_slot_enabled']) && $_POST['tmw_slot_enabled'] === '1';
-    update_post_meta($post_id, '_tmw_slot_enabled', $enabled ? '1' : '');
+    $mode = '';
+    $shortcode = '';
 
-    // Save mode (default to shortcode)
-    $mode = isset($_POST['tmw_slot_mode']) ? sanitize_text_field($_POST['tmw_slot_mode']) : 'shortcode';
-    if (!in_array($mode, ['widget', 'shortcode'])) {
-        $mode = 'shortcode';
-    }
-    update_post_meta($post_id, '_tmw_slot_mode', $mode);
+    if (!$enabled) {
+        delete_post_meta($post_id, '_tmw_slot_enabled');
+        delete_post_meta($post_id, '_tmw_slot_mode');
+        delete_post_meta($post_id, '_tmw_slot_shortcode');
+    } else {
+        update_post_meta($post_id, '_tmw_slot_enabled', '1');
 
-    // Save shortcode (default to [tmw_slot_machine])
-    $shortcode = isset($_POST['tmw_slot_shortcode']) ? sanitize_textarea_field($_POST['tmw_slot_shortcode']) : '';
-    if (trim($shortcode) === '') {
-        $shortcode = '[tmw_slot_machine]';
+        $mode = isset($_POST['tmw_slot_mode']) ? sanitize_text_field($_POST['tmw_slot_mode']) : 'shortcode';
+        if (!in_array($mode, ['widget', 'shortcode'], true)) {
+            $mode = 'shortcode';
+        }
+        update_post_meta($post_id, '_tmw_slot_mode', $mode);
+
+        $shortcode = isset($_POST['tmw_slot_shortcode']) ? sanitize_textarea_field($_POST['tmw_slot_shortcode']) : '';
+        $shortcode = trim($shortcode);
+        if ($mode === 'widget') {
+            delete_post_meta($post_id, '_tmw_slot_shortcode');
+        } elseif ($shortcode !== '') {
+            update_post_meta($post_id, '_tmw_slot_shortcode', $shortcode);
+        } else {
+            delete_post_meta($post_id, '_tmw_slot_shortcode');
+        }
     }
-    update_post_meta($post_id, '_tmw_slot_shortcode', trim($shortcode));
 
     if (defined('TMW_DEBUG') && TMW_DEBUG) {
-        error_log('[TMW-SLOT-SAVE] post_id=' . $post_id . ' enabled=' . ($enabled ? '1' : '0') . ' mode=' . $mode . ' shortcode=' . $shortcode);
+        $shortcode_len = strlen($shortcode);
+        error_log('[TMW-SLOT-META] save post_id=' . $post_id . ' enabled=' . ($enabled ? '1' : '0') . ' mode=' . $mode . ' shortcode_len=' . $shortcode_len);
     }
 }, 10, 1);
-
-// Gutenberg Block Editor save via REST API
-add_action('rest_after_insert_model', function ($post, $request) {
-    $meta = $request->get_param('meta');
-    if (!is_array($meta)) {
-        return;
-    }
-
-    $post_id = $post->ID;
-
-    if (array_key_exists('_tmw_slot_enabled', $meta)) {
-        update_post_meta($post_id, '_tmw_slot_enabled', $meta['_tmw_slot_enabled'] === '1' ? '1' : '');
-    }
-
-    if (array_key_exists('_tmw_slot_mode', $meta)) {
-        $mode = in_array($meta['_tmw_slot_mode'], ['widget', 'shortcode']) ? $meta['_tmw_slot_mode'] : 'shortcode';
-        update_post_meta($post_id, '_tmw_slot_mode', $mode);
-    }
-
-    if (array_key_exists('_tmw_slot_shortcode', $meta)) {
-        $sc = trim(sanitize_textarea_field($meta['_tmw_slot_shortcode']));
-        if ($sc === '') {
-            $sc = '[tmw_slot_machine]';
-        }
-        update_post_meta($post_id, '_tmw_slot_shortcode', $sc);
-    }
-
-    if (defined('TMW_DEBUG') && TMW_DEBUG) {
-        error_log('[TMW-SLOT-REST] post_id=' . $post_id . ' meta updated via REST API');
-    }
-}, 10, 2);
-
-// Enqueue JS for Gutenberg metabox sync
-add_action('enqueue_block_editor_assets', function () {
-    $screen = get_current_screen();
-    if (!$screen || $screen->post_type !== 'model') {
-        return;
-    }
-
-    $js_path = get_stylesheet_directory() . '/js/tmw-slot-metabox-sync.js';
-    if (!file_exists($js_path)) {
-        return;
-    }
-
-    wp_enqueue_script(
-        'tmw-slot-metabox-sync',
-        get_stylesheet_directory_uri() . '/js/tmw-slot-metabox-sync.js',
-        ['wp-data', 'wp-api-fetch', 'wp-element'],
-        filemtime($js_path),
-        true
-    );
-});

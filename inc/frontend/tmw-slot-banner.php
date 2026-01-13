@@ -27,78 +27,54 @@ function tmw_render_model_slot_banner_zone(int $post_id): string
 {
     $debug = defined('TMW_DEBUG') && TMW_DEBUG;
 
-    // Step 1: Check if enabled
     $enabled = get_post_meta($post_id, '_tmw_slot_enabled', true);
     if ($enabled !== '1') {
-        if ($debug) {
-            error_log('[TMW-SLOT-RENDER] post_id=' . $post_id . " SKIP: not enabled (value='" . $enabled . "')");
-        }
         return '';
     }
 
     $mode = get_post_meta($post_id, '_tmw_slot_mode', true);
+    if (!in_array($mode, ['widget', 'shortcode'], true)) {
+        $mode = 'shortcode';
+    }
+
     $shortcode = trim(get_post_meta($post_id, '_tmw_slot_shortcode', true));
+    $source = '';
+    $out = '';
 
-    if ($debug) {
-        error_log('[TMW-SLOT-RENDER] post_id=' . $post_id . " enabled=1 mode='" . $mode . "' shortcode='" . $shortcode . "'");
-    }
-
-    // Step 2: Try the configured shortcode first
-    if ($shortcode !== '') {
-        $out = do_shortcode($shortcode);
-        if (strlen(trim($out)) > 0) {
-            if ($debug) {
-                error_log('[TMW-SLOT-RENDER] post_id=' . $post_id . ' SUCCESS via configured shortcode, len=' . strlen($out));
-            }
-            return '<div class="tmw-slot-banner-zone"><div class="tmw-slot-banner">' . $out . '</div></div>';
-        }
-        if ($debug) {
-            error_log('[TMW-SLOT-RENDER] post_id=' . $post_id . ' configured shortcode returned empty');
-        }
-    }
-
-    // Step 3: Try default [tmw_slot_machine] shortcode
-    if (shortcode_exists('tmw_slot_machine')) {
-        $out = do_shortcode('[tmw_slot_machine]');
-        if (strlen(trim($out)) > 0) {
-            if ($debug) {
-                error_log('[TMW-SLOT-RENDER] post_id=' . $post_id . ' SUCCESS via default shortcode, len=' . strlen($out));
-            }
-            return '<div class="tmw-slot-banner-zone"><div class="tmw-slot-banner">' . $out . '</div></div>';
-        }
-        if ($debug) {
-            error_log('[TMW-SLOT-RENDER] post_id=' . $post_id . ' default shortcode returned empty');
-        }
-    } else {
-        if ($debug) {
-            error_log("[TMW-SLOT-RENDER] post_id=$post_id shortcode 'tmw_slot_machine' NOT REGISTERED");
-        }
-    }
-
-    // Step 4: Try widget area
-    if (is_active_sidebar('tmw-model-slot-banner-global')) {
+    if ($mode === 'widget') {
         ob_start();
         dynamic_sidebar('tmw-model-slot-banner-global');
-        $out = ob_get_clean();
-        if (strlen(trim($out)) > 0) {
-            if ($debug) {
-                error_log('[TMW-SLOT-RENDER] post_id=' . $post_id . ' SUCCESS via widget area, len=' . strlen($out));
-            }
-            return '<div class="tmw-slot-banner-zone"><div class="tmw-slot-banner">' . $out . '</div></div>';
-        }
-        if ($debug) {
-            error_log('[TMW-SLOT-RENDER] post_id=' . $post_id . ' widget area returned empty');
+        $out = trim(ob_get_clean());
+
+        if ($out === '' && shortcode_exists('tmw_slot_machine')) {
+            $out = trim(do_shortcode('[tmw_slot_machine]'));
+            $source = $out !== '' ? 'fallback' : '';
+        } elseif ($out !== '') {
+            $source = 'widget';
         }
     } else {
-        if ($debug) {
-            error_log('[TMW-SLOT-RENDER] post_id=' . $post_id . ' widget area not active');
+        if ($shortcode === '' && shortcode_exists('tmw_slot_machine')) {
+            $shortcode = '[tmw_slot_machine]';
+            $source = 'fallback';
+        }
+
+        if ($shortcode !== '') {
+            $out = trim(do_shortcode($shortcode));
+            if ($out !== '' && $source === '') {
+                $source = 'shortcode';
+            }
         }
     }
 
     if ($debug) {
-        error_log('[TMW-SLOT-RENDER] post_id=' . $post_id . ' ALL SOURCES EXHAUSTED - returning empty');
+        error_log('[TMW-SLOT] model_id=' . $post_id . ' enabled=yes mode=' . $mode . ' source=' . ($source !== '' ? $source : 'none') . ' output_len=' . strlen($out));
     }
-    return '';
+
+    if ($out === '') {
+        return '';
+    }
+
+    return '<div class="tmw-slot-banner-zone"><div class="tmw-slot-banner">' . $out . '</div></div>';
 }
 
 // Backwards compatibility alias
