@@ -198,6 +198,14 @@ if ( empty( $cta_label ) ) {
                                 </div>
                                 <!-- === END TMW-TAGS-BULLETPROOF-RESTORE === -->
                                 <?php endif; ?>
+								<?php
+								/**
+								 * TMW Slot Banner – safe placement AFTER tags
+								 */
+								if ( function_exists( 'tmw_render_model_slot_banner_zone' ) ) {
+									echo tmw_render_model_slot_banner_zone( get_the_ID() );
+								}
+								?>
 
                         <?php get_template_part( 'template-parts/model-videos' ); ?>
 
