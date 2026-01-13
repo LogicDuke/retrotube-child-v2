@@ -158,22 +158,14 @@ if ( empty( $cta_label ) ) {
                                         <?php endif; ?>
                                 </div>
 
-								<?php if ( xbox_get_field_value( 'wpst-options', 'show-categories-video-about' ) == 'on' || xbox_get_field_value( 'wpst-options', 'show-tags-video-about' ) == 'on' ) : ?>
-										<!-- [TMW-SLOT-AUDIT] BEGIN tags -->
-                                        <div class="tags"><?php wpst_entry_footer(); ?></div>
-								<!-- [TMW-SLOT-AUDIT] END tags -->
-                                <?php endif; ?>
-						</div>
-						<?php
-						$tmw_model_tags_count = get_query_var('tmw_model_tags_count', null);
-						$tmw_model_tags       = get_query_var('tmw_model_tags_data', []);
-						?>
-
 								<?php 
 								// === TMW SLOT BANNER ZONE ===
 								if (function_exists('tmw_render_model_slot_banner_zone')) :
 									$tmw_slot_html = tmw_render_model_slot_banner_zone((int) get_the_ID());
 									if ($tmw_slot_html !== '') :
+										if (defined('TMW_DEBUG') && TMW_DEBUG) {
+											error_log('[TMW-SLOT-FIX] template content-model.php echo len=' . strlen($tmw_slot_html) . ' model_id=' . get_the_ID());
+										}
 										// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 										echo $tmw_slot_html;
 									elseif (defined('TMW_DEBUG') && TMW_DEBUG) :
@@ -194,6 +186,17 @@ if ( empty( $cta_label ) ) {
 								endif;
 								// === END TMW SLOT BANNER ZONE ===
 								?>
+
+								<?php if ( xbox_get_field_value( 'wpst-options', 'show-categories-video-about' ) == 'on' || xbox_get_field_value( 'wpst-options', 'show-tags-video-about' ) == 'on' ) : ?>
+										<!-- [TMW-SLOT-AUDIT] BEGIN tags -->
+                                        <div class="tags"><?php wpst_entry_footer(); ?></div>
+								<!-- [TMW-SLOT-AUDIT] END tags -->
+                                <?php endif; ?>
+						</div>
+						<?php
+						$tmw_model_tags_count = get_query_var('tmw_model_tags_count', null);
+						$tmw_model_tags       = get_query_var('tmw_model_tags_data', []);
+						?>
                         <?php if ( $tmw_model_tags_count !== null ) : ?>
                                 <!-- === TMW-TAGS-BULLETPROOF-RESTORE === -->
                                 <div class="post-tags entry-tags tmw-model-tags<?php echo $tmw_model_tags_count === 0 ? ' no-tags' : ''; ?>">
