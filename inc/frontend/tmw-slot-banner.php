@@ -38,36 +38,35 @@ function tmw_render_model_slot_banner_zone(int $post_id): string
     }
 
     $shortcode = trim(get_post_meta($post_id, '_tmw_slot_shortcode', true));
+    $fallback_shortcode = $shortcode !== '' ? $shortcode : '[tmw_slot_machine]';
     $source = '';
     $out = '';
 
     if ($mode === 'widget') {
-        ob_start();
-        dynamic_sidebar('tmw-model-slot-banner-global');
-        $out = trim(ob_get_clean());
+        $widget_output = '';
+        if (is_active_sidebar('tmw-model-slot-banner-global')) {
+            ob_start();
+            dynamic_sidebar('tmw-model-slot-banner-global');
+            $widget_output = trim(ob_get_clean());
+        }
 
-        if ($out === '' && shortcode_exists('tmw_slot_machine')) {
-            $out = trim(do_shortcode('[tmw_slot_machine]'));
-            $source = $out !== '' ? 'fallback' : '';
-        } elseif ($out !== '') {
+        $has_marker = $widget_output !== '' && strpos($widget_output, 'tmw-slot-machine-container') !== false;
+        if ($widget_output !== '' && $has_marker) {
+            $out = $widget_output;
             $source = 'widget';
+        } else {
+            $out = trim(do_shortcode($fallback_shortcode));
+            $source = $out !== '' ? 'fallback' : '';
         }
     } else {
-        if ($shortcode === '' && shortcode_exists('tmw_slot_machine')) {
-            $shortcode = '[tmw_slot_machine]';
-            $source = 'fallback';
-        }
-
-        if ($shortcode !== '') {
-            $out = trim(do_shortcode($shortcode));
-            if ($out !== '' && $source === '') {
-                $source = 'shortcode';
-            }
+        $out = trim(do_shortcode($fallback_shortcode));
+        if ($out !== '') {
+            $source = $shortcode !== '' ? 'shortcode' : 'fallback';
         }
     }
 
     if ($debug) {
-        error_log('[TMW-SLOT] model_id=' . $post_id . ' enabled=yes mode=' . $mode . ' source=' . ($source !== '' ? $source : 'none') . ' output_len=' . strlen($out));
+        error_log('[TMW-SLOT-FIX] model_id=' . $post_id . ' enabled=' . $enabled . ' mode=' . $mode . ' source=' . ($source !== '' ? $source : 'none') . ' shortcode_len=' . strlen($fallback_shortcode) . ' out_len=' . strlen($out));
     }
 
     if ($out === '') {

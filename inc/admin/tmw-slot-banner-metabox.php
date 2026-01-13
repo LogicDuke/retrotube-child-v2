@@ -8,6 +8,38 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+add_action('init', function () {
+    register_post_meta('model', '_tmw_slot_enabled', [
+        'type' => 'string',
+        'single' => true,
+        'show_in_rest' => true,
+        'sanitize_callback' => 'sanitize_text_field',
+        'auth_callback' => function () {
+            return current_user_can('edit_posts');
+        },
+    ]);
+
+    register_post_meta('model', '_tmw_slot_mode', [
+        'type' => 'string',
+        'single' => true,
+        'show_in_rest' => true,
+        'sanitize_callback' => 'sanitize_text_field',
+        'auth_callback' => function () {
+            return current_user_can('edit_posts');
+        },
+    ]);
+
+    register_post_meta('model', '_tmw_slot_shortcode', [
+        'type' => 'string',
+        'single' => true,
+        'show_in_rest' => true,
+        'sanitize_callback' => 'sanitize_textarea_field',
+        'auth_callback' => function () {
+            return current_user_can('edit_posts');
+        },
+    ]);
+});
+
 // Add metabox
 add_action('add_meta_boxes', function () {
     add_meta_box(
@@ -117,17 +149,14 @@ add_action('save_post_model', function ($post_id) {
 
         $shortcode = isset($_POST['tmw_slot_shortcode']) ? sanitize_textarea_field($_POST['tmw_slot_shortcode']) : '';
         $shortcode = trim($shortcode);
-        if ($mode === 'widget') {
-            delete_post_meta($post_id, '_tmw_slot_shortcode');
-        } elseif ($shortcode !== '') {
+        if ($shortcode !== '') {
             update_post_meta($post_id, '_tmw_slot_shortcode', $shortcode);
-        } else {
-            delete_post_meta($post_id, '_tmw_slot_shortcode');
         }
     }
 
     if (defined('TMW_DEBUG') && TMW_DEBUG) {
-        $shortcode_len = strlen($shortcode);
-        error_log('[TMW-SLOT-META] save post_id=' . $post_id . ' enabled=' . ($enabled ? '1' : '0') . ' mode=' . $mode . ' shortcode_len=' . $shortcode_len);
+        $stored_shortcode = get_post_meta($post_id, '_tmw_slot_shortcode', true);
+        $shortcode_len = strlen((string) $stored_shortcode);
+        error_log('[TMW-SLOT-FIX] save post_id=' . $post_id . ' enabled=' . ($enabled ? '1' : '0') . ' mode=' . $mode . ' shortcode_len=' . $shortcode_len);
     }
 }, 10, 1);
