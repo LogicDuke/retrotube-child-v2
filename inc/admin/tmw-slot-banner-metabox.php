@@ -3,6 +3,36 @@ if (!defined('ABSPATH')) {
 	exit;
 }
 
+add_action('init', function () {
+	register_post_meta('model', '_tmw_slot_enabled', [
+		'show_in_rest' => true,
+		'single' => true,
+		'type' => 'string',
+		'sanitize_callback' => 'sanitize_text_field',
+		'auth_callback' => function () {
+			return current_user_can('edit_posts');
+		},
+	]);
+	register_post_meta('model', '_tmw_slot_mode', [
+		'show_in_rest' => true,
+		'single' => true,
+		'type' => 'string',
+		'sanitize_callback' => 'sanitize_text_field',
+		'auth_callback' => function () {
+			return current_user_can('edit_posts');
+		},
+	]);
+	register_post_meta('model', '_tmw_slot_shortcode', [
+		'show_in_rest' => true,
+		'single' => true,
+		'type' => 'string',
+		'sanitize_callback' => 'sanitize_textarea_field',
+		'auth_callback' => function () {
+			return current_user_can('edit_posts');
+		},
+	]);
+});
+
 add_action('add_meta_boxes', function () {
 	add_meta_box(
 		'tmw-slot-banner',
@@ -65,6 +95,7 @@ add_action('add_meta_boxes', function () {
 });
 
 add_action('save_post_model', function ($post_id) {
+	$debug = defined('TMW_DEBUG') && TMW_DEBUG;
 	if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
 		return;
 	}
@@ -87,6 +118,9 @@ add_action('save_post_model', function ($post_id) {
 		delete_post_meta($post_id, '_tmw_slot_enabled');
 		delete_post_meta($post_id, '_tmw_slot_mode');
 		delete_post_meta($post_id, '_tmw_slot_shortcode');
+		if ($debug) {
+			error_log('[TMW-SLOT-ADMIN] model_id=' . $post_id . ' enabled=no mode=none shortcode_len=0');
+		}
 		return;
 	}
 
@@ -113,8 +147,15 @@ add_action('save_post_model', function ($post_id) {
 		} else {
 			update_post_meta($post_id, '_tmw_slot_shortcode', $shortcode);
 		}
+		if ($debug) {
+			$shortcode_len = ($shortcode === '') ? 0 : strlen($shortcode);
+			error_log('[TMW-SLOT-ADMIN] model_id=' . $post_id . ' enabled=yes mode=shortcode shortcode_len=' . $shortcode_len);
+		}
 	} else {
 		update_post_meta($post_id, '_tmw_slot_mode', 'widget');
 		delete_post_meta($post_id, '_tmw_slot_shortcode');
+		if ($debug) {
+			error_log('[TMW-SLOT-ADMIN] model_id=' . $post_id . ' enabled=yes mode=widget shortcode_len=0');
+		}
 	}
 });
