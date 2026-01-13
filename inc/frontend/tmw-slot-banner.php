@@ -73,13 +73,13 @@ function tmw_render_model_slot_banner_zone(int $post_id): string
         return '';
     }
 
-    return sprintf('<div class="tmw-slot-banner-zone"><div class="tmw-slot-banner">%s</div></div>', $out);
+    return '<div class="tmw-slot-banner-zone"><div class="tmw-slot-banner">' . $out . '</div></div>';
 }
 
 // Backwards compatibility alias
 function tmw_render_model_slot_banner(int $post_id): string
 {
-    return call_user_func('tmw_render_model_slot_banner_zone', $post_id);
+    return tmw_render_model_slot_banner_zone($post_id);
 }
 
 // Helper functions

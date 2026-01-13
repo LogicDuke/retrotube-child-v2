@@ -145,13 +145,6 @@ if ( empty( $cta_label ) ) {
 				</div>
 			<?php endif; ?>
 
-			<?php
-			/**
-			 * TMW Slot Banner – safe anchor before accordion
-			 */
-			do_action( 'tmw_model_before_accordion' );
-			?>
-
 			<div class="tab-content">
 				<?php $width = ( xbox_get_field_value( 'wpst-options', 'enable-views-system' ) == 'off' && xbox_get_field_value( 'wpst-options', 'enable-rating-system' ) == 'off' ) ? '100' : '70'; ?>
 				<div id="video-about" class="width<?php echo $width; ?>">
@@ -165,6 +158,35 @@ if ( empty( $cta_label ) ) {
                                         <?php endif; ?>
                                 </div>
 
+								<?php 
+								// === TMW SLOT BANNER ZONE ===
+								if (function_exists('tmw_render_model_slot_banner_zone')) :
+									$tmw_slot_html = tmw_render_model_slot_banner_zone((int) get_the_ID());
+									if ($tmw_slot_html !== '') :
+										if (defined('TMW_DEBUG') && TMW_DEBUG) {
+											error_log('[TMW-SLOT-FIX] template content-model.php echo len=' . strlen($tmw_slot_html) . ' model_id=' . get_the_ID());
+										}
+										// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+										echo $tmw_slot_html;
+									elseif (defined('TMW_DEBUG') && TMW_DEBUG) :
+										// Debug comment showing current meta values
+										$d_id = get_the_ID();
+										$d_en = get_post_meta($d_id, '_tmw_slot_enabled', true);
+										$d_mo = get_post_meta($d_id, '_tmw_slot_mode', true);
+										$d_sc = get_post_meta($d_id, '_tmw_slot_shortcode', true);
+										printf(
+											'<!-- TMW_SLOT_DEBUG: post_id=%d enabled="%s" mode="%s" shortcode="%s" shortcode_exists=%s -->',
+											$d_id,
+											esc_attr($d_en),
+											esc_attr($d_mo),
+											esc_attr($d_sc),
+											shortcode_exists('tmw_slot_machine') ? 'yes' : 'NO'
+										);
+									endif;
+								endif;
+								// === END TMW SLOT BANNER ZONE ===
+								?>
+
 								<?php if ( xbox_get_field_value( 'wpst-options', 'show-categories-video-about' ) == 'on' || xbox_get_field_value( 'wpst-options', 'show-tags-video-about' ) == 'on' ) : ?>
 										<!-- [TMW-SLOT-AUDIT] BEGIN tags -->
                                         <div class="tags"><?php wpst_entry_footer(); ?></div>
@@ -175,43 +197,29 @@ if ( empty( $cta_label ) ) {
 						$tmw_model_tags_count = get_query_var('tmw_model_tags_count', null);
 						$tmw_model_tags       = get_query_var('tmw_model_tags_data', []);
 						?>
-						<?php if ( $tmw_model_tags_count !== null ) : ?>
-							<!-- === TMW-TAGS-BULLETPROOF-RESTORE === -->
-							<div class="post-tags entry-tags tmw-model-tags<?php echo $tmw_model_tags_count === 0 ? ' no-tags' : ''; ?>">
-								<span class="tag-title">
-									<i class="fa fa-tags" aria-hidden="true"></i>
-									<?php
-									echo $tmw_model_tags_count === 0
-										? esc_html__( '(No tags linked — audit mode)', 'retrotube' )
-										: esc_html__( 'Tags:', 'retrotube' );
-									?>
-								</span>
-								<?php if ( $tmw_model_tags_count > 0 && is_array( $tmw_model_tags ) ) : ?>
-									<?php foreach ( $tmw_model_tags as $tag ) : ?>
-										<a href="<?php echo get_tag_link( $tag->term_id ); ?>"
-											class="label"
-											title="<?php echo esc_attr( $tag->name ); ?>">
-											<i class="fa fa-tag"></i><?php echo esc_html( $tag->name ); ?>
-										</a>
-									<?php endforeach; ?>
-								<?php endif; ?>
-							</div>
-							<!-- === END TMW-TAGS-BULLETPROOF-RESTORE === -->
-						<?php endif; ?>
-
-						<?php
-						/**
-						 * TMW Slot Banner — SAFE render
-						 * Must NOT depend on tag count or accordion state
-						 */
-						if ( function_exists( 'tmw_render_model_slot_banner_zone' ) ) {
-							echo tmw_render_model_slot_banner_zone( get_the_ID() );
-						}
-
-						if ( $tmw_debug_enabled ) {
-							error_log( '[TMW-SLOT-FIX] Slot banner rendered outside tag scope for model_id=' . get_the_ID() );
-						}
-						?>
+                        <?php if ( $tmw_model_tags_count !== null ) : ?>
+                                <!-- === TMW-TAGS-BULLETPROOF-RESTORE === -->
+                                <div class="post-tags entry-tags tmw-model-tags<?php echo $tmw_model_tags_count === 0 ? ' no-tags' : ''; ?>">
+                                        <span class="tag-title">
+                                                <i class="fa fa-tags" aria-hidden="true"></i>
+                                                <?php
+                                                echo $tmw_model_tags_count === 0
+                                                        ? esc_html__('(No tags linked — audit mode)', 'retrotube')
+                                                        : esc_html__('Tags:', 'retrotube');
+                                                ?>
+                                        </span>
+                                        <?php if ($tmw_model_tags_count > 0 && is_array($tmw_model_tags)) : ?>
+                                                <?php foreach ($tmw_model_tags as $tag) : ?>
+                                                        <a href="<?php echo get_tag_link( $tag->term_id ); ?>"
+                                                                class="label"
+                                                                title="<?php echo esc_attr( $tag->name ); ?>">
+                                                                <i class="fa fa-tag"></i><?php echo esc_html( $tag->name ); ?>
+                                                        </a>
+                                                <?php endforeach; ?>
+                                        <?php endif; ?>
+                                </div>
+                                <!-- === END TMW-TAGS-BULLETPROOF-RESTORE === -->
+                                <?php endif; ?>
 
                         <?php get_template_part( 'template-parts/model-videos' ); ?>
 
