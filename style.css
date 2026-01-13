@@ -838,21 +838,20 @@ a.tag-link {
 }
 
 
-/* === TMW Slot Banner Zone v4.5.0 === */
+/* === TMW Slot Banner Zone v4.6.0 - Outside Accordion === */
 /* Zero footprint when disabled - only renders when slot has content */
 .single-model .tmw-slot-banner-zone {
   width: 100%;
   max-width: 100%;
-  margin: 20px 0 25px 0;
+  margin: 20px 0 15px 0;
   padding: 0;
   box-sizing: border-box;
 }
 
 .single-model .tmw-slot-banner-zone .tmw-slot-banner {
-  max-width: 1035px;
+  max-width: 100%;
   width: 100%;
-  margin-left: auto;
-  margin-right: auto;
+  margin: 0 auto;
   text-align: center;
 }
 
@@ -865,13 +864,6 @@ a.tag-link {
   .single-model .related-posts {
     content-visibility: auto;
     contain-intrinsic-size: auto 800px;
-  }
-}
-
-@media (max-width: 840px) {
-  .single-model .tmw-slot-banner-zone .tmw-slot-banner {
-    max-width: 100%;
-    padding: 0 10px;
   }
 }
 
