@@ -20,20 +20,6 @@ add_action('widgets_init', function () {
     ]);
 });
 
-add_action('tmw_model_before_accordion', function () {
-    if (!is_singular('model')) {
-        return;
-    }
-
-    $model_id = get_the_ID();
-
-    if (!tmw_model_slot_is_enabled($model_id)) {
-        return;
-    }
-
-    echo tmw_render_model_slot_banner_zone($model_id);
-}, 15);
-
 /**
  * BULLETPROOF renderer - tries ALL sources until one works
  */
@@ -93,7 +79,7 @@ function tmw_render_model_slot_banner_zone(int $post_id): string
 // Backwards compatibility alias
 function tmw_render_model_slot_banner(int $post_id): string
 {
-    return tmw_render_model_slot_banner_zone($post_id);
+    return call_user_func('tmw_render_model_slot_banner_zone', $post_id);
 }
 
 // Helper functions
