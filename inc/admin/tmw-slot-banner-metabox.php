@@ -14,6 +14,10 @@ add_action('add_meta_boxes', function () {
 
 			$enabled = (get_post_meta($post->ID, '_tmw_slot_enabled', true) === '1');
 			$shortcode = (string) get_post_meta($post->ID, '_tmw_slot_shortcode', true);
+			$mode = (string) get_post_meta($post->ID, '_tmw_slot_mode', true);
+			if ($mode !== 'widget' && $mode !== 'shortcode') {
+				$mode = $shortcode !== '' ? 'shortcode' : 'widget';
+			}
 
 			wp_nonce_field('tmw_slot_banner_save', 'tmw_slot_banner_nonce');
 			?>
@@ -25,15 +29,29 @@ add_action('add_meta_boxes', function () {
 			</p>
 
 			<p style="margin-top:10px;">
-				<label for="tmw_slot_shortcode" style="display:block; font-weight:600;">
-					<?php esc_html_e('Shortcode', 'retrotube-child'); ?>
+				<strong><?php esc_html_e('Banner source', 'retrotube-child'); ?></strong><br />
+				<label style="display:block; margin-top:6px;">
+					<input type="radio" name="tmw_slot_mode" value="widget" <?php checked($mode, 'widget'); ?> />
+					<?php esc_html_e('Use Global Widget Area', 'retrotube-child'); ?>
 				</label>
-				<input type="text"
+				<label style="display:block; margin-top:6px;">
+					<input type="radio" name="tmw_slot_mode" value="shortcode" <?php checked($mode, 'shortcode'); ?> />
+					<?php esc_html_e('Use Custom Shortcode', 'retrotube-child'); ?>
+				</label>
+				<span class="description" style="display:block; margin-top:6px;">
+					<?php esc_html_e('Widget area name: Model Page – Slot Banner (Global)', 'retrotube-child'); ?>
+				</span>
+			</p>
+
+			<p style="margin-top:10px;">
+				<label for="tmw_slot_shortcode" style="display:block; font-weight:600;">
+					<?php esc_html_e('Shortcode (used when "Use Custom Shortcode" is selected)', 'retrotube-child'); ?>
+				</label>
+				<textarea
 					id="tmw_slot_shortcode"
 					name="tmw_slot_shortcode"
-					value="<?php echo esc_attr($shortcode); ?>"
-					style="width:100%;"
-					placeholder="[tmw_slot_machine]" />
+					style="width:100%; min-height:80px;"
+					placeholder="[tmw_slot_machine]"><?php echo esc_textarea($shortcode); ?></textarea>
 				<span class="description" style="display:block; margin-top:6px;">
 					<?php esc_html_e('Paste the shortcode for the slot banner you want to display on this model.', 'retrotube-child'); ?>
 				</span>
@@ -63,14 +81,40 @@ add_action('save_post_model', function ($post_id) {
 		return;
 	}
 
-	$enabled = isset($_POST['tmw_slot_enabled']) ? '1' : '0';
-	$shortcode = '';
+	$enabled = isset($_POST['tmw_slot_enabled']);
 
-	if (isset($_POST['tmw_slot_shortcode'])) {
-		$shortcode = sanitize_text_field(wp_unslash($_POST['tmw_slot_shortcode']));
-		$shortcode = trim($shortcode);
+	if (!$enabled) {
+		delete_post_meta($post_id, '_tmw_slot_enabled');
+		delete_post_meta($post_id, '_tmw_slot_mode');
+		delete_post_meta($post_id, '_tmw_slot_shortcode');
+		return;
 	}
 
-	update_post_meta($post_id, '_tmw_slot_enabled', $enabled);
-	update_post_meta($post_id, '_tmw_slot_shortcode', $shortcode);
+	update_post_meta($post_id, '_tmw_slot_enabled', '1');
+
+	$mode = 'widget';
+	if (isset($_POST['tmw_slot_mode'])) {
+		$mode_value = sanitize_text_field(wp_unslash($_POST['tmw_slot_mode']));
+		if ($mode_value === 'shortcode' || $mode_value === 'widget') {
+			$mode = $mode_value;
+		}
+	}
+
+	if ($mode === 'shortcode') {
+		update_post_meta($post_id, '_tmw_slot_mode', 'shortcode');
+		$shortcode = '';
+		if (isset($_POST['tmw_slot_shortcode'])) {
+			$shortcode = sanitize_textarea_field(wp_unslash($_POST['tmw_slot_shortcode']));
+			$shortcode = trim($shortcode);
+		}
+
+		if ($shortcode === '') {
+			delete_post_meta($post_id, '_tmw_slot_shortcode');
+		} else {
+			update_post_meta($post_id, '_tmw_slot_shortcode', $shortcode);
+		}
+	} else {
+		update_post_meta($post_id, '_tmw_slot_mode', 'widget');
+		delete_post_meta($post_id, '_tmw_slot_shortcode');
+	}
 });
