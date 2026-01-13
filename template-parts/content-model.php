@@ -169,18 +169,31 @@ if ( empty( $cta_label ) ) {
 						$tmw_model_tags       = get_query_var('tmw_model_tags_data', []);
 						?>
 
-								<?php if (function_exists('tmw_render_model_slot_banner_zone')) : ?>
-									<?php
-									$tmw_slot_output = tmw_render_model_slot_banner_zone((int) get_the_ID());
-									if (!empty($tmw_slot_output)) {
-										// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Trusted widget/shortcode output (must keep data-* attrs)
-										echo $tmw_slot_output;
-										if ($tmw_debug_enabled) {
-											error_log('[TMW-SLOT-FIX] template echo slot banner len=' . strlen((string) $tmw_slot_output));
-										}
-									}
-									?>
-								<?php endif; ?>
+								<?php 
+								// === TMW SLOT BANNER ZONE ===
+								if (function_exists('tmw_render_model_slot_banner_zone')) :
+									$tmw_slot_html = tmw_render_model_slot_banner_zone((int) get_the_ID());
+									if ($tmw_slot_html !== '') :
+										// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+										echo $tmw_slot_html;
+									elseif (defined('TMW_DEBUG') && TMW_DEBUG) :
+										// Debug comment showing current meta values
+										$d_id = get_the_ID();
+										$d_en = get_post_meta($d_id, '_tmw_slot_enabled', true);
+										$d_mo = get_post_meta($d_id, '_tmw_slot_mode', true);
+										$d_sc = get_post_meta($d_id, '_tmw_slot_shortcode', true);
+										printf(
+											'<!-- TMW_SLOT_DEBUG: post_id=%d enabled="%s" mode="%s" shortcode="%s" shortcode_exists=%s -->',
+											$d_id,
+											esc_attr($d_en),
+											esc_attr($d_mo),
+											esc_attr($d_sc),
+											shortcode_exists('tmw_slot_machine') ? 'yes' : 'NO'
+										);
+									endif;
+								endif;
+								// === END TMW SLOT BANNER ZONE ===
+								?>
                         <?php if ( $tmw_model_tags_count !== null ) : ?>
                                 <!-- === TMW-TAGS-BULLETPROOF-RESTORE === -->
                                 <div class="post-tags entry-tags tmw-model-tags<?php echo $tmw_model_tags_count === 0 ? ' no-tags' : ''; ?>">
