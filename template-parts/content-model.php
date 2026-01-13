@@ -169,7 +169,6 @@ if ( empty( $cta_label ) ) {
 						$tmw_model_tags       = get_query_var('tmw_model_tags_data', []);
 						?>
 
-                        <?php if ( $tmw_model_tags_count !== null ) : ?>
 								<?php if (function_exists('tmw_render_model_slot_banner_zone')) : ?>
 									<?php
 									$tmw_zone = tmw_render_model_slot_banner_zone((int) get_the_ID());
@@ -179,6 +178,7 @@ if ( empty( $cta_label ) ) {
 									}
 									?>
 								<?php endif; ?>
+                        <?php if ( $tmw_model_tags_count !== null ) : ?>
                                 <!-- === TMW-TAGS-BULLETPROOF-RESTORE === -->
                                 <div class="post-tags entry-tags tmw-model-tags<?php echo $tmw_model_tags_count === 0 ? ' no-tags' : ''; ?>">
                                         <span class="tag-title">
