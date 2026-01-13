@@ -20,6 +20,20 @@ add_action('widgets_init', function () {
     ]);
 });
 
+add_action('tmw_model_before_about', function () {
+    if (!is_singular('model')) {
+        return;
+    }
+
+    $model_id = get_the_ID();
+
+    if (!tmw_model_slot_is_enabled($model_id)) {
+        return;
+    }
+
+    echo tmw_render_model_slot_banner_zone($model_id);
+}, 20);
+
 /**
  * BULLETPROOF renderer - tries ALL sources until one works
  */

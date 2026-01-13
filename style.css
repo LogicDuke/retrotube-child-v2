@@ -1045,3 +1045,9 @@ a.tag-link {
     opacity: 0.85;
   }
 }
+
+.tmw-slot-banner-zone {
+  display: block;
+  clear: both;
+  margin: 20px 0;
+}

@@ -145,6 +145,13 @@ if ( empty( $cta_label ) ) {
 				</div>
 			<?php endif; ?>
 
+			<?php
+			/**
+			 * TMW: Slot banner anchor (outside accordion, layout-safe)
+			 */
+			do_action( 'tmw_model_before_about' );
+			?>
+
 			<div class="tab-content">
 				<?php $width = ( xbox_get_field_value( 'wpst-options', 'enable-views-system' ) == 'off' && xbox_get_field_value( 'wpst-options', 'enable-rating-system' ) == 'off' ) ? '100' : '70'; ?>
 				<div id="video-about" class="width<?php echo $width; ?>">
@@ -157,35 +164,6 @@ if ( empty( $cta_label ) ) {
                                                 </div>
                                         <?php endif; ?>
                                 </div>
-
-								<?php 
-								// === TMW SLOT BANNER ZONE ===
-								if (function_exists('tmw_render_model_slot_banner_zone')) :
-									$tmw_slot_html = tmw_render_model_slot_banner_zone((int) get_the_ID());
-									if ($tmw_slot_html !== '') :
-										if (defined('TMW_DEBUG') && TMW_DEBUG) {
-											error_log('[TMW-SLOT-FIX] template content-model.php echo len=' . strlen($tmw_slot_html) . ' model_id=' . get_the_ID());
-										}
-										// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-										echo $tmw_slot_html;
-									elseif (defined('TMW_DEBUG') && TMW_DEBUG) :
-										// Debug comment showing current meta values
-										$d_id = get_the_ID();
-										$d_en = get_post_meta($d_id, '_tmw_slot_enabled', true);
-										$d_mo = get_post_meta($d_id, '_tmw_slot_mode', true);
-										$d_sc = get_post_meta($d_id, '_tmw_slot_shortcode', true);
-										printf(
-											'<!-- TMW_SLOT_DEBUG: post_id=%d enabled="%s" mode="%s" shortcode="%s" shortcode_exists=%s -->',
-											$d_id,
-											esc_attr($d_en),
-											esc_attr($d_mo),
-											esc_attr($d_sc),
-											shortcode_exists('tmw_slot_machine') ? 'yes' : 'NO'
-										);
-									endif;
-								endif;
-								// === END TMW SLOT BANNER ZONE ===
-								?>
 
 								<?php if ( xbox_get_field_value( 'wpst-options', 'show-categories-video-about' ) == 'on' || xbox_get_field_value( 'wpst-options', 'show-tags-video-about' ) == 'on' ) : ?>
 										<!-- [TMW-SLOT-AUDIT] BEGIN tags -->
