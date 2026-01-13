@@ -73,7 +73,7 @@ function tmw_render_model_slot_banner_zone(int $post_id): string
         return '';
     }
 
-    return '<div class="tmw-slot-banner-zone"><div class="tmw-slot-banner">' . $out . '</div></div>';
+    return sprintf('<div class="tmw-slot-banner-zone"><div class="tmw-slot-banner">%s</div></div>', $out);
 }
 
 // Backwards compatibility alias
