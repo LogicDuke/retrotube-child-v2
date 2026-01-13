@@ -42,6 +42,25 @@ $cta_note  = function_exists( 'get_field' ) ? get_field( 'model_link_note', $mod
 if ( empty( $cta_label ) ) {
         $cta_label = __( 'Watch Live', 'retrotube' );
 }
+
+$views_count    = function_exists( 'tmw_get_model_views' )
+	? tmw_get_model_views( (int) $model_id )
+	: (int) get_post_meta( $model_id, 'post_views_count', true );
+$likes_count    = function_exists( 'tmw_get_model_likes' )
+	? tmw_get_model_likes( (int) $model_id )
+	: (int) get_post_meta( $model_id, 'likes_count', true );
+$dislikes_count = function_exists( 'tmw_get_model_dislikes' )
+	? tmw_get_model_dislikes( (int) $model_id )
+	: (int) get_post_meta( $model_id, 'dislikes_count', true );
+$views_count    = is_numeric( $views_count ) ? (int) $views_count : 0;
+$likes_count    = is_numeric( $likes_count ) ? (int) $likes_count : 0;
+$dislikes_count = is_numeric( $dislikes_count ) ? (int) $dislikes_count : 0;
+$rating_percent = function_exists( 'tmw_get_model_rating_percent' )
+	? tmw_get_model_rating_percent( (int) $model_id )
+	: ( ( $likes_count + $dislikes_count ) > 0
+		? round( ( $likes_count / ( $likes_count + $dislikes_count ) ) * 100, 1 )
+		: 0 );
+$is_rated_yet   = ( 0 === ( $likes_count + $dislikes_count ) ) ? ' not-rated-yet' : '';
 ?>
 
 <article id="post-<?php the_ID(); ?>" <?php post_class(); ?> itemprop="performer" itemscope itemtype="http://schema.org/Person">
@@ -82,13 +101,6 @@ if ( empty( $cta_label ) ) {
 		<div class="title-block box-shadow">
 			<?php the_title( '<h1 class="entry-title model-name" itemprop="name">', '</h1>' ); ?>
 			<?php if ( xbox_get_field_value( 'wpst-options', 'enable-rating-system' ) == 'on' ) : ?>
-				<?php
-				$rating_percent = function_exists( 'tmw_get_post_like_rate' )
-					? tmw_get_post_like_rate( get_the_ID() )
-					: ( function_exists( 'wpst_get_post_like_rate' ) ? wpst_get_post_like_rate( get_the_ID() ) : false );
-				$is_rated_yet   = ( $rating_percent === false ) ? ' not-rated-yet' : '';
-				$rating_percent = ( $rating_percent === false ) ? 0 : (float) $rating_percent;
-				?>
 				<div id="rating" class="<?php echo esc_attr( trim( $is_rated_yet ) ); ?>">
 					<span id="video-rate">
 						<?php
@@ -122,25 +134,9 @@ if ( empty( $cta_label ) ) {
 		<div class="clear"></div>
 
 
-        </header><!-- .entry-header -->
+		</header><!-- .entry-header -->
 
 		<div class="entry-content">
-			<?php
-			$views_count    = function_exists( 'tmw_get_display_model_views' )
-				? tmw_get_display_model_views( (int) get_the_ID() )
-				: ( function_exists( 'tmw_get_post_views_count' )
-					? tmw_get_post_views_count( (int) get_the_ID() )
-					: ( function_exists( 'wpst_get_post_views' ) ? wpst_get_post_views( get_the_ID() ) : 0 ) );
-			$likes_count    = function_exists( 'tmw_get_post_likes_count' )
-				? tmw_get_post_likes_count( (int) get_the_ID() )
-				: ( function_exists( 'wpst_get_post_likes' ) ? wpst_get_post_likes( get_the_ID() ) : 0 );
-			$dislikes_count = function_exists( 'tmw_get_post_dislikes_count' )
-				? tmw_get_post_dislikes_count( (int) get_the_ID() )
-				: ( function_exists( 'wpst_get_post_dislikes' ) ? wpst_get_post_dislikes( get_the_ID() ) : 0 );
-			$views_count    = is_numeric( $views_count ) ? (int) $views_count : 0;
-			$likes_count    = is_numeric( $likes_count ) ? (int) $likes_count : 0;
-			$dislikes_count = is_numeric( $dislikes_count ) ? (int) $dislikes_count : 0;
-			?>
 			<?php if ( xbox_get_field_value( 'wpst-options', 'enable-views-system' ) == 'on' || xbox_get_field_value( 'wpst-options', 'enable-rating-system' ) == 'on' ) : ?>
 				<div id="rating-col">
 					<?php if ( xbox_get_field_value( 'wpst-options', 'enable-views-system' ) == 'on' ) : ?>
