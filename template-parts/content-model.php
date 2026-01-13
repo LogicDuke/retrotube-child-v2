@@ -147,9 +147,9 @@ if ( empty( $cta_label ) ) {
 
 			<?php
 			/**
-			 * TMW: Slot banner anchor (outside accordion, layout-safe)
+			 * TMW Slot Banner – safe anchor before accordion
 			 */
-			do_action( 'tmw_model_before_about' );
+			do_action( 'tmw_model_before_accordion' );
 			?>
 
 			<div class="tab-content">

@@ -20,7 +20,7 @@ add_action('widgets_init', function () {
     ]);
 });
 
-add_action('tmw_model_before_about', function () {
+add_action('tmw_model_before_accordion', function () {
     if (!is_singular('model')) {
         return;
     }
@@ -32,7 +32,7 @@ add_action('tmw_model_before_about', function () {
     }
 
     echo tmw_render_model_slot_banner_zone($model_id);
-}, 20);
+}, 15);
 
 /**
  * BULLETPROOF renderer - tries ALL sources until one works
