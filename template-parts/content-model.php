@@ -171,10 +171,13 @@ if ( empty( $cta_label ) ) {
 
 								<?php if (function_exists('tmw_render_model_slot_banner_zone')) : ?>
 									<?php
-									$tmw_zone = tmw_render_model_slot_banner_zone((int) get_the_ID());
-									if ($tmw_zone !== '') {
+									$tmw_slot_output = tmw_render_model_slot_banner_zone((int) get_the_ID());
+									if (!empty($tmw_slot_output)) {
 										// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Trusted widget/shortcode output (must keep data-* attrs)
-										echo $tmw_zone;
+										echo $tmw_slot_output;
+										if ($tmw_debug_enabled) {
+											error_log('[TMW-SLOT-FIX] template echo slot banner len=' . strlen((string) $tmw_slot_output));
+										}
 									}
 									?>
 								<?php endif; ?>
