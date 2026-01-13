@@ -164,35 +164,10 @@ if ( empty( $cta_label ) ) {
 								<!-- [TMW-SLOT-AUDIT] END tags -->
                                 <?php endif; ?>
 						</div>
-
-						$model_slug = get_post_field('post_name', get_the_ID());
-                        if (!is_string($model_slug) || $model_slug === '') {
-                                if ($tmw_debug_enabled) {
-                                        error_log('[TMW-MODEL-AUDIT] Unable to determine model slug in content-model.php');
-                                }
-                        } elseif (function_exists('tmw_get_videos_for_model')) {
-                                $videos = tmw_get_videos_for_model($model_slug);
-                                if (!is_array($videos)) {
-                                        $video_count = 0;
-                                        if ($tmw_debug_enabled) {
-                                                error_log('[TMW-MODEL-AUDIT] Unexpected result from tmw_get_videos_for_model for ' . $model_slug);
-                                        }
-                                } else {
-                                        $video_count = count($videos);
-                                }
-                                set_query_var('tmw_model_videos', $videos);
-                                if ($tmw_debug_enabled) {
-                                        error_log('[TMW-MODEL-AUDIT] ' . $model_slug . ' video count: ' . $video_count);
-                                }
-                        } else {
-                                if ($tmw_debug_enabled) {
-                                        error_log('[TMW-MODEL-AUDIT] tmw_get_videos_for_model unavailable in content-model.php');
-                                }
-                        }
-
-                        $tmw_model_tags_count = get_query_var('tmw_model_tags_count', null);
-                        $tmw_model_tags       = get_query_var('tmw_model_tags_data', []);
-                        ?>
+						<?php
+						$tmw_model_tags_count = get_query_var('tmw_model_tags_count', null);
+						$tmw_model_tags       = get_query_var('tmw_model_tags_data', []);
+						?>
 
                         <?php if ( $tmw_model_tags_count !== null ) : ?>
 								<?php if (function_exists('tmw_render_model_slot_banner_zone')) : ?>
