@@ -112,6 +112,117 @@ if (defined('TMW_DEBUG') && TMW_DEBUG) {
 }
 
 /* ======================================================================
+ * SLOT BANNER BACKFILL TOOL
+ * ====================================================================== */
+add_action('admin_menu', function () {
+  add_management_page(
+    'Slot Banner Backfill',
+    'Slot Banner Backfill',
+    'manage_options',
+    'tmw-slot-banner-backfill',
+    'tmw_render_slot_banner_backfill_page'
+  );
+});
+
+add_action('admin_post_tmw_slot_banner_backfill', function () {
+  if (!current_user_can('manage_options')) {
+    wp_die('Forbidden');
+  }
+
+  check_admin_referer('tmw_slot_banner_backfill');
+
+  $query = new WP_Query([
+    'post_type'      => 'model',
+    'post_status'    => 'any',
+    'posts_per_page' => -1,
+    'fields'         => 'ids',
+    'meta_query'     => [
+      'relation' => 'OR',
+      [
+        'key'     => '_tmw_slot_enabled',
+        'compare' => 'NOT EXISTS',
+      ],
+      [
+        'key'     => '_tmw_slot_mode',
+        'compare' => 'NOT EXISTS',
+      ],
+      [
+        'key'     => '_tmw_slot_shortcode',
+        'compare' => 'NOT EXISTS',
+      ],
+    ],
+  ]);
+
+  $total = is_array($query->posts) ? count($query->posts) : 0;
+  $updated = 0;
+  $skipped = 0;
+
+  foreach ((array) $query->posts as $post_id) {
+    $missing_enabled = !metadata_exists('post', $post_id, '_tmw_slot_enabled');
+    $missing_mode = !metadata_exists('post', $post_id, '_tmw_slot_mode');
+    $missing_shortcode = !metadata_exists('post', $post_id, '_tmw_slot_shortcode');
+
+    if ($missing_enabled || $missing_mode || $missing_shortcode) {
+      update_post_meta($post_id, '_tmw_slot_enabled', '1');
+      update_post_meta($post_id, '_tmw_slot_mode', 'shortcode');
+      update_post_meta($post_id, '_tmw_slot_shortcode', '[tmw_slot_machine]');
+      $updated++;
+    } else {
+      $skipped++;
+    }
+  }
+
+  if (defined('TMW_DEBUG') && TMW_DEBUG) {
+    error_log('[TMW-SLOT-META] backfill updated=' . $updated . ' skipped=' . $skipped . ' total=' . $total);
+  }
+
+  $redirect = add_query_arg([
+    'page'    => 'tmw-slot-banner-backfill',
+    'updated' => $updated,
+    'skipped' => $skipped,
+    'total'   => $total,
+  ], admin_url('tools.php'));
+
+  wp_safe_redirect($redirect);
+  exit;
+});
+
+function tmw_render_slot_banner_backfill_page() {
+  if (!current_user_can('manage_options')) {
+    return;
+  }
+
+  $updated = isset($_GET['updated']) ? (int) $_GET['updated'] : null;
+  $skipped = isset($_GET['skipped']) ? (int) $_GET['skipped'] : null;
+  $total = isset($_GET['total']) ? (int) $_GET['total'] : null;
+  ?>
+  <div class="wrap">
+    <h1><?php esc_html_e('Slot Banner Backfill', 'retrotube-child'); ?></h1>
+    <p><?php esc_html_e('Backfill missing slot banner meta for model posts.', 'retrotube-child'); ?></p>
+    <?php if ($updated !== null && $skipped !== null && $total !== null) : ?>
+      <div class="notice notice-success is-dismissible">
+        <p>
+          <?php
+          printf(
+            esc_html__('Processed %1$d posts. Updated %2$d, skipped %3$d.', 'retrotube-child'),
+            $total,
+            $updated,
+            $skipped
+          );
+          ?>
+        </p>
+      </div>
+    <?php endif; ?>
+    <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+      <?php wp_nonce_field('tmw_slot_banner_backfill'); ?>
+      <input type="hidden" name="action" value="tmw_slot_banner_backfill" />
+      <?php submit_button(__('Backfill Missing Slot Meta', 'retrotube-child')); ?>
+    </form>
+  </div>
+  <?php
+}
+
+/* ======================================================================
  * MODEL BANNER POSITION META BOX
  * ====================================================================== */
 if (!function_exists('tmw_render_banner_position_box')) {

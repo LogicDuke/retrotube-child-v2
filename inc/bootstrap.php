@@ -36,6 +36,7 @@ require_once __DIR__ . '/frontend/shortcodes.php';
 require_once __DIR__ . '/frontend/template-tags.php';
 require_once __DIR__ . '/frontend/model-stats.php';
 require_once __DIR__ . '/frontend/tmw-slot-banner.php';
+require_once __DIR__ . '/admin/tmw-slot-banner-meta.php';
 
 /** SEO helpers */
 require_once __DIR__ . '/seo/schema.php';
