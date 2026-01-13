@@ -55,8 +55,10 @@ if (!function_exists('tmw_render_model_slot_banner_zone')) {
 			return '';
 		}
 
+		$shortcode = tmw_model_slot_get_shortcode($post_id);
+		$shortcode_available = $shortcode !== '' && shortcode_exists('tmw_slot_machine');
+
 		if ($mode === 'shortcode') {
-			$shortcode = tmw_model_slot_get_shortcode($post_id);
 			if ($shortcode === '') {
 				if ($debug) {
 					error_log('[TMW-SLOT] model_id=' . $post_id . ' enabled=yes mode=shortcode source=shortcode output_len=0');
@@ -82,7 +84,26 @@ if (!function_exists('tmw_render_model_slot_banner_zone')) {
 			if ($debug) {
 				error_log('[TMW-SLOT] model_id=' . $post_id . ' enabled=yes mode=widget source=widget output_len=0');
 			}
-			return '';
+			if ($shortcode_available) {
+				$source = 'shortcode-fallback';
+			} else {
+				return '';
+			}
+		}
+
+		if ($source === 'shortcode-fallback') {
+			$out = do_shortcode($shortcode);
+			$output_len = is_string($out) ? strlen(trim($out)) : 0;
+
+			if ($debug) {
+				error_log('[TMW-SLOT] model_id=' . $post_id . ' enabled=yes mode=widget source=' . $source . ' output_len=' . $output_len);
+			}
+
+			if ($output_len === 0) {
+				return '';
+			}
+
+			return '<div class="tmw-slot-banner-zone"><div class="tmw-slot-banner">' . $out . '</div></div>';
 		}
 
 		ob_start();
@@ -95,6 +116,18 @@ if (!function_exists('tmw_render_model_slot_banner_zone')) {
 		}
 
 		if ($output_len === 0) {
+			if ($shortcode_available) {
+				$out = do_shortcode($shortcode);
+				$output_len = is_string($out) ? strlen(trim($out)) : 0;
+
+				if ($debug) {
+					error_log('[TMW-SLOT] model_id=' . $post_id . ' enabled=yes mode=widget source=shortcode-fallback output_len=' . $output_len);
+				}
+
+				if ($output_len > 0) {
+					return '<div class="tmw-slot-banner-zone"><div class="tmw-slot-banner">' . $out . '</div></div>';
+				}
+			}
 			return '';
 		}
 
