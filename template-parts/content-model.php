@@ -175,37 +175,43 @@ if ( empty( $cta_label ) ) {
 						$tmw_model_tags_count = get_query_var('tmw_model_tags_count', null);
 						$tmw_model_tags       = get_query_var('tmw_model_tags_data', []);
 						?>
-                        <?php if ( $tmw_model_tags_count !== null ) : ?>
-                                <!-- === TMW-TAGS-BULLETPROOF-RESTORE === -->
-                                <div class="post-tags entry-tags tmw-model-tags<?php echo $tmw_model_tags_count === 0 ? ' no-tags' : ''; ?>">
-                                        <span class="tag-title">
-                                                <i class="fa fa-tags" aria-hidden="true"></i>
-                                                <?php
-                                                echo $tmw_model_tags_count === 0
-                                                        ? esc_html__('(No tags linked — audit mode)', 'retrotube')
-                                                        : esc_html__('Tags:', 'retrotube');
-                                                ?>
-                                        </span>
-                                        <?php if ($tmw_model_tags_count > 0 && is_array($tmw_model_tags)) : ?>
-                                                <?php foreach ($tmw_model_tags as $tag) : ?>
-                                                        <a href="<?php echo get_tag_link( $tag->term_id ); ?>"
-                                                                class="label"
-                                                                title="<?php echo esc_attr( $tag->name ); ?>">
-                                                                <i class="fa fa-tag"></i><?php echo esc_html( $tag->name ); ?>
-                                                        </a>
-                                                <?php endforeach; ?>
-                                        <?php endif; ?>
-                                </div>
-                                <!-- === END TMW-TAGS-BULLETPROOF-RESTORE === -->
-                                <?php endif; ?>
-								<?php
-								/**
-								 * TMW Slot Banner – safe placement AFTER tags
-								 */
-								if ( function_exists( 'tmw_render_model_slot_banner_zone' ) ) {
-									echo tmw_render_model_slot_banner_zone( get_the_ID() );
-								}
-								?>
+						<?php if ( $tmw_model_tags_count !== null ) : ?>
+							<!-- === TMW-TAGS-BULLETPROOF-RESTORE === -->
+							<div class="post-tags entry-tags tmw-model-tags<?php echo $tmw_model_tags_count === 0 ? ' no-tags' : ''; ?>">
+								<span class="tag-title">
+									<i class="fa fa-tags" aria-hidden="true"></i>
+									<?php
+									echo $tmw_model_tags_count === 0
+										? esc_html__( '(No tags linked — audit mode)', 'retrotube' )
+										: esc_html__( 'Tags:', 'retrotube' );
+									?>
+								</span>
+								<?php if ( $tmw_model_tags_count > 0 && is_array( $tmw_model_tags ) ) : ?>
+									<?php foreach ( $tmw_model_tags as $tag ) : ?>
+										<a href="<?php echo get_tag_link( $tag->term_id ); ?>"
+											class="label"
+											title="<?php echo esc_attr( $tag->name ); ?>">
+											<i class="fa fa-tag"></i><?php echo esc_html( $tag->name ); ?>
+										</a>
+									<?php endforeach; ?>
+								<?php endif; ?>
+							</div>
+							<!-- === END TMW-TAGS-BULLETPROOF-RESTORE === -->
+						<?php endif; ?>
+
+						<?php
+						/**
+						 * TMW Slot Banner — SAFE render
+						 * Must NOT depend on tag count or accordion state
+						 */
+						if ( function_exists( 'tmw_render_model_slot_banner_zone' ) ) {
+							echo tmw_render_model_slot_banner_zone( get_the_ID() );
+						}
+
+						if ( $tmw_debug_enabled ) {
+							error_log( '[TMW-SLOT-FIX] Slot banner rendered outside tag scope for model_id=' . get_the_ID() );
+						}
+						?>
 
                         <?php get_template_part( 'template-parts/model-videos' ); ?>
 
