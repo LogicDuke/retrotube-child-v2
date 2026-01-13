@@ -14,12 +14,9 @@ if ($tmw_debug_enabled) {
 		? tmw_model_slot_get_shortcode((int) $model_id)
 		: ($slot_shortcode_value !== '' ? $slot_shortcode_value : '[tmw_slot_machine]');
 	$slot_raw_len = 0;
-	$slot_sanitized_len = 0;
 	if (function_exists('tmw_render_model_slot_banner')) {
 		$slot_output = do_shortcode($slot_shortcode);
 		$slot_raw_len = is_string($slot_output) ? strlen(trim($slot_output)) : 0;
-		$slot_sanitized = wp_kses_post($slot_output);
-		$slot_sanitized_len = is_string($slot_sanitized) ? strlen(trim($slot_sanitized)) : 0;
 	}
 	$wpst_like_exists = function_exists('wpst_get_post_like_link');
 	$wpst_rate_exists = function_exists('wpst_get_post_like_rate');
@@ -31,7 +28,7 @@ if ($tmw_debug_enabled) {
 	if ($slot_enabled_exists || $slot_shortcode_exists) {
 		error_log('[TMW-SLOT-AUDIT] slot_meta enabled_exists=' . ($slot_enabled_exists ? 'yes' : 'no') . ' enabled_value=' . ($slot_enabled_value !== '' ? $slot_enabled_value : 'empty') . ' shortcode_exists=' . ($slot_shortcode_exists ? 'yes' : 'no') . ' shortcode_value=' . ($slot_shortcode_value !== '' ? $slot_shortcode_value : 'empty'));
 	}
-	error_log('[TMW-SLOT-AUDIT] slot_enabled=' . ($slot_is_enabled ? 'yes' : 'no') . ' shortcode=' . $slot_shortcode . ' raw_len=' . $slot_raw_len . ' sanitized_len=' . $slot_sanitized_len);
+	error_log('[TMW-SLOT-AUDIT] slot_enabled=' . ($slot_is_enabled ? 'yes' : 'no') . ' shortcode=' . $slot_shortcode . ' raw_len=' . $slot_raw_len);
 	error_log('[TMW-LIKE-AUDIT] wpst_get_post_like_link_exists=' . ($wpst_like_exists ? 'yes' : 'no') . ' wpst_get_post_like_rate_exists=' . ($wpst_rate_exists ? 'yes' : 'no') . ' like_html_len=' . $like_html_len . ' has_vote_markup=' . ($like_has_markup ? 'yes' : 'no'));
 	error_log('[TMW-MODEL-AUDIT] template-parts/content-model.php loaded for ' . $model_name);
 }
@@ -161,52 +158,12 @@ if ( empty( $cta_label ) ) {
                                         <?php endif; ?>
                                 </div>
 
-                                <?php if ( xbox_get_field_value( 'wpst-options', 'show-categories-video-about' ) == 'on' || xbox_get_field_value( 'wpst-options', 'show-tags-video-about' ) == 'on' ) : ?>
+								<?php if ( xbox_get_field_value( 'wpst-options', 'show-categories-video-about' ) == 'on' || xbox_get_field_value( 'wpst-options', 'show-tags-video-about' ) == 'on' ) : ?>
 										<!-- [TMW-SLOT-AUDIT] BEGIN tags -->
                                         <div class="tags"><?php wpst_entry_footer(); ?></div>
 								<!-- [TMW-SLOT-AUDIT] END tags -->
                                 <?php endif; ?>
 						</div>
-
-						<?php
-						// === TMW SLOT BANNER ZONE (v4.5.1) ===
-						// Positioned OUTSIDE accordion, at full content width.
-						// FIXED: Removed wp_kses_post() which was stripping slot machine attributes.
-						$tmw_slot_post_id = (int) get_the_ID();
-						$tmw_slot_enabled = function_exists( 'tmw_model_slot_is_enabled' ) ? tmw_model_slot_is_enabled( $tmw_slot_post_id ) : false;
-
-						echo "\n<!-- TMW-SLOT-ZONE v4.5.1 model_id={$tmw_slot_post_id} enabled=" . ( $tmw_slot_enabled ? 'yes' : 'no' ) . " -->\n";
-
-						if ( $tmw_slot_enabled && function_exists( 'tmw_model_slot_get_shortcode' ) ) {
-							$tmw_slot_shortcode = tmw_model_slot_get_shortcode( $tmw_slot_post_id );
-							$tmw_slot_output    = do_shortcode( $tmw_slot_shortcode );
-							$tmw_slot_output    = is_string( $tmw_slot_output ) ? trim( $tmw_slot_output ) : '';
-							$tmw_slot_len       = strlen( $tmw_slot_output );
-
-							echo "<!-- TMW-SLOT-ZONE shortcode='{$tmw_slot_shortcode}' output_len={$tmw_slot_len} -->\n";
-
-							if ( $tmw_slot_len > 0 ) {
-								// Output the slot banner zone wrapper
-								echo '<div class="tmw-slot-banner-zone">';
-								echo '<div class="tmw-slot-banner">';
-								// CRITICAL FIX: Output directly without wp_kses_post()
-								// The shortcode is from our trusted TMW Slot Machine plugin
-								// wp_kses_post() was stripping data-* attributes and breaking the slot
-								// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Trusted plugin shortcode output
-								echo $tmw_slot_output;
-								echo '</div>';
-								echo '</div>';
-								echo "<!-- TMW-SLOT-ZONE: rendered successfully -->\n";
-							} else {
-								echo "<!-- TMW-SLOT-ZONE: shortcode returned empty -->\n";
-								echo "<!-- Check: 1) TMW Slot Machine plugin activated? 2) Plugin settings configured? -->\n";
-							}
-						} elseif ( ! $tmw_slot_enabled ) {
-							echo "<!-- TMW-SLOT-ZONE: disabled for this model (checkbox not checked) -->\n";
-						} else {
-							echo "<!-- TMW-SLOT-ZONE: required functions not available (tmw-slot-banner.php not loaded) -->\n";
-						}
-						// === END TMW SLOT BANNER ZONE ===
 
 						$model_slug = get_post_field('post_name', get_the_ID());
                         if (!is_string($model_slug) || $model_slug === '') {
@@ -238,6 +195,15 @@ if ( empty( $cta_label ) ) {
                         ?>
 
                         <?php if ( $tmw_model_tags_count !== null ) : ?>
+								<?php if (function_exists('tmw_render_model_slot_banner_zone')) : ?>
+									<?php
+									$tmw_zone = tmw_render_model_slot_banner_zone((int) get_the_ID());
+									if ($tmw_zone !== '') {
+										// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Trusted widget/shortcode output (must keep data-* attrs)
+										echo $tmw_zone;
+									}
+									?>
+								<?php endif; ?>
                                 <!-- === TMW-TAGS-BULLETPROOF-RESTORE === -->
                                 <div class="post-tags entry-tags tmw-model-tags<?php echo $tmw_model_tags_count === 0 ? ' no-tags' : ''; ?>">
                                         <span class="tag-title">
