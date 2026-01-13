@@ -192,17 +192,61 @@ if ( has_post_thumbnail() && wp_get_attachment_url( get_post_thumbnail_id() ) ) 
 	<?php endif; ?>
 
 	<?php
-	// [TMW-VIDEO-TAGS] v4.4.2 — Tags moved out of accordion to sit above comments (Leave a Reply)
+	// [TMW-VIDEO-TAGS] v4.5.0 — Unified tag layout matching model page
 	$tmw_debug_enabled = defined( 'TMW_DEBUG' ) && TMW_DEBUG;
 
-	if ( xbox_get_field_value( 'wpst-options', 'show-categories-video-about' ) == 'on' || xbox_get_field_value( 'wpst-options', 'show-tags-video-about' ) == 'on' ) : ?>
-		<div class="tags"><?php wpst_entry_footer(); ?></div>
+	if ( xbox_get_field_value( 'wpst-options', 'show-tags-video-about' ) == 'on' ) :
+		$video_tags = get_the_tags( get_the_ID() );
+		$video_tags_count = is_array( $video_tags ) ? count( $video_tags ) : 0;
+		?>
+		<!-- === TMW-VIDEO-TAGS-UNIFIED === -->
+		<div class="post-tags entry-tags tmw-video-tags<?php echo $video_tags_count === 0 ? ' no-tags' : ''; ?>">
+			<span class="tag-title">
+				<i class="fa fa-tags" aria-hidden="true"></i>
+				<?php echo esc_html__( 'Tags:', 'retrotube' ); ?>
+			</span>
+			<?php if ( $video_tags_count > 0 ) : ?>
+				<?php foreach ( $video_tags as $tag ) : ?>
+					<a href="<?php echo esc_url( get_tag_link( $tag->term_id ) ); ?>"
+						class="label"
+						title="<?php echo esc_attr( $tag->name ); ?>">
+						<i class="fa fa-tag"></i><?php echo esc_html( $tag->name ); ?>
+					</a>
+				<?php endforeach; ?>
+			<?php endif; ?>
+		</div>
+		<!-- === END TMW-VIDEO-TAGS-UNIFIED === -->
 		<?php
 		if ( $tmw_debug_enabled ) {
-			error_log( '[TMW-VIDEO-TAGS] rendered above comments on video=' . get_the_title() . ' (ID=' . get_the_ID() . ')' );
+			error_log( '[TMW-VIDEO-TAGS] rendered with unified layout on video=' . get_the_title() . ' (ID=' . get_the_ID() . ')' );
 		}
 		?>
 	<?php endif; ?>
+
+	<?php
+	// Also show categories if enabled (separate from tags)
+	if ( xbox_get_field_value( 'wpst-options', 'show-categories-video-about' ) == 'on' ) :
+		$video_categories = get_the_category( get_the_ID() );
+		$video_cats_count = is_array( $video_categories ) ? count( $video_categories ) : 0;
+		if ( $video_cats_count > 0 ) :
+		?>
+		<div class="post-categories entry-categories tmw-video-categories">
+			<span class="category-title">
+				<i class="fa fa-folder" aria-hidden="true"></i>
+				<?php echo esc_html__( 'Categories:', 'retrotube' ); ?>
+			</span>
+			<?php foreach ( $video_categories as $cat ) : ?>
+				<a href="<?php echo esc_url( get_category_link( $cat->term_id ) ); ?>"
+					class="label"
+					title="<?php echo esc_attr( $cat->name ); ?>">
+					<i class="fa fa-folder-o"></i><?php echo esc_html( $cat->name ); ?>
+				</a>
+			<?php endforeach; ?>
+		</div>
+		<?php
+		endif;
+	endif;
+	?>
 
 	<?php
 	// 🔹 Comments
