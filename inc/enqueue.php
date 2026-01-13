@@ -166,6 +166,33 @@ add_action('wp_enqueue_scripts', function () {
   }
 }, 100);
 
+// [TMW-VOTE] Always-visible voting buttons + AJAX updates (models + videos).
+add_action('wp_enqueue_scripts', function () {
+  if (!is_singular(['model', 'post', 'video'])) {
+    return;
+  }
+
+  $script_path = get_stylesheet_directory() . '/js/tmw-voting.js';
+  if (!file_exists($script_path)) {
+    return;
+  }
+
+  $script_ver = filemtime($script_path) ?: tmw_child_style_version();
+  wp_enqueue_script(
+    'tmw-voting',
+    get_stylesheet_directory_uri() . '/js/tmw-voting.js',
+    [],
+    $script_ver,
+    true
+  );
+
+  wp_localize_script('tmw-voting', 'tmwVoting', [
+    'ajaxUrl' => admin_url('admin-ajax.php'),
+    'nonce'   => wp_create_nonce('tmw_vote'),
+    'postId'  => get_queried_object_id(),
+  ]);
+}, 110);
+
 // Model tag styles now inherit from the global stylesheet to match video tags.
 
 /* === TMW: Extend Video Widget for Model Filtering (Hybrid post/video) === */

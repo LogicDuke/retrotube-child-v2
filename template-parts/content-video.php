@@ -67,12 +67,20 @@ if ( has_post_thumbnail() && wp_get_attachment_url( get_post_thumbnail_id() ) ) 
 			<?php the_title( '<h1 class="entry-title" itemprop="name">', '</h1>' ); ?>
 			<?php if ( xbox_get_field_value( 'wpst-options', 'enable-rating-system' ) == 'on' ) : ?>
 				<?php
-				$rating_percent = wpst_get_post_like_rate( get_the_ID() );
+				$rating_percent = function_exists( 'tmw_get_post_like_rate' )
+					? tmw_get_post_like_rate( get_the_ID() )
+					: ( function_exists( 'wpst_get_post_like_rate' ) ? wpst_get_post_like_rate( get_the_ID() ) : false );
 				$is_rated_yet   = ( $rating_percent === false ) ? ' not-rated-yet' : '';
 				$rating_percent = ( $rating_percent === false ) ? 0 : (float) $rating_percent;
 				?>
 				<div id="rating" class="<?php echo esc_attr( trim( $is_rated_yet ) ); ?>">
-					<span id="video-rate"><?php echo wpst_get_post_like_link( get_the_ID() ); ?></span>
+					<span id="video-rate">
+						<?php
+						echo function_exists( 'tmw_get_post_like_link' )
+							? tmw_get_post_like_link( get_the_ID() )
+							: ( function_exists( 'wpst_get_post_like_link' ) ? wpst_get_post_like_link( get_the_ID() ) : '' );
+						?>
+					</span>
 				</div>
 			<?php endif; ?>
 			<div id="video-tabs" class="tabs">
@@ -127,9 +135,15 @@ if ( has_post_thumbnail() && wp_get_attachment_url( get_post_thumbnail_id() ) ) 
 
 	<div class="entry-content">
 		<?php
-		$views_count    = function_exists( 'wpst_get_post_views' ) ? wpst_get_post_views( get_the_ID() ) : 0;
-		$likes_count    = function_exists( 'wpst_get_post_likes' ) ? wpst_get_post_likes( get_the_ID() ) : 0;
-		$dislikes_count = function_exists( 'wpst_get_post_dislikes' ) ? wpst_get_post_dislikes( get_the_ID() ) : 0;
+		$views_count    = function_exists( 'tmw_get_post_views_count' )
+			? tmw_get_post_views_count( (int) get_the_ID() )
+			: ( function_exists( 'wpst_get_post_views' ) ? wpst_get_post_views( get_the_ID() ) : 0 );
+		$likes_count    = function_exists( 'tmw_get_post_likes_count' )
+			? tmw_get_post_likes_count( (int) get_the_ID() )
+			: ( function_exists( 'wpst_get_post_likes' ) ? wpst_get_post_likes( get_the_ID() ) : 0 );
+		$dislikes_count = function_exists( 'tmw_get_post_dislikes_count' )
+			? tmw_get_post_dislikes_count( (int) get_the_ID() )
+			: ( function_exists( 'wpst_get_post_dislikes' ) ? wpst_get_post_dislikes( get_the_ID() ) : 0 );
 		$views_count    = is_numeric( $views_count ) ? (int) $views_count : 0;
 		$likes_count    = is_numeric( $likes_count ) ? (int) $likes_count : 0;
 		$dislikes_count = is_numeric( $dislikes_count ) ? (int) $dislikes_count : 0;
