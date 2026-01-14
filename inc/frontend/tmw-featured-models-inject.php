@@ -83,7 +83,11 @@ if (!function_exists('tmw_featured_models_render_block')) {
             return '';
         }
 
-        return '<!-- TMW-FEATURED-MODELS -->' . $markup;
+        $wrapped = '<!-- TMW-FEATURED-MODELS:START -->' . "\n"
+            . $markup . "\n"
+            . '<!-- TMW-FEATURED-MODELS:END -->';
+
+        return trim($wrapped);
     }
 }
 
@@ -159,7 +163,7 @@ if (!function_exists('tmw_featured_models_find_insertion_pos')) {
 }
 
 if (!function_exists('tmw_featured_models_log_anchor')) {
-    function tmw_featured_models_log_anchor(string $anchor) {
+    function tmw_featured_models_log_anchor(string $anchor, string $archive_relocate = '') {
         if (!defined('TMW_DEBUG') || !TMW_DEBUG) {
             return;
         }
@@ -169,7 +173,12 @@ if (!function_exists('tmw_featured_models_log_anchor')) {
         }
 
         $GLOBALS['tmw_featured_models_injector_logged'] = true;
-        error_log('[TMW-FEATURED-INJECT] anchor=' . $anchor);
+        $message = '[TMW-FEATURED-INJECT] ';
+        if ($archive_relocate !== '') {
+            $message .= 'archive_relocate=' . $archive_relocate . ' ';
+        }
+        $message .= 'anchor=' . $anchor;
+        error_log($message);
     }
 }
 
@@ -188,10 +197,17 @@ if (!function_exists('tmw_featured_models_injector_callback')) {
             return $buffer;
         }
 
-        if (strpos($buffer, '<!-- TMW-FEATURED-MODELS -->') !== false) {
-            tmw_featured_models_log_anchor('skipped');
-            $GLOBALS['tmw_featured_models_markup'] = '';
-            return $buffer;
+        $start_marker = '<!-- TMW-FEATURED-MODELS:START -->';
+        $end_marker = '<!-- TMW-FEATURED-MODELS:END -->';
+        $block_to_insert = $markup;
+        $start_pos = strpos($buffer, $start_marker);
+        if ($start_pos !== false) {
+            $end_pos = strpos($buffer, $end_marker, $start_pos);
+            if ($end_pos !== false) {
+                $end_pos += strlen($end_marker);
+                $block_to_insert = substr($buffer, $start_pos, $end_pos - $start_pos);
+                $buffer = substr_replace($buffer, '', $start_pos, $end_pos - $start_pos);
+            }
         }
 
         if (defined('TMW_DEBUG') && TMW_DEBUG) {
@@ -224,10 +240,50 @@ if (!function_exists('tmw_featured_models_injector_callback')) {
                 . ' last_three=' . (empty($last_three) ? '[]' : '[' . implode(', ', $last_three) . ']'));
         }
 
-        $insert_pos = tmw_featured_models_find_insertion_pos($buffer);
-        $log_anchor = isset($GLOBALS['tmw_featured_models_insertion_anchor'])
-            ? $GLOBALS['tmw_featured_models_insertion_anchor']
-            : 'skipped';
+        $insert_pos = false;
+        $log_anchor = 'skipped';
+        $archive_relocate = '';
+
+        if (is_category() || is_tag()) {
+            $archive_relocate = is_category() ? 'category' : 'tag';
+            $aside_pos = stripos($buffer, '<aside');
+            if ($aside_pos !== false) {
+                $left = substr($buffer, 0, $aside_pos);
+                $main_close = strripos($left, '</main>');
+                if ($main_close !== false) {
+                    $insert_pos = $main_close;
+                    $log_anchor = 'main-before-aside';
+                }
+            }
+
+            if ($insert_pos === false) {
+                $main_close = strripos($buffer, '</main>');
+                if ($main_close !== false) {
+                    $insert_pos = $main_close;
+                    $log_anchor = 'main-before-footer';
+                }
+            }
+
+            if ($insert_pos === false) {
+                $footer_pos = strripos($buffer, '</footer>');
+                if ($footer_pos !== false) {
+                    $insert_pos = $footer_pos;
+                    $log_anchor = 'fallback-footer';
+                }
+            }
+
+            if ($insert_pos === false) {
+                $insert_pos = strlen($buffer);
+                $log_anchor = 'append-end';
+            }
+
+            $block_to_insert = '<div class="tmw-featured-models-anchor">' . $block_to_insert . '</div>';
+        } else {
+            $insert_pos = tmw_featured_models_find_insertion_pos($buffer);
+            $log_anchor = isset($GLOBALS['tmw_featured_models_insertion_anchor'])
+                ? $GLOBALS['tmw_featured_models_insertion_anchor']
+                : 'skipped';
+        }
 
         if (defined('TMW_DEBUG') && TMW_DEBUG) {
             $used_main_offset = false;
@@ -250,10 +306,10 @@ if (!function_exists('tmw_featured_models_injector_callback')) {
         }
 
         if ($insert_pos !== false) {
-            $buffer = substr_replace($buffer, $markup, $insert_pos, 0);
+            $buffer = substr_replace($buffer, $block_to_insert, $insert_pos, 0);
         }
 
-        tmw_featured_models_log_anchor($log_anchor);
+        tmw_featured_models_log_anchor($log_anchor, $archive_relocate);
 
         $GLOBALS['tmw_featured_models_markup'] = '';
         return $buffer;
