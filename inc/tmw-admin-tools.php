@@ -485,24 +485,6 @@ add_filter( 'redirect_canonical', function( $redirect_url, $requested_url ) {
     return $redirect_url;
 }, 10, 2 );
 
-add_filter( 'widget_display_callback', function( $instance, $widget, $args ) {
-  if ( $widget instanceof wpst_WP_Widget_Videos_Block ) {
-    ob_start();
-    $widget->widget( $args, $instance );
-    $output = ob_get_clean();
-
-    $host = preg_quote( wp_parse_url( home_url(), PHP_URL_HOST ), '#' );
-    // Only rewrite links that point directly to ?filter= without the /videos/ prefix.
-    $pattern = '#(href=["\'])(?:https?://'.$host.')?/\?filter=([^"\']+)#i';
-    $output = preg_replace( $pattern, '$1' . home_url( '/videos/?filter=' ) . '$2', $output );
-
-    echo $output;
-    return false;
-  }
-
-  return $instance;
-}, 10, 3 );
-
 /**
  * Sync LiveJasmin performer profiles with Retrotube Model CPT
  * Triggered automatically after each imported video is linked to a model
