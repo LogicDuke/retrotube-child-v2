@@ -766,11 +766,22 @@ if (!function_exists('tmw_get_featured_shortcode_for_context')) {
 
 if (!function_exists('tmw_should_output_featured_block')) {
   function tmw_should_output_featured_block() {
+    $excluded_slugs = [
+      '18-u-s-c-2257',
+      'dmca',
+      'privacy-policy-top-models-webcam',
+      'terms-of-use-of-top-models-webcam-directory',
+    ];
+
     if (is_front_page() || is_home()) {
       return false;
     }
 
     if (is_post_type_archive('model')) {
+      return false;
+    }
+
+    if (is_page($excluded_slugs)) {
       return false;
     }
 
@@ -826,27 +837,6 @@ if (!function_exists('tmw_featured_block_output_buffer_start')) {
       return;
     }
 
-    if (defined('TMW_DEBUG') && TMW_DEBUG) {
-      $excluded_slugs = [
-        '18-u-s-c-2257',
-        'dmca',
-        'privacy-policy-top-models-webcam',
-        'terms-of-use-of-top-models-webcam-directory',
-      ];
-      $context = [
-        'is_category' => is_category() ? '1' : '0',
-        'is_tag' => is_tag() ? '1' : '0',
-        'is_page' => is_page() ? '1' : '0',
-        'is_archive' => is_archive() ? '1' : '0',
-        'is_singular' => is_singular() ? '1' : '0',
-        'excluded_match' => is_page($excluded_slugs) ? '1' : '0',
-      ];
-      error_log(sprintf(
-        '[TMW-AUDIT] Featured Models buffer start. template_context=%s',
-        wp_json_encode($context)
-      ));
-    }
-
     $GLOBALS['tmw_featured_block_buffer_started'] = true;
     ob_start();
 
@@ -875,15 +865,8 @@ if (!function_exists('tmw_featured_block_inject_into_main')) {
     $markup = tmw_featured_block_markup();
 
     if ($markup !== '') {
-      if (defined('TMW_DEBUG') && TMW_DEBUG) {
-        error_log(sprintf(
-          '[TMW-AUDIT] Featured Models rendered via hook: get_footer priority 0 in %s:%d',
-          __FILE__,
-          __LINE__
-        ));
-      }
       if (strpos($buffer, '</main>') !== false) {
-        $buffer = preg_replace('#</main>#', $markup . '</main>', $buffer, 1);
+        $buffer = preg_replace('#</main>#', '</main>' . $markup, $buffer, 1);
       } else {
         $buffer .= $markup;
       }
