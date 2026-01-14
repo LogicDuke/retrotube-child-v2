@@ -99,55 +99,40 @@ if (!function_exists('tmw_featured_models_find_insertion_pos')) {
         }
 
         $aside_pos = stripos($html, '<aside');
-        $scope = $html;
-        $used_aside_scope = false;
+        $search_end = $aside_pos !== false ? $aside_pos : strlen($html);
+        $primary_open_pos = false;
+        $primary_open_end = false;
 
-        if ($aside_pos !== false) {
-            $scope = substr($html, 0, $aside_pos);
-            $used_aside_scope = true;
+        if (preg_match('~<div\b[^>]*\bid\s*=\s*["\']primary["\'][^>]*>~i', $html, $primary_match, PREG_OFFSET_CAPTURE)) {
+            $primary_open_pos = $primary_match[0][1];
+            $primary_open_end = $primary_open_pos + strlen($primary_match[0][0]);
         }
 
-        $matches = [];
-        if (preg_match_all('~<main\b[^>]*>~i', $scope, $matches, PREG_OFFSET_CAPTURE) && !empty($matches[0])) {
-            $selected = null;
-            foreach ($matches[0] as $match) {
-                if (preg_match('~\bid\s*=\s*["\']main["\']~i', $match[0])) {
-                    $selected = $match;
-                    break;
-                }
+        if ($primary_open_pos !== false) {
+            $sub = substr($html, $primary_open_pos, $search_end - $primary_open_pos);
+            $main_close_pos = strripos($sub, '</main>');
+            if ($main_close_pos !== false) {
+                $GLOBALS['tmw_featured_models_insertion_anchor'] = 'primary-main-before-aside';
+                return $primary_open_pos + $main_close_pos;
             }
 
-            if ($selected === null) {
-                foreach ($matches[0] as $match) {
-                    if (preg_match('~\bid\s*=\s*["\']primary["\']~i', $match[0])) {
-                        $selected = $match;
-                        break;
-                    }
-                }
-            }
-
-            if ($selected === null) {
-                $selected = $matches[0][count($matches[0]) - 1];
-            }
-
-            $open_pos = $selected[1];
-            $open_end = $open_pos + strlen($selected[0]);
+            $cursor = $primary_open_end;
             $depth = 1;
-            $cursor = $open_end;
-
-            while (preg_match('~</?main\b[^>]*>~i', $scope, $tag_match, PREG_OFFSET_CAPTURE, $cursor)) {
+            while (preg_match('~</?div\b[^>]*>~i', $html, $tag_match, PREG_OFFSET_CAPTURE, $cursor)) {
                 $tag = $tag_match[0][0];
                 $tag_pos = $tag_match[0][1];
-                if (stripos($tag, '</main') === 0) {
+                if ($tag_pos >= $search_end) {
+                    break;
+                }
+
+                if (stripos($tag, '</div') === 0) {
                     $depth--;
                 } else {
                     $depth++;
                 }
 
                 if ($depth === 0) {
-                    $GLOBALS['tmw_featured_models_insertion_anchor'] = $used_aside_scope
-                        ? 'scope-main-before-aside'
-                        : 'main-scan';
+                    $GLOBALS['tmw_featured_models_insertion_anchor'] = 'primary-close-before-aside';
                     return $tag_pos;
                 }
 
@@ -155,32 +140,21 @@ if (!function_exists('tmw_featured_models_find_insertion_pos')) {
             }
         }
 
-        $fallback_pos = strripos($scope, '</main>');
-        if ($fallback_pos !== false) {
-            $GLOBALS['tmw_featured_models_insertion_anchor'] = 'fallback-last-main';
-            return $fallback_pos;
+        $footer_pos = strripos($html, '</footer>');
+        if ($footer_pos !== false) {
+            $before_footer = substr($html, 0, $footer_pos);
+            $fallback_pos = strripos($before_footer, '</main>');
+            if ($fallback_pos !== false) {
+                $GLOBALS['tmw_featured_models_insertion_anchor'] = 'fallback-last-main';
+                return $fallback_pos;
+            }
+
+            $GLOBALS['tmw_featured_models_insertion_anchor'] = 'fallback-footer';
+            return $footer_pos;
         }
 
-        $fallback_pos = strripos($html, '</main>');
-        if ($fallback_pos !== false) {
-            $GLOBALS['tmw_featured_models_insertion_anchor'] = 'fallback-last-main';
-            return $fallback_pos;
-        }
-
-        $fallback_pos = strripos($html, '</footer>');
-        if ($fallback_pos !== false) {
-            $GLOBALS['tmw_featured_models_insertion_anchor'] = 'footer';
-            return $fallback_pos;
-        }
-
-        $fallback_pos = strripos($html, '</body>');
-        if ($fallback_pos !== false) {
-            $GLOBALS['tmw_featured_models_insertion_anchor'] = 'body';
-            return $fallback_pos;
-        }
-
-        $GLOBALS['tmw_featured_models_insertion_anchor'] = 'skipped';
-        return false;
+        $GLOBALS['tmw_featured_models_insertion_anchor'] = 'fallback-append';
+        return strlen($html);
     }
 }
 
