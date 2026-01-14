@@ -5,6 +5,7 @@
 get_header();
 
 $filter   = isset( $_GET['filter'] ) ? sanitize_text_field( wp_unslash( $_GET['filter'] ) ) : '';
+$cat      = isset( $_GET['cat'] ) ? absint( $_GET['cat'] ) : 0;
 $instance = array();
 
 if ( $filter ) {
@@ -13,28 +14,42 @@ if ( $filter ) {
             'title'          => __( 'Latest videos', 'retrotube-child' ),
             'video_type'     => 'latest',
             'video_number'   => 12,
-            'video_category' => 0,
+            'video_category' => $cat,
         );
     } elseif ( 'random' === $filter ) {
         $instance = array(
             'title'          => __( 'Random videos', 'retrotube-child' ),
             'video_type'     => 'random',
             'video_number'   => 12,
-            'video_category' => 0,
+            'video_category' => $cat,
+        );
+    } elseif ( 'related' === $filter ) {
+        $instance = array(
+            'title'          => __( 'Related videos', 'retrotube-child' ),
+            'video_type'     => 'random',
+            'video_number'   => 12,
+            'video_category' => $cat,
         );
     } elseif ( 'longest' === $filter ) {
         $instance = array(
             'title'          => __( 'Longest videos', 'retrotube-child' ),
             'video_type'     => 'longest',
             'video_number'   => 12,
-            'video_category' => 0,
+            'video_category' => $cat,
         );
     } elseif ( 'popular' === $filter ) {
         $instance = array(
             'title'          => __( 'Most popular videos', 'retrotube-child' ),
             'video_type'     => 'popular',
             'video_number'   => 12,
-            'video_category' => 0,
+            'video_category' => $cat,
+        );
+    } elseif ( 'most-viewed' === $filter ) {
+        $instance = array(
+            'title'          => __( 'Most viewed videos', 'retrotube-child' ),
+            'video_type'     => 'most-viewed',
+            'video_number'   => 12,
+            'video_category' => $cat,
         );
     } elseif ( is_numeric( $filter ) ) {
         $category_id = absint( $filter );
@@ -45,7 +60,7 @@ if ( $filter ) {
             $title     = sprintf( __( '%s videos', 'retrotube-child' ), $term->name );
             $instance  = array(
                 'title'          => $title,
-                'video_type'     => 'category',
+                'video_type'     => 'latest',
                 'video_number'   => 12,
                 'video_category' => $category_id,
             );
