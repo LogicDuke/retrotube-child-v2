@@ -2,12 +2,8 @@
 /**
  * Tag archive template override for Retrotube Child theme.
  *
- * Delegates rendering to the parent template; the Featured Models block is now injected globally.
+ * Uses child theme layout to ensure Featured Models renders correctly at the bottom of the left column.
  */
-
-if (tmw_try_parent_template(['tag.php', 'archive.php', 'index.php'])) {
-    return;
-}
 
 get_header();
 
