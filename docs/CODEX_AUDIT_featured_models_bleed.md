@@ -49,16 +49,7 @@ When the token replacement inserts after `</main>`, the Featured Models markup i
 ## Exclusion policy pages (unchanged)
 `tmw_should_output_featured_block()` already excludes the four policy pages by slug and does not rely on the buffer token. This is still intact and should remain unchanged during the fix.
 
-## Logging (audit-only)
-A minimal debug log was added under `TMW_DEBUG` to report:
-* `is_category`, `is_single`, `is_page`, `is_author`
-* Whether insertion occurred
-* Which token was used (`</main>` or `append-buffer`)
-
-Log tag: `[TMW-AUDIT-FEATURED]`
-
 ## Fix plan (next PR)
 1. **Confirm the parent template boundaries** on the affected templates (single, page, author, and generic archive) to find the correct insertion boundary inside the left column. The primary target should be **before** `</main>` (preferred) or before `</div><!-- #primary -->` if `</main>` cannot be reliably targeted.
 2. **Scope Featured Models injection to category archives only**, keeping the previous layout behavior for non-category templates.
 3. **Retain policy-page exclusions** as-is to avoid regressions.
-4. Remove the `[TMW-AUDIT-FEATURED]` debug logs after the fix is verified.

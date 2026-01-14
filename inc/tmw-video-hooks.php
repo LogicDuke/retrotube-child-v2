@@ -817,6 +817,10 @@ if (!function_exists('tmw_featured_block_markup')) {
 
 if (!function_exists('tmw_featured_block_output_buffer_start')) {
   function tmw_featured_block_output_buffer_start() {
+    if (!is_category()) {
+      return;
+    }
+
     if (is_admin() || wp_doing_ajax() || wp_doing_cron()) {
       return;
     }
@@ -863,31 +867,14 @@ if (!function_exists('tmw_featured_block_inject_into_main')) {
     }
 
     $markup = tmw_featured_block_markup();
-    $token_used = 'none';
-    $inserted = false;
+    $primary_close_token = '</div><!-- #primary -->';
 
     if ($markup !== '') {
       if (strpos($buffer, '</main>') !== false) {
-        $buffer = preg_replace('#</main>#', '</main>' . $markup, $buffer, 1);
-        $token_used = '</main>';
-        $inserted = true;
-      } else {
-        $buffer .= $markup;
-        $token_used = 'append-buffer';
-        $inserted = true;
+        $buffer = preg_replace('#</main>#', $markup . '</main>', $buffer, 1);
+      } elseif (strpos($buffer, $primary_close_token) !== false) {
+        $buffer = preg_replace('#' . preg_quote($primary_close_token, '#') . '#', $markup . $primary_close_token, $buffer, 1);
       }
-    }
-
-    if (function_exists('tmw_debug_log')) {
-      tmw_debug_log(sprintf(
-        '[TMW-AUDIT-FEATURED] is_category=%d is_single=%d is_page=%d is_author=%d inserted=%d token=%s',
-        is_category() ? 1 : 0,
-        is_single() ? 1 : 0,
-        is_page() ? 1 : 0,
-        is_author() ? 1 : 0,
-        $inserted ? 1 : 0,
-        $token_used
-      ));
     }
 
     echo $buffer; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
