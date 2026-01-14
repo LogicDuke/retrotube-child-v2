@@ -8,6 +8,7 @@ if (defined('TMW_DEBUG') && TMW_DEBUG) {
   error_log('[TMW-MODEL-AUDIT] taxonomy-models.php loaded for ' . single_term_title('', false));
 }
 get_header();
+$tmw_video_widget_class = class_exists('TMW_WP_Widget_Videos_Block_Fixed') ? 'TMW_WP_Widget_Videos_Block_Fixed' : 'wpst_WP_Widget_Videos_Block';
 ?>
 <div class="tmw-title">
   <span class="tmw-star">★</span>
@@ -19,7 +20,7 @@ get_header();
     <h2 class="widget-title">Videos Featuring <?php echo single_term_title('', false); ?></h2>
     <?php
     the_widget(
-        'wpst_WP_Widget_Videos_Block',
+        $tmw_video_widget_class,
         array(
             'title'          => sprintf(__('Videos Featuring %s', 'retrotube-child'), single_term_title('', false)),
             'video_type'     => 'model',
