@@ -87,78 +87,99 @@ if (!function_exists('tmw_featured_models_render_block')) {
     }
 }
 
-if (!function_exists('tmw_featured_models_find_main_close_pos')) {
+if (!function_exists('tmw_featured_models_find_insertion_pos')) {
     /**
-     * Find the correct </main> closing position.
-     *
-     * IMPROVED: Uses sidebar position as reference to ensure we find the
-     * </main> that closes the main content area, not some nested main tag.
+     * Find the correct insertion point for Featured Models markup.
      */
-    function tmw_featured_models_find_main_close_pos(string $html) {
+    function tmw_featured_models_find_insertion_pos(string $html) {
+        $GLOBALS['tmw_featured_models_insertion_anchor'] = 'skipped';
+
         if ($html === '') {
             return false;
         }
 
-        // IMPROVED: Find sidebar position first, then look for </main> before it
         $aside_pos = stripos($html, '<aside');
+        $scope = $html;
+        $used_aside_scope = false;
+
         if ($aside_pos !== false) {
-            $content_before_sidebar = substr($html, 0, $aside_pos);
-            $last_main_close = strripos($content_before_sidebar, '</main>');
-            if ($last_main_close !== false) {
-                return $last_main_close;
-            }
+            $scope = substr($html, 0, $aside_pos);
+            $used_aside_scope = true;
         }
 
-        // Fallback to original logic if no sidebar found
-        if (!preg_match_all('~<main\b[^>]*>~i', $html, $matches, PREG_OFFSET_CAPTURE) || empty($matches[0])) {
-            return false;
-        }
-
-        $selected = null;
-        $matches_count = count($matches[0]);
-        for ($i = 0; $i < $matches_count; $i++) {
-            $tag = $matches[0][$i][0];
-            if (preg_match('~\bid\s*=\s*["\']main["\']~i', $tag)) {
-                $selected = $matches[0][$i];
-                break;
-            }
-        }
-
-        if ($selected === null) {
-            for ($i = 0; $i < $matches_count; $i++) {
-                $tag = $matches[0][$i][0];
-                if (preg_match('~\bid\s*=\s*["\']primary["\']~i', $tag)) {
-                    $selected = $matches[0][$i];
+        $matches = [];
+        if (preg_match_all('~<main\b[^>]*>~i', $scope, $matches, PREG_OFFSET_CAPTURE) && !empty($matches[0])) {
+            $selected = null;
+            foreach ($matches[0] as $match) {
+                if (preg_match('~\bid\s*=\s*["\']main["\']~i', $match[0])) {
+                    $selected = $match;
                     break;
                 }
             }
-        }
 
-        if ($selected === null) {
-            $selected = $matches[0][$matches_count - 1];
-        }
-
-        $open_pos = $selected[1];
-        $open_end = $open_pos + strlen($selected[0]);
-        $depth = 1;
-        $cursor = $open_end;
-
-        while (preg_match('~</?main\b[^>]*>~i', $html, $tag_match, PREG_OFFSET_CAPTURE, $cursor)) {
-            $tag = $tag_match[0][0];
-            $tag_pos = $tag_match[0][1];
-            if (stripos($tag, '</main') === 0) {
-                $depth--;
-            } else {
-                $depth++;
+            if ($selected === null) {
+                foreach ($matches[0] as $match) {
+                    if (preg_match('~\bid\s*=\s*["\']primary["\']~i', $match[0])) {
+                        $selected = $match;
+                        break;
+                    }
+                }
             }
 
-            if ($depth === 0) {
-                return $tag_pos;
+            if ($selected === null) {
+                $selected = $matches[0][count($matches[0]) - 1];
             }
 
-            $cursor = $tag_pos + strlen($tag);
+            $open_pos = $selected[1];
+            $open_end = $open_pos + strlen($selected[0]);
+            $depth = 1;
+            $cursor = $open_end;
+
+            while (preg_match('~</?main\b[^>]*>~i', $scope, $tag_match, PREG_OFFSET_CAPTURE, $cursor)) {
+                $tag = $tag_match[0][0];
+                $tag_pos = $tag_match[0][1];
+                if (stripos($tag, '</main') === 0) {
+                    $depth--;
+                } else {
+                    $depth++;
+                }
+
+                if ($depth === 0) {
+                    $GLOBALS['tmw_featured_models_insertion_anchor'] = $used_aside_scope
+                        ? 'scope-main-before-aside'
+                        : 'main-scan';
+                    return $tag_pos;
+                }
+
+                $cursor = $tag_pos + strlen($tag);
+            }
         }
 
+        $fallback_pos = strripos($scope, '</main>');
+        if ($fallback_pos !== false) {
+            $GLOBALS['tmw_featured_models_insertion_anchor'] = 'fallback-last-main';
+            return $fallback_pos;
+        }
+
+        $fallback_pos = strripos($html, '</main>');
+        if ($fallback_pos !== false) {
+            $GLOBALS['tmw_featured_models_insertion_anchor'] = 'fallback-last-main';
+            return $fallback_pos;
+        }
+
+        $fallback_pos = strripos($html, '</footer>');
+        if ($fallback_pos !== false) {
+            $GLOBALS['tmw_featured_models_insertion_anchor'] = 'footer';
+            return $fallback_pos;
+        }
+
+        $fallback_pos = strripos($html, '</body>');
+        if ($fallback_pos !== false) {
+            $GLOBALS['tmw_featured_models_insertion_anchor'] = 'body';
+            return $fallback_pos;
+        }
+
+        $GLOBALS['tmw_featured_models_insertion_anchor'] = 'skipped';
         return false;
     }
 }
@@ -199,17 +220,13 @@ if (!function_exists('tmw_featured_models_injector_callback')) {
             return $buffer;
         }
 
-        $log_anchor = 'skipped';
-        $main_pos = tmw_featured_models_find_main_close_pos($buffer);
-        if ($main_pos !== false) {
-            $log_anchor = 'main-scan';
-            $buffer = substr_replace($buffer, $markup, $main_pos, 0);
-        } else {
-            $footer_pos = strripos($buffer, '</footer>');
-            if ($footer_pos !== false) {
-                $log_anchor = 'footer-fallback';
-                $buffer = substr_replace($buffer, $markup, $footer_pos, 0);
-            }
+        $insert_pos = tmw_featured_models_find_insertion_pos($buffer);
+        $log_anchor = isset($GLOBALS['tmw_featured_models_insertion_anchor'])
+            ? $GLOBALS['tmw_featured_models_insertion_anchor']
+            : 'skipped';
+
+        if ($insert_pos !== false) {
+            $buffer = substr_replace($buffer, $markup, $insert_pos, 0);
         }
 
         tmw_featured_models_log_anchor($log_anchor);
