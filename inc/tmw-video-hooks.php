@@ -863,13 +863,31 @@ if (!function_exists('tmw_featured_block_inject_into_main')) {
     }
 
     $markup = tmw_featured_block_markup();
+    $token_used = 'none';
+    $inserted = false;
 
     if ($markup !== '') {
       if (strpos($buffer, '</main>') !== false) {
         $buffer = preg_replace('#</main>#', '</main>' . $markup, $buffer, 1);
+        $token_used = '</main>';
+        $inserted = true;
       } else {
         $buffer .= $markup;
+        $token_used = 'append-buffer';
+        $inserted = true;
       }
+    }
+
+    if (function_exists('tmw_debug_log')) {
+      tmw_debug_log(sprintf(
+        '[TMW-AUDIT-FEATURED] is_category=%d is_single=%d is_page=%d is_author=%d inserted=%d token=%s',
+        is_category() ? 1 : 0,
+        is_single() ? 1 : 0,
+        is_page() ? 1 : 0,
+        is_author() ? 1 : 0,
+        $inserted ? 1 : 0,
+        $token_used
+      ));
     }
 
     echo $buffer; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
