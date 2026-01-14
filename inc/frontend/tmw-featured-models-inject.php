@@ -220,10 +220,60 @@ if (!function_exists('tmw_featured_models_injector_callback')) {
             return $buffer;
         }
 
+        if (defined('TMW_DEBUG') && TMW_DEBUG) {
+            $aside_pos = stripos($buffer, '<aside');
+            $primary_pos = false;
+            $primary_match = [];
+            if (preg_match('~<div\b[^>]*\bid\s*=\s*["\']primary["\']~i', $buffer, $primary_match, PREG_OFFSET_CAPTURE)) {
+                $primary_pos = $primary_match[0][1];
+            }
+
+            $main_close_positions = [];
+            $main_close_matches = [];
+            if (preg_match_all('~</main>~i', $buffer, $main_close_matches, PREG_OFFSET_CAPTURE)) {
+                foreach ($main_close_matches[0] as $match) {
+                    $main_close_positions[] = $match[1];
+                }
+            }
+
+            $main_close_count = count($main_close_positions);
+            $last_three = $main_close_count > 0 ? array_slice($main_close_positions, -3) : [];
+            $request_uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+
+            error_log('[TMW-FEATURED-AUDIT] context is_category=' . (is_category() ? '1' : '0')
+                . ' is_tag=' . (is_tag() ? '1' : '0')
+                . ' is_page=' . (is_page() ? '1' : '0')
+                . ' request_uri=' . $request_uri);
+            error_log('[TMW-FEATURED-AUDIT] aside_pos=' . ($aside_pos === false ? 'false' : $aside_pos)
+                . ' primary_pos=' . ($primary_pos === false ? 'false' : $primary_pos));
+            error_log('[TMW-FEATURED-AUDIT] main_close_count=' . $main_close_count
+                . ' last_three=' . (empty($last_three) ? '[]' : '[' . implode(', ', $last_three) . ']'));
+        }
+
         $insert_pos = tmw_featured_models_find_insertion_pos($buffer);
         $log_anchor = isset($GLOBALS['tmw_featured_models_insertion_anchor'])
             ? $GLOBALS['tmw_featured_models_insertion_anchor']
             : 'skipped';
+
+        if (defined('TMW_DEBUG') && TMW_DEBUG) {
+            $used_main_offset = false;
+            if (!isset($main_close_positions)) {
+                $main_close_positions = [];
+                $main_close_matches = [];
+                if (preg_match_all('~</main>~i', $buffer, $main_close_matches, PREG_OFFSET_CAPTURE)) {
+                    foreach ($main_close_matches[0] as $match) {
+                        $main_close_positions[] = $match[1];
+                    }
+                }
+            }
+
+            if ($insert_pos !== false && in_array($insert_pos, $main_close_positions, true)) {
+                $used_main_offset = $insert_pos;
+            }
+
+            error_log('[TMW-FEATURED-AUDIT] insertion_pos=' . ($insert_pos === false ? 'false' : $insert_pos)
+                . ' used_main_offset=' . ($used_main_offset === false ? 'false' : $used_main_offset));
+        }
 
         if ($insert_pos !== false) {
             $buffer = substr_replace($buffer, $markup, $insert_pos, 0);
