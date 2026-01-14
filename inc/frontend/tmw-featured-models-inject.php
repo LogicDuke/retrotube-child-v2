@@ -1,4 +1,11 @@
 <?php
+/**
+ * Featured Models Global Injection
+ *
+ * Injects Featured Models block into pages via output buffer.
+ * Uses improved logic to find the correct </main> position (before sidebar).
+ */
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -81,11 +88,28 @@ if (!function_exists('tmw_featured_models_render_block')) {
 }
 
 if (!function_exists('tmw_featured_models_find_main_close_pos')) {
+    /**
+     * Find the correct </main> closing position.
+     *
+     * IMPROVED: Uses sidebar position as reference to ensure we find the
+     * </main> that closes the main content area, not some nested main tag.
+     */
     function tmw_featured_models_find_main_close_pos(string $html) {
         if ($html === '') {
             return false;
         }
 
+        // IMPROVED: Find sidebar position first, then look for </main> before it
+        $aside_pos = stripos($html, '<aside');
+        if ($aside_pos !== false) {
+            $content_before_sidebar = substr($html, 0, $aside_pos);
+            $last_main_close = strripos($content_before_sidebar, '</main>');
+            if ($last_main_close !== false) {
+                return $last_main_close;
+            }
+        }
+
+        // Fallback to original logic if no sidebar found
         if (!preg_match_all('~<main\b[^>]*>~i', $html, $matches, PREG_OFFSET_CAPTURE) || empty($matches[0])) {
             return false;
         }
