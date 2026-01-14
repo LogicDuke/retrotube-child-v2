@@ -8,6 +8,13 @@ $filter   = isset( $_GET['filter'] ) ? sanitize_text_field( wp_unslash( $_GET['f
 $cat      = isset( $_GET['cat'] ) ? absint( $_GET['cat'] ) : 0;
 $instance = array();
 
+if ( $filter && is_numeric( $filter ) ) {
+    $cat    = absint( $filter );
+    $filter = 'latest';
+}
+
+$tmw_video_widget_class = class_exists( 'TMW_WP_Widget_Videos_Block_Fixed' ) ? 'TMW_WP_Widget_Videos_Block_Fixed' : 'wpst_WP_Widget_Videos_Block';
+
 if ( $filter ) {
     if ( 'latest' === $filter ) {
         $instance = array(
@@ -51,24 +58,10 @@ if ( $filter ) {
             'video_number'   => 12,
             'video_category' => $cat,
         );
-    } elseif ( is_numeric( $filter ) ) {
-        $category_id = absint( $filter );
-        $term        = get_term( $category_id, 'category' );
-
-        if ( $term && ! is_wp_error( $term ) ) {
-            /* translators: %s: video category name. */
-            $title     = sprintf( __( '%s videos', 'retrotube-child' ), $term->name );
-            $instance  = array(
-                'title'          => $title,
-                'video_type'     => 'latest',
-                'video_number'   => 12,
-                'video_category' => $category_id,
-            );
-        }
     }
 }
 
-tmw_render_sidebar_layout('', function () use ( $filter, $instance ) {
+tmw_render_sidebar_layout('', function () use ( $filter, $instance, $tmw_video_widget_class ) {
     ?>
       <header class="entry-header">
         <h1 class="entry-title"><i class="fa fa-video-camera"></i> Videos</h1>
@@ -79,7 +72,7 @@ tmw_render_sidebar_layout('', function () use ( $filter, $instance ) {
         <?php if ( ! empty( $instance ) ) : ?>
           <?php
           the_widget(
-              'wpst_WP_Widget_Videos_Block',
+              $tmw_video_widget_class,
               $instance,
               array(
                   'before_widget' => '<section class="widget widget_videos_block">',
@@ -97,7 +90,7 @@ tmw_render_sidebar_layout('', function () use ( $filter, $instance ) {
 
         <?php
         the_widget(
-            'wpst_WP_Widget_Videos_Block',
+            $tmw_video_widget_class,
             array(
                 'title'          => 'Videos being watched',
                 'video_type'     => 'random',
@@ -113,7 +106,7 @@ tmw_render_sidebar_layout('', function () use ( $filter, $instance ) {
         );
 
         the_widget(
-            'wpst_WP_Widget_Videos_Block',
+            $tmw_video_widget_class,
             array(
                 'title'          => 'Latest videos',
                 'video_type'     => 'latest',
@@ -129,7 +122,7 @@ tmw_render_sidebar_layout('', function () use ( $filter, $instance ) {
         );
 
         the_widget(
-            'wpst_WP_Widget_Videos_Block',
+            $tmw_video_widget_class,
             array(
                 'title'          => 'Longest videos',
                 'video_type'     => 'longest',
