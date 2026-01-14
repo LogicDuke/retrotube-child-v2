@@ -31,6 +31,13 @@ function tmw_rewrite_video_filter_hrefs_to_videos_page($html) {
             return $matches[0];
         }
 
+        if (function_exists('tmw_normalize_video_filter')) {
+            $normalized_filter = tmw_normalize_video_filter($q['filter']);
+            if ($normalized_filter !== '') {
+                $q['filter'] = $normalized_filter;
+            }
+        }
+
         $path = $parts['path'] ?? '';
         if ($path !== '' && $path !== '/') {
             return $matches[0];
@@ -47,6 +54,43 @@ function tmw_rewrite_video_filter_hrefs_to_videos_page($html) {
     }
 
     return $updated;
+}
+
+if (!function_exists('tmw_normalize_video_filter')) {
+    function tmw_normalize_video_filter($filter) {
+        if (!is_string($filter)) {
+            return '';
+        }
+
+        $normalized = strtolower(trim($filter));
+        if ($normalized === '') {
+            return '';
+        }
+
+        $normalized = preg_replace('/\s+/', '-', $normalized);
+        $normalized = str_replace('_', '-', $normalized);
+        $normalized = trim($normalized, '-');
+
+        if (preg_match('/^(.+?)-(videos|video)$/', $normalized, $match)) {
+            $normalized = $match[1];
+        }
+
+        $aliases = [
+            'new'          => 'latest',
+            'recent'       => 'latest',
+            'most-popular' => 'popular',
+            'mostviewed'   => 'most-viewed',
+            'most-viewed'  => 'most-viewed',
+            'viewed'       => 'most-viewed',
+            'views'        => 'most-viewed',
+        ];
+
+        if (isset($aliases[$normalized])) {
+            return $aliases[$normalized];
+        }
+
+        return $normalized;
+    }
 }
 
 add_action('widgets_init', function () {
