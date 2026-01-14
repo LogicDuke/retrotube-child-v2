@@ -3,7 +3,7 @@
  * Tag archive template for Retrotube Child theme.
  *
  * Uses parent template for video rendering, then injects Featured Models
- * at the correct position (bottom of left column, before sidebar).
+ * INSIDE the main content area (before </main>), not outside it.
  */
 
 if (!defined('ABSPATH')) {
@@ -39,10 +39,43 @@ function tmw_tag_get_featured_models_markup() {
 }
 
 /**
- * Inject Featured Models into HTML at the correct position.
+ * Find the correct </main> position - the one that closes the main content area.
+ * Uses the sidebar position as reference to ensure we find the right closing tag.
+ */
+function tmw_tag_find_main_close_position($html) {
+    // Find the sidebar start position (we want to insert BEFORE this, inside main)
+    $aside_pos = stripos($html, '<aside');
+
+    if ($aside_pos !== false) {
+        // Search only in the content BEFORE the sidebar
+        $content_before_sidebar = substr($html, 0, $aside_pos);
+
+        // Find the LAST </main> before the sidebar - this is the main content closing tag
+        $last_main_close = strripos($content_before_sidebar, '</main>');
+        if ($last_main_close !== false) {
+            return $last_main_close;
+        }
+    }
+
+    // Fallback: use the existing function if available (from tmw-featured-models-inject.php)
+    if (function_exists('tmw_featured_models_find_main_close_pos')) {
+        return tmw_featured_models_find_main_close_pos($html);
+    }
+
+    // Last resort: find the last </main> in the entire document
+    $last_main = strripos($html, '</main>');
+    if ($last_main !== false) {
+        return $last_main;
+    }
+
+    return false;
+}
+
+/**
+ * Inject Featured Models into HTML at the correct position (inside <main>, before </main>).
  */
 function tmw_tag_inject_featured_models($html) {
-    // Skip if already has marker
+    // Skip if already has marker (prevent duplicate injection)
     if (strpos($html, '<!-- TMW-FEATURED-MODELS -->') !== false) {
         return $html;
     }
@@ -52,25 +85,26 @@ function tmw_tag_inject_featured_models($html) {
         return $html;
     }
 
-    // Try insertion points in order of preference:
-    // 1. Before <aside (sidebar) - most reliable for two-column layouts
-    // 2. Before <footer
-    // 3. Before </body>
+    // Find the correct </main> position
+    $main_close_pos = tmw_tag_find_main_close_position($html);
 
-    $insertion_patterns = [
-        '~(<aside[\s>])~i',           // Before sidebar
-        '~(<footer[\s>])~i',          // Before footer
-        '~(</body>)~i',               // Before body close (last resort)
-    ];
-
-    foreach ($insertion_patterns as $pattern) {
-        if (preg_match($pattern, $html, $matches, PREG_OFFSET_CAPTURE)) {
-            $pos = $matches[1][1];
-            return substr($html, 0, $pos) . $fm_markup . substr($html, $pos);
-        }
+    if ($main_close_pos !== false) {
+        // Insert BEFORE </main> - this keeps Featured Models INSIDE the main content area
+        return substr($html, 0, $main_close_pos) . $fm_markup . substr($html, $main_close_pos);
     }
 
-    // Absolute fallback: append to end
+    // Fallback: insert before footer
+    $footer_pos = stripos($html, '<footer');
+    if ($footer_pos !== false) {
+        return substr($html, 0, $footer_pos) . $fm_markup . substr($html, $footer_pos);
+    }
+
+    // Ultimate fallback: append before </body>
+    $body_close = strripos($html, '</body>');
+    if ($body_close !== false) {
+        return substr($html, 0, $body_close) . $fm_markup . substr($html, $body_close);
+    }
+
     return $html . $fm_markup;
 }
 
@@ -95,7 +129,7 @@ foreach (['tag.php', 'archive.php', 'index.php'] as $candidate) {
 
 // If parent template rendered successfully
 if ($parent_output !== null) {
-    // Inject Featured Models at correct position and output
+    // Inject Featured Models at correct position (inside main) and output
     echo tmw_tag_inject_featured_models($parent_output);
     return;
 }
@@ -122,7 +156,7 @@ tmw_render_sidebar_layout('tag-archive', function () {
         get_template_part('template-parts/content', 'none');
     endif;
 
-    // Featured Models in fallback
+    // Featured Models in fallback (already inside main via tmw_render_sidebar_layout)
     echo '<!-- TMW-FEATURED-MODELS -->';
     $shortcode = function_exists('tmw_get_featured_shortcode_for_context')
         ? tmw_get_featured_shortcode_for_context()
