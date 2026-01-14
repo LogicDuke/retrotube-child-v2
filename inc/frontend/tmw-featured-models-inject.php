@@ -23,6 +23,10 @@ if (!function_exists('tmw_featured_models_should_inject')) {
             return false;
         }
 
+        if (is_front_page() || is_home()) {
+            return false;
+        }
+
         $excluded = [
             '18-u-s-c-2257',
             'dmca',
@@ -97,26 +101,47 @@ if (!function_exists('tmw_featured_models_injector_callback')) {
             return $buffer;
         }
 
-        $pos = strrpos($buffer, '</main>');
-        if ($pos !== false) {
-            if (defined('TMW_DEBUG') && TMW_DEBUG) {
-                error_log('[TMW-FEATURED-INJECT] injected before </main>');
+        $log_anchor = '';
+        $primary_pattern = '#</div>\s*<!--\s*#primary\s*-->#i';
+        if (preg_match_all($primary_pattern, $buffer, $matches, PREG_OFFSET_CAPTURE) && !empty($matches[0])) {
+            $last_match = $matches[0][count($matches[0]) - 1];
+            $pos = $last_match[1];
+            $log_anchor = 'primary';
+            $buffer = substr_replace($buffer, $markup, $pos, 0);
+        } else {
+            $main_pattern = '#<main\b[^>]*\bid=["\']main["\'][^>]*>#i';
+            if (preg_match_all($main_pattern, $buffer, $matches, PREG_OFFSET_CAPTURE) && !empty($matches[0])) {
+                $last_match = $matches[0][count($matches[0]) - 1];
+                $search_start = $last_match[1] + strlen($last_match[0]);
+                $pos = stripos($buffer, '</main>', $search_start);
+                if ($pos !== false) {
+                    $log_anchor = 'main-id';
+                    $buffer = substr_replace($buffer, $markup, $pos, 0);
+                }
             }
-            $GLOBALS['tmw_featured_models_markup'] = '';
-            return substr_replace($buffer, $markup, $pos, 0);
-        }
 
-        $pos = strrpos($buffer, '</footer>');
-        if ($pos !== false) {
-            if (defined('TMW_DEBUG') && TMW_DEBUG) {
-                error_log('[TMW-FEATURED-INJECT] injected before </footer>');
+            if ($log_anchor === '') {
+                $pos = strripos($buffer, '</main>');
+                if ($pos !== false) {
+                    $log_anchor = 'main-last';
+                    $buffer = substr_replace($buffer, $markup, $pos, 0);
+                }
             }
-            $GLOBALS['tmw_featured_models_markup'] = '';
-            return substr_replace($buffer, $markup, $pos, 0);
+
+            if ($log_anchor === '') {
+                $pos = strripos($buffer, '</footer>');
+                if ($pos !== false) {
+                    $log_anchor = 'footer';
+                    $buffer = substr_replace($buffer, $markup, $pos, 0);
+                }
+            }
         }
 
         if (defined('TMW_DEBUG') && TMW_DEBUG) {
-            error_log('[TMW-FEATURED-INJECT] skipped: no target');
+            if ($log_anchor === '') {
+                $log_anchor = 'skipped-no-anchor';
+            }
+            error_log('[TMW-FEATURED-INJECT] anchor=' . $log_anchor);
         }
 
         $GLOBALS['tmw_featured_models_markup'] = '';
@@ -136,19 +161,11 @@ if (!function_exists('tmw_featured_models_injector_start')) {
 
         $markup = tmw_featured_models_render_block();
         if ($markup === '') {
-            if (defined('TMW_DEBUG') && TMW_DEBUG) {
-                error_log('[TMW-FEATURED-INJECT] skipped');
-            }
             return;
         }
 
         $GLOBALS['tmw_featured_models_injector_started'] = true;
         $GLOBALS['tmw_featured_models_markup'] = $markup;
-
-        if (defined('TMW_DEBUG') && TMW_DEBUG) {
-            error_log('[TMW-FEATURED] injector buffering start');
-            error_log('[TMW-FEATURED] pre-render ok len=' . strlen($markup));
-        }
 
         ob_start('tmw_featured_models_injector_callback');
     }
