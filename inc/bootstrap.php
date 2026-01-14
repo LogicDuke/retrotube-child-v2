@@ -13,6 +13,12 @@ spl_autoload_register(function($class){
 /** Constants shared across modules */
 require_once __DIR__ . '/constants.php';
 
+/** Emergency front-end fatal logging */
+$tmw_fatal = __DIR__ . '/frontend/tmw-fatal-catcher.php';
+if (file_exists($tmw_fatal)) {
+    require_once $tmw_fatal;
+}
+
 // Shared CLI/helpers for hybrid model scan.
 $hybrid_scan = TMW_CHILD_PATH . '/assets/php/tmw-hybrid-model-scan.php';
 if (is_readable($hybrid_scan)) {
@@ -37,7 +43,14 @@ require_once __DIR__ . '/frontend/template-tags.php';
 require_once __DIR__ . '/frontend/model-stats.php';
 require_once __DIR__ . '/frontend/tmw-slot-banner.php';
 require_once __DIR__ . '/frontend/tmw-video-widget-links-fix.php';
-require_once __DIR__ . '/frontend/tmw-featured-models-inject.php';
+$tmw_injector = __DIR__ . '/frontend/tmw-featured-models-inject.php';
+if (file_exists($tmw_injector)) {
+    require_once $tmw_injector;
+}
+$tmw_featured_compat = __DIR__ . '/frontend/tmw-featured-models-compat.php';
+if (file_exists($tmw_featured_compat)) {
+    require_once $tmw_featured_compat;
+}
 require_once __DIR__ . '/admin/tmw-slot-banner-meta.php';
 
 /** SEO helpers */

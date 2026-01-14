@@ -4,7 +4,7 @@ if (!defined('ABSPATH')) {
 }
 
 if (!function_exists('tmw_featured_models_should_inject')) {
-    function tmw_featured_models_should_inject(): bool {
+    function tmw_featured_models_should_inject() {
         if (is_admin() || wp_doing_ajax() || wp_doing_cron()) {
             return false;
         }
@@ -14,6 +14,10 @@ if (!function_exists('tmw_featured_models_should_inject')) {
         }
 
         if (is_feed()) {
+            return false;
+        }
+
+        if (is_embed()) {
             return false;
         }
 
@@ -58,7 +62,7 @@ if (!function_exists('tmw_featured_models_render_block')) {
             get_template_part('partials/featured-models-block');
         }
         $markup = ob_get_clean();
-        set_query_var('tmw_featured_shortcode', null);
+        set_query_var('tmw_featured_shortcode', '');
 
         if (!is_string($markup)) {
             return '';
