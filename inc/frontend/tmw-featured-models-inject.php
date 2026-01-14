@@ -3,6 +3,8 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+$GLOBALS['tmw_featured_models_markup'] = '';
+
 if (!function_exists('tmw_featured_models_should_inject')) {
     function tmw_featured_models_should_inject() {
         if (is_admin() || wp_doing_ajax() || wp_doing_cron()) {
@@ -80,18 +82,18 @@ if (!function_exists('tmw_featured_models_render_block')) {
 if (!function_exists('tmw_featured_models_injector_callback')) {
     function tmw_featured_models_injector_callback($buffer) {
         if (!is_string($buffer) || $buffer === '') {
+            $GLOBALS['tmw_featured_models_markup'] = '';
+            return $buffer;
+        }
+
+        $markup = isset($GLOBALS['tmw_featured_models_markup']) ? $GLOBALS['tmw_featured_models_markup'] : '';
+        if ($markup === '') {
+            $GLOBALS['tmw_featured_models_markup'] = '';
             return $buffer;
         }
 
         if (strpos($buffer, '<!-- TMW-FEATURED-MODELS -->') !== false) {
-            return $buffer;
-        }
-
-        $markup = tmw_featured_models_render_block();
-        if ($markup === '') {
-            if (defined('TMW_DEBUG') && TMW_DEBUG) {
-                error_log('[TMW-FEATURED-INJECT] skipped');
-            }
+            $GLOBALS['tmw_featured_models_markup'] = '';
             return $buffer;
         }
 
@@ -100,6 +102,7 @@ if (!function_exists('tmw_featured_models_injector_callback')) {
             if (defined('TMW_DEBUG') && TMW_DEBUG) {
                 error_log('[TMW-FEATURED-INJECT] injected before </main>');
             }
+            $GLOBALS['tmw_featured_models_markup'] = '';
             return substr_replace($buffer, $markup, $pos, 0);
         }
 
@@ -108,6 +111,7 @@ if (!function_exists('tmw_featured_models_injector_callback')) {
             if (defined('TMW_DEBUG') && TMW_DEBUG) {
                 error_log('[TMW-FEATURED-INJECT] injected before </footer>');
             }
+            $GLOBALS['tmw_featured_models_markup'] = '';
             return substr_replace($buffer, $markup, $pos, 0);
         }
 
@@ -115,6 +119,7 @@ if (!function_exists('tmw_featured_models_injector_callback')) {
             error_log('[TMW-FEATURED-INJECT] skipped: no target');
         }
 
+        $GLOBALS['tmw_featured_models_markup'] = '';
         return $buffer;
     }
 }
@@ -129,10 +134,20 @@ if (!function_exists('tmw_featured_models_injector_start')) {
             return;
         }
 
+        $markup = tmw_featured_models_render_block();
+        if ($markup === '') {
+            if (defined('TMW_DEBUG') && TMW_DEBUG) {
+                error_log('[TMW-FEATURED-INJECT] skipped');
+            }
+            return;
+        }
+
         $GLOBALS['tmw_featured_models_injector_started'] = true;
+        $GLOBALS['tmw_featured_models_markup'] = $markup;
 
         if (defined('TMW_DEBUG') && TMW_DEBUG) {
             error_log('[TMW-FEATURED] injector buffering start');
+            error_log('[TMW-FEATURED] pre-render ok len=' . strlen($markup));
         }
 
         ob_start('tmw_featured_models_injector_callback');
