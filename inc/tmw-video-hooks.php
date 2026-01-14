@@ -817,7 +817,9 @@ if (!function_exists('tmw_featured_block_markup')) {
 
 if (!function_exists('tmw_featured_block_output_buffer_start')) {
   function tmw_featured_block_output_buffer_start() {
-    if (!is_category()) {
+    $allowed_context = is_category() || is_singular('video') || is_singular('model');
+
+    if (!$allowed_context) {
       return;
     }
 
@@ -870,10 +872,16 @@ if (!function_exists('tmw_featured_block_inject_into_main')) {
     $primary_close_token = '</div><!-- #primary -->';
 
     if ($markup !== '') {
-      if (strpos($buffer, '</main>') !== false) {
-        $buffer = preg_replace('#</main>#', $markup . '</main>', $buffer, 1);
-      } elseif (strpos($buffer, $primary_close_token) !== false) {
-        $buffer = preg_replace('#' . preg_quote($primary_close_token, '#') . '#', $markup . $primary_close_token, $buffer, 1);
+      if (is_category()) {
+        if (strpos($buffer, '</main>') !== false) {
+          $buffer = preg_replace('#</main>#', $markup . '</main>', $buffer, 1);
+        } elseif (strpos($buffer, $primary_close_token) !== false) {
+          $buffer = preg_replace('#' . preg_quote($primary_close_token, '#') . '#', $markup . $primary_close_token, $buffer, 1);
+        }
+      } elseif (is_singular('video') || is_singular('model')) {
+        if (strpos($buffer, '</main>') !== false) {
+          $buffer = preg_replace('#</main>#', $markup . '</main>', $buffer, 1);
+        }
       }
     }
 
