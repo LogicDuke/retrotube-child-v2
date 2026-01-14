@@ -4,57 +4,53 @@
  */
 get_header();
 
-$filter   = isset( $_GET['filter'] ) ? sanitize_text_field( wp_unslash( $_GET['filter'] ) ) : '';
+$filter_raw = isset( $_GET['filter'] ) ? wp_unslash( $_GET['filter'] ) : '';
+$filter_raw = is_string( $filter_raw ) ? sanitize_text_field( $filter_raw ) : '';
+$filter     = '';
 $cat      = isset( $_GET['cat'] ) ? absint( $_GET['cat'] ) : 0;
 $instance = array();
 
-if ( $filter && is_numeric( $filter ) ) {
-    $cat    = absint( $filter );
+if ( $filter_raw && is_numeric( $filter_raw ) ) {
+    $cat    = absint( $filter_raw );
     $filter = 'latest';
+} else {
+    $filter = function_exists( 'tmw_normalize_video_filter' ) ? tmw_normalize_video_filter( $filter_raw ) : strtolower( $filter_raw );
 }
 
 $tmw_video_widget_class = class_exists( 'TMW_WP_Widget_Videos_Block_Fixed' ) ? 'TMW_WP_Widget_Videos_Block_Fixed' : 'wpst_WP_Widget_Videos_Block';
 
 if ( $filter ) {
-    if ( 'latest' === $filter ) {
+    $filter_map = array(
+        'latest'      => array(
+            'title'      => __( 'Latest videos', 'retrotube-child' ),
+            'video_type' => 'latest',
+        ),
+        'random'      => array(
+            'title'      => __( 'Random videos', 'retrotube-child' ),
+            'video_type' => 'random',
+        ),
+        'related'     => array(
+            'title'      => __( 'Related videos', 'retrotube-child' ),
+            'video_type' => 'random',
+        ),
+        'longest'     => array(
+            'title'      => __( 'Longest videos', 'retrotube-child' ),
+            'video_type' => 'longest',
+        ),
+        'popular'     => array(
+            'title'      => __( 'Most popular videos', 'retrotube-child' ),
+            'video_type' => 'popular',
+        ),
+        'most-viewed' => array(
+            'title'      => __( 'Most viewed videos', 'retrotube-child' ),
+            'video_type' => 'most-viewed',
+        ),
+    );
+
+    if ( isset( $filter_map[ $filter ] ) ) {
         $instance = array(
-            'title'          => __( 'Latest videos', 'retrotube-child' ),
-            'video_type'     => 'latest',
-            'video_number'   => 12,
-            'video_category' => $cat,
-        );
-    } elseif ( 'random' === $filter ) {
-        $instance = array(
-            'title'          => __( 'Random videos', 'retrotube-child' ),
-            'video_type'     => 'random',
-            'video_number'   => 12,
-            'video_category' => $cat,
-        );
-    } elseif ( 'related' === $filter ) {
-        $instance = array(
-            'title'          => __( 'Related videos', 'retrotube-child' ),
-            'video_type'     => 'random',
-            'video_number'   => 12,
-            'video_category' => $cat,
-        );
-    } elseif ( 'longest' === $filter ) {
-        $instance = array(
-            'title'          => __( 'Longest videos', 'retrotube-child' ),
-            'video_type'     => 'longest',
-            'video_number'   => 12,
-            'video_category' => $cat,
-        );
-    } elseif ( 'popular' === $filter ) {
-        $instance = array(
-            'title'          => __( 'Most popular videos', 'retrotube-child' ),
-            'video_type'     => 'popular',
-            'video_number'   => 12,
-            'video_category' => $cat,
-        );
-    } elseif ( 'most-viewed' === $filter ) {
-        $instance = array(
-            'title'          => __( 'Most viewed videos', 'retrotube-child' ),
-            'video_type'     => 'most-viewed',
+            'title'          => $filter_map[ $filter ]['title'],
+            'video_type'     => $filter_map[ $filter ]['video_type'],
             'video_number'   => 12,
             'video_category' => $cat,
         );
