@@ -316,8 +316,7 @@ if (!function_exists('tmw_featured_models_inject_into_buffer')) {
 
         $force = tmw_featured_models_is_force_relocate_context();
 
-        if (stripos($buffer, '<!-- TMW-FEATURED-MODELS -->') !== false
-            || stripos($buffer, '<!-- TMW-FEATURED-MODELS:START -->') !== false) {
+        if (preg_match('~<!--\\s*/?TMW-FEATURED-MODELS(?::START|:END)?\\s*-->~i', $buffer)) {
             tmw_featured_models_debug_log(
                 'TMW-FEATURED-INJECT',
                 'anchor=skipped(marker)'
