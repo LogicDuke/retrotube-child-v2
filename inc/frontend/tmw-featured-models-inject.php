@@ -217,25 +217,45 @@ if (!function_exists('tmw_featured_models_find_insertion_pos')) {
     }
 }
 
+if (!function_exists('tmw_featured_models_find_main_id_close_pos')) {
+    function tmw_featured_models_find_main_id_close_pos(string $html) {
+        if ($html === '') {
+            return false;
+        }
+
+        if (!preg_match('~<main\\b[^>]*\\bid\\s*=\\s*["\']main["\'][^>]*>~i', $html, $match, PREG_OFFSET_CAPTURE)) {
+            return false;
+        }
+
+        $main_start_pos = $match[0][1];
+        $cursor = $main_start_pos + strlen($match[0][0]);
+        $depth = 1;
+
+        while (preg_match('~</?main\\b[^>]*>~i', $html, $tag_match, PREG_OFFSET_CAPTURE, $cursor)) {
+            $tag = $tag_match[0][0];
+            $tag_pos = $tag_match[0][1];
+
+            if (stripos($tag, '</main') === 0) {
+                $depth--;
+            } else {
+                $depth++;
+            }
+
+            if ($depth === 0) {
+                return $tag_pos;
+            }
+
+            $cursor = $tag_pos + strlen($tag);
+        }
+
+        return false;
+    }
+}
+
 if (!function_exists('tmw_featured_models_strip_existing_blocks')) {
     function tmw_featured_models_strip_existing_blocks(string $content): string {
         $pattern = '~<!--\\s*TMW-FEATURED-MODELS\\s*-->.*?<!--\\s*/TMW-FEATURED-MODELS\\s*-->~is';
-        $removed = 0;
-        if (defined('TMW_DEBUG') && TMW_DEBUG) {
-            preg_match_all($pattern, $content, $matches);
-            $removed = isset($matches[0]) ? count($matches[0]) : 0;
-        }
-
-        $content = preg_replace($pattern, '', $content);
-
-        if (defined('TMW_DEBUG') && TMW_DEBUG) {
-            tmw_featured_models_debug_log(
-                'TMW-FEATURED-INJECT',
-                'strip=1 removed_blocks=' . $removed
-            );
-        }
-
-        return $content;
+        return preg_replace($pattern, '', $content);
     }
 }
 
@@ -294,10 +314,14 @@ if (!function_exists('tmw_featured_models_inject_into_buffer')) {
             return $buffer;
         }
 
-        $page_type = tmw_featured_models_get_page_type();
         $force = tmw_featured_models_is_force_relocate_context();
 
-        if (!$force && strpos($buffer, '<!-- TMW-FEATURED-MODELS:START -->') !== false) {
+        if (stripos($buffer, '<!-- TMW-FEATURED-MODELS -->') !== false
+            || stripos($buffer, '<!-- TMW-FEATURED-MODELS:START -->') !== false) {
+            tmw_featured_models_debug_log(
+                'TMW-FEATURED-INJECT',
+                'anchor=skipped(marker)'
+            );
             $GLOBALS['tmw_featured_models_markup'] = '';
             return $buffer;
         }
@@ -308,44 +332,42 @@ if (!function_exists('tmw_featured_models_inject_into_buffer')) {
 
         $block_to_insert = $markup;
         $insert_pos = false;
-        $anchor_label = 'skipped';
+        $anchor_label = 'append';
 
-        if ($force) {
-            $insert_pos = tmw_featured_models_find_primary_main_close_pos($buffer);
-            $region = isset($GLOBALS['tmw_featured_models_primary_region'])
-                ? $GLOBALS['tmw_featured_models_primary_region']
-                : [];
+        $insert_pos = tmw_featured_models_find_main_id_close_pos($buffer);
+        if ($insert_pos !== false) {
+            $anchor_label = 'main-id';
+        } else {
+            $insert_pos = strripos($buffer, '</main>');
             if ($insert_pos !== false) {
-                $anchor_label = 'primary-main';
-                if (defined('TMW_DEBUG') && TMW_DEBUG) {
-                    tmw_featured_models_debug_log(
-                        'TMW-FEATURED-INJECT',
-                        'anchor=primary-main primary_start=' . ($region['primary_start'] ?? 'n/a')
-                        . ' primary_end=' . ($region['primary_end'] ?? 'n/a')
-                        . ' pos=' . ($region['pos'] ?? 'n/a')
-                    );
+                $anchor_label = 'last-main';
+            } else {
+                $footer_pos = strripos($buffer, '</footer>');
+                if ($footer_pos !== false) {
+                    $insert_pos = $footer_pos;
+                    $anchor_label = 'footer';
+                } else {
+                    $insert_pos = strlen($buffer);
+                    $anchor_label = 'append';
                 }
             }
-        }
-
-        if ($insert_pos === false) {
-            $insert_pos = tmw_featured_models_find_insertion_pos($buffer);
-            $anchor_label = isset($GLOBALS['tmw_featured_models_insertion_anchor'])
-                ? $GLOBALS['tmw_featured_models_insertion_anchor']
-                : 'skipped';
         }
 
         if ($insert_pos !== false) {
             $buffer = substr_replace($buffer, $block_to_insert, $insert_pos, 0);
         }
 
-        tmw_featured_models_debug_log(
-            'TMW-FEATURED-INJECT',
-            'page_type=' . $page_type
-            . ' target=fallback'
-            . ' anchor=' . $anchor_label
-            . ' done output_length=' . strlen($buffer)
-        );
+        if (in_array($anchor_label, ['main-id', 'last-main', 'footer'], true)) {
+            tmw_featured_models_debug_log(
+                'TMW-FEATURED-INJECT',
+                'anchor=' . $anchor_label . ' pos=' . $insert_pos
+            );
+        } else {
+            tmw_featured_models_debug_log(
+                'TMW-FEATURED-INJECT',
+                'anchor=' . $anchor_label
+            );
+        }
 
         $GLOBALS['tmw_featured_models_markup'] = '';
         return $buffer;

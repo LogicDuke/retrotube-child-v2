@@ -1200,3 +1200,16 @@ a.tag-link {
   background-color: #2980b9;
   color: #fff;
 }
+
+.tmwfm-slot {
+  clear: both;
+  width: 100%;
+  float: none;
+  flex: 0 0 100%;
+}
+
+.tmwfm-slot::after {
+  content: "";
+  display: table;
+  clear: both;
+}
