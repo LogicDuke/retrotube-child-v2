@@ -18,6 +18,21 @@ if (!function_exists('tmw_featured_models_should_inject')) {
             return false;
         }
 
+        if (is_category()) {
+            tmw_featured_models_debug_log('TMW-FEATURED-LOCK', 'injector_disabled=1 ctx=category');
+            return false;
+        }
+
+        if (is_tag()) {
+            tmw_featured_models_debug_log('TMW-FEATURED-LOCK', 'injector_disabled=1 ctx=tag');
+            return false;
+        }
+
+        if (is_front_page() || is_home()) {
+            tmw_featured_models_debug_log('TMW-FEATURED-LOCK', 'injector_disabled=1 ctx=home');
+            return false;
+        }
+
         if (defined('REST_REQUEST') && REST_REQUEST) {
             return false;
         }
