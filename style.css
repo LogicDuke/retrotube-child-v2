@@ -176,6 +176,12 @@
   margin-top: 28px;
 }
 
+.tmw-featured-slot--locked {
+  clear: both;
+  width: 100%;
+  display: block;
+}
+
 .tmw-featured-slot .section-title {
   font-size: 1.25rem;
   margin: 0 0 10px;
