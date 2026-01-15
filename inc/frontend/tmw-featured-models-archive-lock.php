@@ -10,6 +10,9 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Disabled: featured models placement is handled by output-buffer injection to guarantee left-column lock.
+return;
+
 if (!function_exists('tmw_featured_models_archive_lock_log')) {
     function tmw_featured_models_archive_lock_log(string $message): void {
         if (!defined('TMW_DEBUG') || !TMW_DEBUG) {

@@ -47,7 +47,6 @@ $tmw_injector = __DIR__ . '/frontend/tmw-featured-models-inject.php';
 if (file_exists($tmw_injector)) {
     require_once $tmw_injector;
 }
-require_once __DIR__ . '/frontend/tmw-featured-models-archive-lock.php';
 require_once __DIR__ . '/admin/tmw-slot-banner-meta.php';
 
 /** SEO helpers */
