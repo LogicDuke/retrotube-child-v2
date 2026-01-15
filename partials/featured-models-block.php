@@ -21,4 +21,6 @@ $output = preg_replace(
 );
 
 /* Wrap the entire block so CSS can center the heading no matter what the shortcode outputs */
+echo '<!-- TMW-FEATURED-MODELS -->';
 echo '<div class="tmwfm-slot" data-tmwfm="wrap">', $output, '</div>';
+echo '<!-- /TMW-FEATURED-MODELS -->';
