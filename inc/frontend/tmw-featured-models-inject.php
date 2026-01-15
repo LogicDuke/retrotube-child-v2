@@ -18,30 +18,15 @@ if (!function_exists('tmw_featured_models_should_inject')) {
             return false;
         }
 
-        if (is_category()) {
-            global $wp_query;
-            $max_pages = isset($wp_query->max_num_pages) ? (int) $wp_query->max_num_pages : 0;
-            if ($max_pages > 1) {
-                tmw_featured_models_debug_log('TMW-FEATURED-INJECT', 'injector_enabled=1 ctx=category max_pages=' . $max_pages);
-                return true;
-            }
-            tmw_featured_models_debug_log('TMW-FEATURED-INJECT', 'injector_disabled=1 ctx=category paginated=0');
-            return false;
+        if (is_category() || is_tag()) {
+            return true;
         }
 
-        if (is_tag()) {
-            global $wp_query;
-            $max_pages = isset($wp_query->max_num_pages) ? (int) $wp_query->max_num_pages : 0;
-            if ($max_pages > 1) {
-                tmw_featured_models_debug_log('TMW-FEATURED-INJECT', 'injector_enabled=1 ctx=tag max_pages=' . $max_pages);
-                return true;
-            }
-            tmw_featured_models_debug_log('TMW-FEATURED-INJECT', 'injector_disabled=1 ctx=tag paginated=0');
-            return false;
+        if (is_page('categories')) {
+            return true;
         }
 
         if (is_front_page() || is_home()) {
-            tmw_featured_models_debug_log('TMW-FEATURED-LOCK', 'injector_disabled=1 ctx=home');
             return false;
         }
 
@@ -79,6 +64,22 @@ if (!function_exists('tmw_featured_models_should_inject')) {
 
 if (!function_exists('tmw_featured_models_bootstrap_markup')) {
     function tmw_featured_models_bootstrap_markup(): string {
+        $markup = tmw_featured_models_render_block_markup();
+        if ($markup === '') {
+            return '';
+        }
+
+        $wrapped = "\n<!-- TMW-FEATURED-MODELS:LOCKBOX -->\n"
+            . '<div class="tmw-featured-lockbox" data-tmw-featured-lockbox="1" style="display:block;max-width:100%;overflow:hidden;box-sizing:border-box;clear:both;position:relative;">'
+            . $markup
+            . "</div>\n";
+
+        return trim($wrapped);
+    }
+}
+
+if (!function_exists('tmw_featured_models_render_block_markup')) {
+    function tmw_featured_models_render_block_markup(): string {
         $shortcode = function_exists('tmw_get_featured_shortcode_for_context')
             ? tmw_get_featured_shortcode_for_context()
             : '[tmw_featured_models]';
@@ -110,13 +111,7 @@ if (!function_exists('tmw_featured_models_bootstrap_markup')) {
             return '';
         }
 
-        $wrapped = '<!-- TMW-FEATURED-MODELS:START -->' . "\n"
-            . '<div class="tmw-featured-models-lock" style="clear:both;display:block;width:100%;float:none;">' . "\n"
-            . $markup . "\n"
-            . '</div>' . "\n"
-            . '<!-- TMW-FEATURED-MODELS:END -->';
-
-        return trim($wrapped);
+        return $markup;
     }
 }
 
@@ -139,6 +134,32 @@ if (!function_exists('tmw_featured_models_debug_log')) {
         }
 
         error_log('[' . $tag . '] ' . $message);
+    }
+}
+
+if (!function_exists('tmw_featured_models_log_request')) {
+    function tmw_featured_models_log_request(string $anchor_label, $insert_pos): void {
+        if (!defined('TMW_DEBUG') || !TMW_DEBUG) {
+            return;
+        }
+
+        if (!empty($GLOBALS['tmw_featured_models_log_emitted'])) {
+            return;
+        }
+
+        $GLOBALS['tmw_featured_models_log_emitted'] = true;
+
+        $uri = isset($_SERVER['REQUEST_URI']) ? (string) $_SERVER['REQUEST_URI'] : '';
+        $pos_value = $insert_pos === false ? 'false' : (string) $insert_pos;
+        $message = 'uri=' . $uri
+            . ' page_categories=' . (is_page('categories') ? '1' : '0')
+            . ' is_category=' . (is_category() ? '1' : '0')
+            . ' is_tag=' . (is_tag() ? '1' : '0')
+            . ' is_paged=' . (is_paged() ? '1' : '0')
+            . ' anchor=' . $anchor_label
+            . ' pos=' . $pos_value;
+
+        tmw_featured_models_debug_log('TMW-FEATURED-INJECT][TMW-FEATURED-POS', $message);
     }
 }
 
@@ -318,6 +339,39 @@ if (!function_exists('tmw_featured_models_find_primary_main_close_pos')) {
     }
 }
 
+if (!function_exists('tmw_featured_models_find_primary_locked_insert_pos')) {
+    function tmw_featured_models_find_primary_locked_insert_pos(string $content) {
+        if ($content === '') {
+            return false;
+        }
+
+        $primary_open_pos = false;
+        if (preg_match('~<div\\b[^>]*\\bid\\s*=\\s*["\']primary["\'][^>]*>~i', $content, $match, PREG_OFFSET_CAPTURE)) {
+            $primary_open_pos = $match[0][1];
+        }
+
+        if ($primary_open_pos === false) {
+            return false;
+        }
+
+        $primary_sub = substr($content, $primary_open_pos);
+        if (!preg_match('~</div>\\s*<!--\\s*#primary\\s*-->~i', $primary_sub, $close_match, PREG_OFFSET_CAPTURE)) {
+            return false;
+        }
+
+        $primary_close_pos = $primary_open_pos + $close_match[0][1];
+        $primary_inner = substr($content, $primary_open_pos, $primary_close_pos - $primary_open_pos);
+        $main_close_pos = strripos($primary_inner, '</main>');
+        if ($main_close_pos !== false) {
+            $GLOBALS['tmw_featured_models_primary_region'] = ['pos' => $primary_open_pos + $main_close_pos, 'anchor' => 'primary-main'];
+            return $primary_open_pos + $main_close_pos;
+        }
+
+        $GLOBALS['tmw_featured_models_primary_region'] = ['pos' => $primary_close_pos, 'anchor' => 'primary-close'];
+        return $primary_close_pos;
+    }
+}
+
 if (!function_exists('tmw_featured_models_inject_into_buffer')) {
     function tmw_featured_models_inject_into_buffer(string $buffer): string {
         if ($buffer === '') {
@@ -333,20 +387,8 @@ if (!function_exists('tmw_featured_models_inject_into_buffer')) {
 
         $force = tmw_featured_models_is_force_relocate_context();
 
-        if (strpos($buffer, 'featured-models-block') !== false) {
-            tmw_featured_models_debug_log(
-                'TMW-FEATURED-INJECT',
-                'anchor=skipped(existing)'
-            );
-            $GLOBALS['tmw_featured_models_markup'] = '';
-            return $buffer;
-        }
-
-        if (preg_match('~<!--\\s*/?TMW-FEATURED-MODELS(?::START|:END)?\\s*-->~i', $buffer)) {
-            tmw_featured_models_debug_log(
-                'TMW-FEATURED-INJECT',
-                'anchor=skipped(marker)'
-            );
+        if (strpos($buffer, 'data-tmw-featured-lockbox="1"') !== false) {
+            tmw_featured_models_log_request('skipped-existing', false);
             $GLOBALS['tmw_featured_models_markup'] = '';
             return $buffer;
         }
@@ -360,12 +402,12 @@ if (!function_exists('tmw_featured_models_inject_into_buffer')) {
         $anchor_label = 'append';
 
         if ($force) {
-            $insert_pos = tmw_featured_models_find_primary_main_close_pos($buffer);
+            $insert_pos = tmw_featured_models_find_primary_locked_insert_pos($buffer);
             if ($insert_pos !== false) {
                 $primary_region = $GLOBALS['tmw_featured_models_primary_region'] ?? null;
                 $anchor_label = is_array($primary_region) && !empty($primary_region['anchor'])
                     ? $primary_region['anchor']
-                    : 'primary-close';
+                    : 'primary-locked';
             }
         }
 
@@ -394,17 +436,7 @@ if (!function_exists('tmw_featured_models_inject_into_buffer')) {
             $buffer = substr_replace($buffer, $block_to_insert, $insert_pos, 0);
         }
 
-        if (in_array($anchor_label, ['primary-close', 'primary-main-close', 'main-close', 'main-id', 'last-main', 'footer'], true)) {
-            tmw_featured_models_debug_log(
-                'TMW-FEATURED-INJECT',
-                'anchor=' . $anchor_label . ' pos=' . $insert_pos
-            );
-        } else {
-            tmw_featured_models_debug_log(
-                'TMW-FEATURED-INJECT',
-                'anchor=' . $anchor_label
-            );
-        }
+        tmw_featured_models_log_request($anchor_label, $insert_pos);
 
         $GLOBALS['tmw_featured_models_markup'] = '';
         return $buffer;
