@@ -19,12 +19,24 @@ if (!function_exists('tmw_featured_models_should_inject')) {
         }
 
         if (is_category()) {
-            tmw_featured_models_debug_log('TMW-FEATURED-LOCK', 'injector_disabled=1 ctx=category');
+            global $wp_query;
+            $max_pages = isset($wp_query->max_num_pages) ? (int) $wp_query->max_num_pages : 0;
+            if ($max_pages > 1) {
+                tmw_featured_models_debug_log('TMW-FEATURED-INJECT', 'injector_enabled=1 ctx=category max_pages=' . $max_pages);
+                return true;
+            }
+            tmw_featured_models_debug_log('TMW-FEATURED-INJECT', 'injector_disabled=1 ctx=category paginated=0');
             return false;
         }
 
         if (is_tag()) {
-            tmw_featured_models_debug_log('TMW-FEATURED-LOCK', 'injector_disabled=1 ctx=tag');
+            global $wp_query;
+            $max_pages = isset($wp_query->max_num_pages) ? (int) $wp_query->max_num_pages : 0;
+            if ($max_pages > 1) {
+                tmw_featured_models_debug_log('TMW-FEATURED-INJECT', 'injector_enabled=1 ctx=tag max_pages=' . $max_pages);
+                return true;
+            }
+            tmw_featured_models_debug_log('TMW-FEATURED-INJECT', 'injector_disabled=1 ctx=tag paginated=0');
             return false;
         }
 
@@ -99,7 +111,9 @@ if (!function_exists('tmw_featured_models_bootstrap_markup')) {
         }
 
         $wrapped = '<!-- TMW-FEATURED-MODELS:START -->' . "\n"
+            . '<div class="tmw-featured-models-lock" style="clear:both;display:block;width:100%;float:none;">' . "\n"
             . $markup . "\n"
+            . '</div>' . "\n"
             . '<!-- TMW-FEATURED-MODELS:END -->';
 
         return trim($wrapped);
@@ -114,7 +128,7 @@ if (!function_exists('tmw_featured_models_block_markup')) {
 
 if (!function_exists('tmw_featured_models_is_force_relocate_context')) {
     function tmw_featured_models_is_force_relocate_context(): bool {
-        return is_category() || is_tag();
+        return is_category() || is_tag() || is_page('categories');
     }
 }
 
@@ -265,39 +279,42 @@ if (!function_exists('tmw_featured_models_find_primary_main_close_pos')) {
             return false;
         }
 
-        if (!preg_match('~<div\\b[^>]*\\bid\\s*=\\s*["\']primary["\'][^>]*>~i', $content, $match, PREG_OFFSET_CAPTURE)) {
-            return false;
+        $aside_pos = stripos($content, '<aside');
+        $left = $aside_pos !== false ? substr($content, 0, $aside_pos) : $content;
+
+        if (preg_match('~</div>\\s*<!--\\s*#primary\\s*-->~i', $left, $match, PREG_OFFSET_CAPTURE)) {
+            $GLOBALS['tmw_featured_models_primary_region'] = ['pos' => $match[0][1], 'anchor' => 'primary-close'];
+            return $match[0][1];
         }
 
-        $primary_start = $match[0][1];
-        $primary_end = null;
-        $primary_end_match = null;
+        if (preg_match('~</div>\\s*<!--\\s*#primary\\b~i', $left, $match, PREG_OFFSET_CAPTURE)) {
+            $GLOBALS['tmw_featured_models_primary_region'] = ['pos' => $match[0][1], 'anchor' => 'primary-close'];
+            return $match[0][1];
+        }
 
-        if (preg_match('~</div>\\s*<!--\\s*#primary\\s*-->~i', $content, $primary_end_match, PREG_OFFSET_CAPTURE, $primary_start)) {
-            $primary_end = $primary_end_match[0][1];
-        } else {
-            $aside_pos = stripos($content, '<aside');
-            if ($aside_pos !== false) {
-                $primary_end = $aside_pos;
-            } else {
-                $primary_end = strlen($content);
+        if (preg_match('~<!--\\s*#primary\\s*-->~i', $left, $match, PREG_OFFSET_CAPTURE)) {
+            $comment_pos = $match[0][1];
+            $before_comment = substr($left, 0, $comment_pos);
+            $div_pos = strripos($before_comment, '</div>');
+            if ($div_pos !== false) {
+                $GLOBALS['tmw_featured_models_primary_region'] = ['pos' => $div_pos, 'anchor' => 'primary-close'];
+                return $div_pos;
             }
         }
 
-        $region = substr($content, $primary_start, $primary_end - $primary_start);
-        $main_close_pos = strripos($region, '</main>');
-        if ($main_close_pos === false) {
-            return false;
+        $main_close_pos = strripos($left, '</main>');
+        if ($main_close_pos !== false) {
+            $GLOBALS['tmw_featured_models_primary_region'] = ['pos' => $main_close_pos, 'anchor' => 'primary-main-close'];
+            return $main_close_pos;
         }
 
-        $absolute_pos = $primary_start + $main_close_pos;
-        $GLOBALS['tmw_featured_models_primary_region'] = [
-            'primary_start' => $primary_start,
-            'primary_end' => $primary_end,
-            'pos' => $absolute_pos,
-        ];
+        $main_close_pos = strripos($content, '</main>');
+        if ($main_close_pos !== false) {
+            $GLOBALS['tmw_featured_models_primary_region'] = ['pos' => $main_close_pos, 'anchor' => 'main-close'];
+            return $main_close_pos;
+        }
 
-        return $absolute_pos;
+        return false;
     }
 }
 
@@ -316,6 +333,15 @@ if (!function_exists('tmw_featured_models_inject_into_buffer')) {
 
         $force = tmw_featured_models_is_force_relocate_context();
 
+        if (strpos($buffer, 'featured-models-block') !== false) {
+            tmw_featured_models_debug_log(
+                'TMW-FEATURED-INJECT',
+                'anchor=skipped(existing)'
+            );
+            $GLOBALS['tmw_featured_models_markup'] = '';
+            return $buffer;
+        }
+
         if (preg_match('~<!--\\s*/?TMW-FEATURED-MODELS(?::START|:END)?\\s*-->~i', $buffer)) {
             tmw_featured_models_debug_log(
                 'TMW-FEATURED-INJECT',
@@ -333,21 +359,33 @@ if (!function_exists('tmw_featured_models_inject_into_buffer')) {
         $insert_pos = false;
         $anchor_label = 'append';
 
-        $insert_pos = tmw_featured_models_find_main_id_close_pos($buffer);
-        if ($insert_pos !== false) {
-            $anchor_label = 'main-id';
-        } else {
-            $insert_pos = strripos($buffer, '</main>');
+        if ($force) {
+            $insert_pos = tmw_featured_models_find_primary_main_close_pos($buffer);
             if ($insert_pos !== false) {
-                $anchor_label = 'last-main';
+                $primary_region = $GLOBALS['tmw_featured_models_primary_region'] ?? null;
+                $anchor_label = is_array($primary_region) && !empty($primary_region['anchor'])
+                    ? $primary_region['anchor']
+                    : 'primary-close';
+            }
+        }
+
+        if ($insert_pos === false) {
+            $insert_pos = tmw_featured_models_find_main_id_close_pos($buffer);
+            if ($insert_pos !== false) {
+                $anchor_label = 'main-id';
             } else {
-                $footer_pos = strripos($buffer, '</footer>');
-                if ($footer_pos !== false) {
-                    $insert_pos = $footer_pos;
-                    $anchor_label = 'footer';
+                $insert_pos = strripos($buffer, '</main>');
+                if ($insert_pos !== false) {
+                    $anchor_label = 'last-main';
                 } else {
-                    $insert_pos = strlen($buffer);
-                    $anchor_label = 'append';
+                    $footer_pos = strripos($buffer, '</footer>');
+                    if ($footer_pos !== false) {
+                        $insert_pos = $footer_pos;
+                        $anchor_label = 'footer';
+                    } else {
+                        $insert_pos = strlen($buffer);
+                        $anchor_label = 'append';
+                    }
                 }
             }
         }
@@ -356,7 +394,7 @@ if (!function_exists('tmw_featured_models_inject_into_buffer')) {
             $buffer = substr_replace($buffer, $block_to_insert, $insert_pos, 0);
         }
 
-        if (in_array($anchor_label, ['main-id', 'last-main', 'footer'], true)) {
+        if (in_array($anchor_label, ['primary-close', 'primary-main-close', 'main-close', 'main-id', 'last-main', 'footer'], true)) {
             tmw_featured_models_debug_log(
                 'TMW-FEATURED-INJECT',
                 'anchor=' . $anchor_label . ' pos=' . $insert_pos
