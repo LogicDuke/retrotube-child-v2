@@ -855,10 +855,11 @@ a.tag-link {
 }
 
 .single-model .tmw-slot-banner-zone .tmw-slot-banner {
+  display: block;
   max-width: 100%;
   width: 100%;
-  margin: 0 auto;
-  text-align: center;
+  margin: 0;
+  box-sizing: border-box;
 }
 
 /* v4.4.1 — Reduce initial render cost for offscreen model sections */

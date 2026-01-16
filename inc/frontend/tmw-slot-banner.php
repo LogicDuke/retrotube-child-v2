@@ -25,7 +25,7 @@ add_action('widgets_init', function () {
  */
 function tmw_render_model_slot_banner_zone(int $post_id): string
 {
-    $debug = defined('TMW_DEBUG') && TMW_DEBUG;
+    $debug = (defined('WP_DEBUG') && WP_DEBUG) || (defined('TMW_DEBUG') && TMW_DEBUG);
 
     $enabled = get_post_meta($post_id, '_tmw_slot_enabled', true);
     if ($enabled !== '1') {
@@ -47,26 +47,26 @@ function tmw_render_model_slot_banner_zone(int $post_id): string
         if (is_active_sidebar('tmw-model-slot-banner-global')) {
             ob_start();
             dynamic_sidebar('tmw-model-slot-banner-global');
-            $widget_output = trim(ob_get_clean());
+            $widget_output = ob_get_clean();
         }
 
-        $has_marker = $widget_output !== '' && strpos($widget_output, 'tmw-slot-machine-container') !== false;
-        if ($widget_output !== '' && $has_marker) {
-            $out = $widget_output;
+        $widget_output_clean = trim((string) $widget_output);
+        if ($widget_output_clean !== '') {
+            $out = (string) $widget_output;
             $source = 'widget';
         } else {
             $out = trim(do_shortcode($fallback_shortcode));
-            $source = $out !== '' ? 'fallback' : '';
+            $source = $out !== '' ? 'shortcode_fallback' : '';
         }
     } else {
         $out = trim(do_shortcode($fallback_shortcode));
         if ($out !== '') {
-            $source = $shortcode !== '' ? 'shortcode' : 'fallback';
+            $source = 'shortcode_fallback';
         }
     }
 
     if ($debug) {
-        error_log('[TMW-SLOT-FIX] model_id=' . $post_id . ' enabled=' . $enabled . ' mode=' . $mode . ' source=' . ($source !== '' ? $source : 'none') . ' shortcode_len=' . strlen($fallback_shortcode) . ' out_len=' . strlen($out));
+        error_log('[TMW-SLOT] model_id=' . $post_id . ' enabled=' . $enabled . ' mode=' . $mode . ' source=' . ($source !== '' ? $source : 'none') . ' shortcode_len=' . strlen($fallback_shortcode) . ' out_len=' . strlen($out));
     }
 
     if ($out === '') {
