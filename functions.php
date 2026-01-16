@@ -46,6 +46,20 @@ require_once TMW_CHILD_PATH . '/inc/frontend/tmw-voting.php';
 // Ensure legacy experiments don't affect the default reset email contents.
 remove_all_filters('retrieve_password_message');
 
+// [TMW-SEO] Category SEO landing content (Option 1: parent archive renders videos).
+add_filter('get_the_archive_title', function ($title) { // Safe H1 override via ACF.
+    if (!is_category() || !function_exists('get_field')) { return $title; } // Categories only.
+    $term = get_queried_object(); // Current category term.
+    $acf_title = is_object($term) ? (string) get_field('seo_h1', 'category_' . $term->term_id) : ''; // ACF H1.
+    return $acf_title !== '' ? $acf_title : $title; // Fall back to parent title.
+}, 20);
+add_filter('get_the_archive_description', function ($desc) { // Safe SEO intro via ACF.
+    if (!is_category() || !function_exists('get_field')) { return $desc; } // Categories only.
+    $term = get_queried_object(); // Current category term.
+    $intro = is_object($term) ? (string) get_field('seo_intro', 'category_' . $term->term_id) : ''; // ACF intro.
+    return $intro !== '' ? wp_kses_post(wpautop($intro)) . $desc : $desc; // Prepend intro.
+}, 20);
+
 // === TMW Reset URL normalizer (email message) ===
 require_once __DIR__ . '/inc/tmw-reset-mail-url.php';
 
