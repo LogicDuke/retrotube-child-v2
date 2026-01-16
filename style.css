@@ -1125,3 +1125,138 @@ a.tag-link {
   display: table;
   clear: both;
 }
+/* =====================================================
+   TMW SLOT MACHINE LUXURY OVERRIDE - DO NOT REMOVE
+   These styles override parent theme defaults
+   ===================================================== */
+.tmw-slot-machine.tmw-slot-machine--lux,
+.single-model .tmw-slot-machine.tmw-slot-machine--lux,
+body .tmw-slot-machine.tmw-slot-machine--lux,
+html body .tmw-slot-machine {
+  border: 2px solid rgba(212, 175, 55, 0.5) !important;
+  border-color: rgba(212, 175, 55, 0.5) !important;
+  background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 50%, #1a1a1a 100%) !important;
+  min-height: auto !important;
+  max-height: 130px !important;
+  height: 130px !important;
+  box-shadow: 0 0 0 1px rgba(212,175,55,0.4), 0 0 0 3px rgba(212,175,55,0.15), 0 20px 40px -15px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05) !important;
+}
+
+.tmw-slot-machine .sound-toggle,
+.tmw-slot-machine button.sound-toggle,
+.tmw-slot-machine .tmw-slot-sound-toggle,
+body .tmw-slot-machine .sound-toggle,
+body .tmw-slot-machine button.sound-toggle,
+html body .tmw-slot-machine button {
+  color: rgba(212, 175, 55, 0.5) !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+.tmw-slot-machine .sound-toggle:hover,
+.tmw-slot-machine button.sound-toggle:hover {
+  color: #d4af37 !important;
+}
+
+.tmw-slot-machine .sound-toggle.active,
+.tmw-slot-machine button.sound-toggle.active {
+  color: #d4af37 !important;
+}
+
+.tmw-slot-machine .tmw-result,
+.tmw-slot-machine .slot-result,
+body .tmw-slot-machine .tmw-result,
+body .tmw-slot-machine .slot-result {
+  color: rgba(255, 255, 255, 0.4) !important;
+  font-family: Montserrat, sans-serif !important;
+  font-size: 14px !important;
+}
+
+.tmw-slot-machine .tmw-result.win-text,
+.tmw-slot-machine .slot-result.win-text,
+body .tmw-slot-machine .win-text {
+  color: #f4e4bc !important;
+  text-shadow: 0 0 10px #d4af37 !important;
+}
+
+.tmw-slot-machine .tmw-result.lose-text,
+.tmw-slot-machine .slot-result.lose-text,
+body .tmw-slot-machine .lose-text {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.tmw-slot-machine .teaser-text,
+body .tmw-slot-machine .teaser-text {
+  color: #f4e4bc !important;
+  font-family: 'Playfair Display', serif !important;
+  font-size: 14px !important;
+  text-shadow: 0 0 10px #d4af37, 0 0 20px #d4af37, 0 0 30px rgba(212,175,55,0.5) !important;
+}
+
+.tmw-slot-machine .teaser-sub,
+body .tmw-slot-machine .teaser-sub {
+  color: rgba(212, 175, 55, 0.5) !important;
+  font-family: Montserrat, sans-serif !important;
+  font-size: 9px !important;
+}
+
+.tmw-slot-machine .tmw-claim-bonus,
+.tmw-slot-machine a.tmw-claim-bonus,
+body .tmw-slot-machine .tmw-claim-bonus,
+body .tmw-slot-machine a.tmw-claim-bonus {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 140px !important;
+  height: 40px !important;
+  padding: 0 20px !important;
+  border: none !important;
+  border-radius: 4px !important;
+  font-family: Montserrat, sans-serif !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  letter-spacing: 1.5px !important;
+  text-transform: uppercase !important;
+  text-decoration: none !important;
+  color: #0f0f0f !important;
+  background: linear-gradient(180deg, #f4e4bc 0%, #d4af37 50%, #a68b2c 100%) !important;
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.35) !important;
+  margin-bottom: 8px !important;
+}
+
+.tmw-slot-machine .slot-right,
+body .tmw-slot-machine .slot-right {
+  min-height: auto !important;
+}
+
+.tmw-slot-machine .slot-right img,
+body .tmw-slot-machine .slot-right img {
+  max-width: 45px !important;
+  max-height: 45px !important;
+  width: auto !important;
+}
+
+.tmw-slot-machine .tmw-slot-placeholder,
+body .tmw-slot-machine .tmw-slot-placeholder {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+}
+
+.tmw-slot-machine .tmw-surprise-img,
+body .tmw-slot-machine .tmw-surprise-img {
+  max-width: 45px !important;
+  max-height: 45px !important;
+}
+
+/* Mobile override */
+@media (max-width: 650px) {
+  .tmw-slot-machine.tmw-slot-machine--lux,
+  body .tmw-slot-machine.tmw-slot-machine--lux,
+  html body .tmw-slot-machine {
+    height: auto !important;
+    max-height: none !important;
+    min-height: 280px !important;
+  }
+}
+/* === END TMW SLOT MACHINE LUXURY OVERRIDE === */
