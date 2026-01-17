@@ -115,6 +115,21 @@ add_action('wp_head', function () {
     <?php
 });
 
+add_filter('redirect_canonical', function ($redirect_url, $requested_url) {
+    if (get_option('show_on_front') !== 'page' || !is_front_page()) {
+        return $redirect_url;
+    }
+
+    $redirect_path = wp_parse_url($redirect_url, PHP_URL_PATH);
+    $requested_path = wp_parse_url($requested_url, PHP_URL_PATH);
+
+    if ($redirect_path === '/models/' && ($requested_path === '/' || $requested_path === '')) {
+        return false;
+    }
+
+    return $redirect_url;
+}, 10, 2);
+
 add_action('wp_head', function () {
     if (!is_singular('model')) {
         return;

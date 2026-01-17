@@ -32,7 +32,9 @@ $page_content = trim($page_content);
   <div class="tmw-layout container">
     <section class="tmw-content" data-mobile-guard="true">
       <header class="entry-header">
-        <h1 class="widget-title"><span class="tmw-star">★</span> Models</h1>
+        <h1 class="page-title">
+          <?php echo is_front_page() ? 'Top Models' : get_the_title(); ?>
+        </h1>
       </header>
       
       <?php if (!empty($page_content)) : ?>
