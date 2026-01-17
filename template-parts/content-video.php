@@ -192,7 +192,7 @@ if ( has_post_thumbnail() && wp_get_attachment_url( get_post_thumbnail_id() ) ) 
 	<?php endif; ?>
 
 	<?php
-	// [TMW-VIDEO-TAGS] v4.5.0 — Unified tag layout matching model page exactly
+	// [TMW-VIDEO-TAGS] v4.5.1 — Unified tag layout 100% identical to model page
 	$tmw_debug_enabled = defined( 'TMW_DEBUG' ) && TMW_DEBUG;
 
 	if ( xbox_get_field_value( 'wpst-options', 'show-tags-video-about' ) == 'on' ) :
@@ -223,24 +223,26 @@ if ( has_post_thumbnail() && wp_get_attachment_url( get_post_thumbnail_id() ) ) 
 		endif;
 	endif;
 
-	// Also show categories if enabled (keep original behavior)
+	// Categories - SAME styling as tags (red pills)
 	if ( xbox_get_field_value( 'wpst-options', 'show-categories-video-about' ) == 'on' ) :
 		$video_categories = get_the_category( get_the_ID() );
 		if ( ! empty( $video_categories ) && ! is_wp_error( $video_categories ) ) :
 		?>
-		<div class="post-categories entry-categories tmw-video-categories">
-			<span class="category-title">
-				<i class="fa fa-folder" aria-hidden="true"></i>
+		<!-- === TMW-VIDEO-CATEGORIES-UNIFIED === -->
+		<div class="post-tags entry-tags tmw-model-tags tmw-video-categories">
+			<span class="tag-title">
+				<i class="fa fa-tags" aria-hidden="true"></i>
 				<?php echo esc_html__( 'Categories:', 'retrotube' ); ?>
 			</span>
 			<?php foreach ( $video_categories as $cat ) : ?>
 				<a href="<?php echo esc_url( get_category_link( $cat->term_id ) ); ?>"
 					class="label"
 					title="<?php echo esc_attr( $cat->name ); ?>">
-					<i class="fa fa-folder-o"></i><?php echo esc_html( $cat->name ); ?>
+					<i class="fa fa-tag"></i><?php echo esc_html( $cat->name ); ?>
 				</a>
 			<?php endforeach; ?>
 		</div>
+		<!-- === END TMW-VIDEO-CATEGORIES-UNIFIED === -->
 		<?php
 		endif;
 	endif;

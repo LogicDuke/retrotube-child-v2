@@ -1210,3 +1210,123 @@ a.tag-link {
     margin: 0 6px 6px 0 !important;
   }
 }
+
+/* ============================================================
+   TMW v4.5.1 — VIDEO TAGS & CATEGORIES: 100% identical to Model Tags
+   Fixes spacing and makes categories use same red pill styling
+   ============================================================ */
+
+/* Container - same tight spacing as model */
+.single-post .tmw-model-tags.post-tags.entry-tags,
+.single-post .tmw-video-tags.post-tags.entry-tags,
+.single-post .tmw-video-categories.post-tags.entry-tags {
+  padding: 0;
+  margin: 0 0 12px 0;
+  display: block;
+  line-height: 1.8;
+}
+
+/* Tag/Category pills - EXACT same as model with TIGHT spacing */
+.single-post .tmw-model-tags a,
+.single-post .tmw-model-tags a.label,
+.single-post .tmw-video-tags a,
+.single-post .tmw-video-tags a.label,
+.single-post .tmw-video-categories a,
+.single-post .tmw-video-categories a.label {
+  background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 70%);
+  background-color: #db011a;
+  border: 1px solid #db011a;
+  color: #fff;
+  font-size: 0.85em !important;
+  line-height: 1.28 !important;
+  padding: 2px 6px !important;
+  margin: 0 6px 6px 0 !important;  /* RIGHT margin 6px = tight spacing like model */
+  border-radius: 1px;
+  display: inline-block;
+  text-decoration: none;
+}
+
+/* Hover state - same as model */
+.single-post .tmw-model-tags a:hover,
+.single-post .tmw-model-tags a.label:hover,
+.single-post .tmw-video-tags a:hover,
+.single-post .tmw-video-tags a.label:hover,
+.single-post .tmw-video-categories a:hover,
+.single-post .tmw-video-categories a.label:hover {
+  background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.25) 0%, rgba(0, 0, 0, 0.15) 100%);
+  background-color: #db011a;
+  border-color: #db011a;
+  color: #fff;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.25);
+  text-decoration: none;
+}
+
+/* Icons inside pills - same as model */
+.single-post .tmw-model-tags a.label i,
+.single-post .tmw-model-tags a i.fa,
+.single-post .tmw-video-tags a.label i,
+.single-post .tmw-video-tags a i.fa,
+.single-post .tmw-video-categories a.label i,
+.single-post .tmw-video-categories a i.fa {
+  font-size: 0.85em !important;
+  margin-right: 5px;
+  line-height: 1;
+  vertical-align: -1px;
+}
+
+/* "Tags:" and "Categories:" label - same as model */
+.single-post .tmw-model-tags .tag-title,
+.single-post .tmw-video-tags .tag-title,
+.single-post .tmw-video-categories .tag-title {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 600;
+  color: #fff;
+  margin-right: 6px;
+  gap: 5px;
+  vertical-align: middle;
+}
+
+.single-post .tmw-model-tags .tag-title i.fa-tags,
+.single-post .tmw-video-tags .tag-title i.fa-tags,
+.single-post .tmw-video-categories .tag-title i.fa-tags {
+  color: #db011a;
+  font-size: 14px;
+}
+
+/* OVERRIDE any parent theme .tags styling that adds extra spacing */
+.single-post .tags,
+.single-post .post-tags,
+.single-post .entry-tags {
+  margin: 0 0 12px 0 !important;
+  padding: 0 !important;
+}
+
+.single-post .tags a,
+.single-post .post-tags a,
+.single-post .entry-tags a {
+  margin: 0 6px 6px 0 !important;  /* Force tight 6px spacing */
+}
+
+/* Remove any flexbox gap that might add extra spacing */
+.single-post .tmw-model-tags,
+.single-post .tmw-video-tags,
+.single-post .tmw-video-categories {
+  display: block !important;
+  gap: 0 !important;
+}
+
+/* Mobile responsive - same as model */
+@media (max-width: 600px) {
+  .single-post .tmw-model-tags a,
+  .single-post .tmw-model-tags a.label,
+  .single-post .tmw-video-tags a,
+  .single-post .tmw-video-tags a.label,
+  .single-post .tmw-video-categories a,
+  .single-post .tmw-video-categories a.label {
+    font-size: 0.85em !important;
+    line-height: 1.28 !important;
+    padding: 2px 6px !important;
+    margin: 0 6px 6px 0 !important;
+  }
+}
