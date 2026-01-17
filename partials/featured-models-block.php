@@ -4,6 +4,23 @@
  */
 if (!defined('ABSPATH')) exit;
 
+$excluded_pages = [
+    'models',
+    '18-u-s-c-2257',
+    'dmca',
+    'privacy-policy-top-models-webcam',
+    'terms-of-use-of-top-models-webcam-directory',
+];
+
+if (!empty($GLOBALS['tmw_featured_models_disabled']) || is_page($excluded_pages)) {
+    return;
+}
+
+$models_page = get_page_by_path('models');
+if ($models_page instanceof WP_Post && (int) get_queried_object_id() === (int) $models_page->ID) {
+    return;
+}
+
 $shortcode_to_use = get_query_var('tmw_featured_shortcode', '[tmw_featured_models]');
 if (!is_string($shortcode_to_use)) return;
 $shortcode_to_use = trim($shortcode_to_use);

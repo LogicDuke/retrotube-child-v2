@@ -76,6 +76,7 @@ get_header(); ?>
       endwhile;
     endif;
     ?>
+    <?php get_template_part('partials/featured-models-block'); ?>
   </main>
 </div>
 

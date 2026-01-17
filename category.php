@@ -22,6 +22,8 @@ tmw_render_sidebar_layout('category-archive', function () {
         <?php endwhile; ?>
 
         <?php the_posts_navigation(); ?>
+
+        <?php get_template_part('partials/featured-models-block'); ?>
       <?php else : ?>
         <?php get_template_part('template-parts/content', 'none'); ?>
       <?php endif; ?>
