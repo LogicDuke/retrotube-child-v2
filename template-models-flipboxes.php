@@ -4,7 +4,7 @@
  * Description: Displays an Actors flipbox grid with pagination, sidebar, and SEO accordion.
  *
  * @package RetrotubeChild
- * @version 2.2.0
+ * @version 2.3.0
  */
 
 // Disable FEATURED MODELS injection on this page
@@ -12,17 +12,21 @@ $GLOBALS['tmw_featured_models_disabled'] = true;
 
 get_header();
 
-// Capture the page content for the SEO accordion while allowing the full content to render.
-$page_content_raw = '';
+// Get the page content for the SEO accordion - MUST be inside the loop or use post ID
+$page_content = '';
 if (have_posts()) {
-  while (have_posts()) {
-    the_post();
-    ob_start();
-    the_content();
-    $page_content_raw = ob_get_clean();
-    break;
-  }
+    while (have_posts()) {
+        the_post();
+        $page_content = get_the_content();
+        $page_content = apply_filters('the_content', $page_content);
+        $page_content = str_replace(']]>', ']]&gt;', $page_content);
+    }
+    wp_reset_postdata();
 }
+
+// Strip HTML but keep basic formatting tags
+$page_content = strip_tags($page_content, '<p><br><strong><em><b><i><a>');
+$page_content = trim($page_content);
 ?>
 <main id="primary" class="site-main">
   <div class="tmw-layout container">
@@ -30,8 +34,8 @@ if (have_posts()) {
       <header class="entry-header">
         <h1 class="widget-title"><span class="tmw-star">★</span> Models</h1>
       </header>
-
-      <?php if (!empty($page_content_raw)) : ?>
+      
+      <?php if (!empty($page_content)) : ?>
         <!-- SEO Text Accordion - Matches Video/Model page styling -->
         <style>
           /* Container for the SEO accordion */
@@ -123,7 +127,7 @@ if (have_posts()) {
         
         <div class="tmw-models-seo-accordion">
           <div id="tmw-seo-desc" class="desc more">
-            <?php echo wp_kses_post($page_content_raw); ?>
+            <?php echo $page_content; ?>
           </div>
           <div class="morelink-wrap">
             <a id="tmw-seo-toggle" class="morelink" href="javascript:void(0);">
