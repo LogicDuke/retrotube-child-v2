@@ -964,28 +964,52 @@ a.tag-link {
 }
 
 /**
-/* Like / Dislike – clean vertical centering */
+ * Like/Dislike button vertical centering fix in model title block.
+ */
 .title-block #rating {
-  margin: 0;
-  padding: 0;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.title-block #rating #video-rate {
+  display: flex;
+  align-items: center;
+  padding: 5px 0;
+}
+
+.title-block #rating #video-rate .like-dislike,
+.title-block #rating #video-rate > a,
+.title-block #rating #video-rate > span {
+  margin-top: 5px;
+  margin-bottom: 5px;
 }
 
 .title-block #video-rate {
   display: flex;
-  align-items: center;     /* vertical centering */
-  gap: 6px;               /* space between icons */
-  padding: 0;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 0;
 }
 
-/* Buttons */
-.title-block #video-rate a,
-.title-block #video-rate span {
-  margin: 0 !important;   /* IMPORTANT: kill stacked margins */
-  padding: 6px 10px;      /* ← THIS controls visual size */
-  line-height: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+.title-block .like-btn,
+.title-block .dislike-btn,
+.title-block [class*="like"],
+.title-block [class*="dislike"] {
+  margin-top: 5px !important;
+  margin-bottom: 5px !important;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+#rating .wpst-like-btn,
+#rating .wpst-dislike-btn,
+#rating a[data-type="like"],
+#rating a[data-type="dislike"] {
+  margin: 5px 2px;
+  padding: 5px 10px;
+  vertical-align: middle;
 }
 
 /**
