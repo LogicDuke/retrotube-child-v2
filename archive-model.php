@@ -1,25 +1,32 @@
 <?php
 /**
  * Archive template for Models CPT
- * With SEO text accordion matching video/model page styling.
+ * With SEO text accordion - pulls content from the "models" page editor.
  *
  * @package RetrotubeChild
- * @version 2.1.0
+ * @version 2.4.0
  */
+
+// Disable FEATURED MODELS injection on this page
+$GLOBALS['tmw_featured_models_disabled'] = true;
 
 get_header();
 
-// === SEO Text Configuration ===
+// === GET SEO TEXT FROM THE WORDPRESS PAGE EDITOR ===
+// Get the "models" page content (the page you edit in wp-admin)
 $seo_text = '';
+$models_page = get_page_by_path('models');
 
-// Try to get SEO text from ACF (if available)
-if (function_exists('get_field')) {
-    $seo_text = get_field('models_archive_seo_text', 'option');
-}
-
-// Fallback default SEO text - EDIT THIS to your preferred text
-if (empty($seo_text)) {
-    $seo_text = 'Welcome to the Models page at top-models.webcam, your curated guide to professional webcam models and live cam girls who bring personality, creativity, and charm to every broadcast. This introduction is here if you want a quick overview, while the grid below lets you dive straight into the talent. Each profile includes videos, bio details, and direct links to watch them live. Whether you prefer sultry performances, playful energy, or intimate conversations, our ever-growing roster has someone for every taste. Explore freely, discover new favorites, and enjoy the best in adult webcam entertainment.';
+if ($models_page) {
+    // Get the raw content from the page
+    $seo_text = $models_page->post_content;
+    
+    // Apply content filters (processes shortcodes, etc.)
+    $seo_text = apply_filters('the_content', $seo_text);
+    
+    // Strip tags but keep basic formatting
+    $seo_text = strip_tags($seo_text, '<p><br><strong><em><b><i><a><h2><h3><ul><ol><li>');
+    $seo_text = trim($seo_text);
 }
 ?>
 <main id="primary" class="site-main">
@@ -30,16 +37,16 @@ if (empty($seo_text)) {
       </header>
       
       <?php if (!empty($seo_text)) : ?>
-        <!-- SEO Text Accordion - Matches Video/Model page styling -->
+        <!-- SEO Text Accordion - Content from WordPress Page Editor -->
         <style>
           /* Container for the SEO accordion */
           .tmw-models-seo-accordion {
             margin: 0 0 20px;
-            padding: 15px 20px;
+            padding: 0 20px 15px;
             background: transparent;
           }
           
-          /* Description container - matches .video-description .desc.more */
+          /* Description container */
           .tmw-models-seo-accordion .desc {
             font-size: 14px;
             line-height: 1.6;
@@ -48,40 +55,60 @@ if (empty($seo_text)) {
             padding: 0;
           }
           
-          /* Clamped state - show only ~2 lines */
+          /* Clamped state - show only 1 line */
           .tmw-models-seo-accordion .desc.more {
             display: -webkit-box;
             -webkit-box-orient: vertical;
-            -webkit-line-clamp: 2;
+            -webkit-line-clamp: 1;
             overflow: hidden;
-            max-height: 3.2em; /* ~2 lines */
+            max-height: 1.6em;
           }
           
           .tmw-models-seo-accordion .desc p {
-            margin: 0;
+            margin: 0 0 10px;
+          }
+          
+          .tmw-models-seo-accordion .desc p:first-child {
             display: inline;
           }
           
-          /* Read more link container - centered with lines */
+          .tmw-models-seo-accordion .desc h2,
+          .tmw-models-seo-accordion .desc h3 {
+            font-size: 16px;
+            margin: 15px 0 8px;
+            color: #fff;
+          }
+          
+          .tmw-models-seo-accordion .desc ul,
+          .tmw-models-seo-accordion .desc ol {
+            margin: 10px 0;
+            padding-left: 20px;
+          }
+          
+          .tmw-models-seo-accordion .desc li {
+            margin-bottom: 5px;
+          }
+          
+          /* Read more link container - centered with red lines */
           .tmw-models-seo-accordion .morelink-wrap {
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-top: 12px;
+            margin-top: 15px;
             gap: 0;
           }
           
-          /* Red gradient lines on sides */
+          /* Red gradient lines on both sides */
           .tmw-models-seo-accordion .morelink-wrap::before,
           .tmw-models-seo-accordion .morelink-wrap::after {
             content: '';
             flex: 1;
             height: 2px;
-            background: linear-gradient(90deg, transparent 0%, #e74c3c 50%, #e74c3c 100%);
+            background: linear-gradient(90deg, transparent 0%, #e74c3c 100%);
           }
           
           .tmw-models-seo-accordion .morelink-wrap::after {
-            background: linear-gradient(90deg, #e74c3c 0%, #e74c3c 50%, transparent 100%);
+            background: linear-gradient(90deg, #e74c3c 0%, transparent 100%);
           }
           
           /* The Read more link itself */
@@ -116,7 +143,7 @@ if (empty($seo_text)) {
         
         <div class="tmw-models-seo-accordion">
           <div id="tmw-seo-desc" class="desc more">
-            <?php echo wp_kses_post($seo_text); ?>
+            <?php echo $seo_text; ?>
           </div>
           <div class="morelink-wrap">
             <a id="tmw-seo-toggle" class="morelink" href="javascript:void(0);">
@@ -152,7 +179,7 @@ if (empty($seo_text)) {
       <?php endif; ?>
       
       <?php
-      // Models grid - NO featured models
+      // Models flipbox grid - NO featured models
       add_filter('tmw_model_flipbox_link', 'tmw_flipbox_link_guard_filter', 10, 2);
       echo do_shortcode('[actors_flipboxes per_page="16" cols="4" show_pagination="true"]');
       remove_filter('tmw_model_flipbox_link', 'tmw_flipbox_link_guard_filter', 10, 2);
