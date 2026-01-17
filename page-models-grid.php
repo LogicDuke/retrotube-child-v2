@@ -15,8 +15,11 @@ get_header();
             the_post();
             get_template_part('template-parts/content', 'model');
           endwhile;
-
-          the_posts_navigation();
+          the_posts_pagination([
+            'mid_size'  => 1,
+            'prev_text' => '',
+            'next_text' => '',
+          ]);
         endif;
       else :
         echo tmw_models_flipboxes_cb([
