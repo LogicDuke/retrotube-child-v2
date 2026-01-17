@@ -192,43 +192,41 @@ if ( has_post_thumbnail() && wp_get_attachment_url( get_post_thumbnail_id() ) ) 
 	<?php endif; ?>
 
 	<?php
-	// [TMW-VIDEO-TAGS] v4.5.0 — Unified tag layout matching model page
+	// [TMW-VIDEO-TAGS] v4.5.0 — Unified tag layout matching model page exactly
 	$tmw_debug_enabled = defined( 'TMW_DEBUG' ) && TMW_DEBUG;
 
 	if ( xbox_get_field_value( 'wpst-options', 'show-tags-video-about' ) == 'on' ) :
 		$video_tags = get_the_tags( get_the_ID() );
 		$video_tags_count = is_array( $video_tags ) ? count( $video_tags ) : 0;
+
+		if ( $video_tags_count > 0 ) :
 		?>
 		<!-- === TMW-VIDEO-TAGS-UNIFIED === -->
-		<div class="post-tags entry-tags tmw-video-tags<?php echo $video_tags_count === 0 ? ' no-tags' : ''; ?>">
+		<div class="post-tags entry-tags tmw-model-tags tmw-video-tags">
 			<span class="tag-title">
 				<i class="fa fa-tags" aria-hidden="true"></i>
 				<?php echo esc_html__( 'Tags:', 'retrotube' ); ?>
 			</span>
-			<?php if ( $video_tags_count > 0 ) : ?>
-				<?php foreach ( $video_tags as $tag ) : ?>
-					<a href="<?php echo esc_url( get_tag_link( $tag->term_id ) ); ?>"
-						class="label"
-						title="<?php echo esc_attr( $tag->name ); ?>">
-						<i class="fa fa-tag"></i><?php echo esc_html( $tag->name ); ?>
-					</a>
-				<?php endforeach; ?>
-			<?php endif; ?>
+			<?php foreach ( $video_tags as $tag ) : ?>
+				<a href="<?php echo esc_url( get_tag_link( $tag->term_id ) ); ?>"
+					class="label"
+					title="<?php echo esc_attr( $tag->name ); ?>">
+					<i class="fa fa-tag"></i><?php echo esc_html( $tag->name ); ?>
+				</a>
+			<?php endforeach; ?>
 		</div>
 		<!-- === END TMW-VIDEO-TAGS-UNIFIED === -->
 		<?php
-		if ( $tmw_debug_enabled ) {
-			error_log( '[TMW-VIDEO-TAGS] rendered with unified layout on video=' . get_the_title() . ' (ID=' . get_the_ID() . ')' );
-		}
-		?>
-	<?php endif; ?>
+			if ( $tmw_debug_enabled ) {
+				error_log( '[TMW-VIDEO-TAGS] rendered with unified layout on video=' . get_the_title() . ' (ID=' . get_the_ID() . ')' );
+			}
+		endif;
+	endif;
 
-	<?php
-	// Also show categories if enabled (separate from tags)
+	// Also show categories if enabled (keep original behavior)
 	if ( xbox_get_field_value( 'wpst-options', 'show-categories-video-about' ) == 'on' ) :
 		$video_categories = get_the_category( get_the_ID() );
-		$video_cats_count = is_array( $video_categories ) ? count( $video_categories ) : 0;
-		if ( $video_cats_count > 0 ) :
+		if ( ! empty( $video_categories ) && ! is_wp_error( $video_categories ) ) :
 		?>
 		<div class="post-categories entry-categories tmw-video-categories">
 			<span class="category-title">
