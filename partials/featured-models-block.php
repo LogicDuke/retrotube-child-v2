@@ -4,6 +4,10 @@
  */
 if (!defined('ABSPATH')) exit;
 
+if (function_exists('tmw_featured_models_should_output_block') && !tmw_featured_models_should_output_block()) {
+    return;
+}
+
 $shortcode_to_use = get_query_var('tmw_featured_shortcode', '[tmw_featured_models]');
 if (!is_string($shortcode_to_use)) return;
 $shortcode_to_use = trim($shortcode_to_use);

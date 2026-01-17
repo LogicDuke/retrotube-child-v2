@@ -18,6 +18,10 @@ if (!function_exists('tmw_featured_models_should_inject')) {
             return false;
         }
 
+        if (function_exists('tmw_featured_models_should_output_block') && !tmw_featured_models_should_output_block()) {
+            return false;
+        }
+
         if (is_category() || is_tag()) {
             return true;
         }
@@ -43,18 +47,6 @@ if (!function_exists('tmw_featured_models_should_inject')) {
         }
 
         if (is_front_page() || is_home()) {
-            return false;
-        }
-
-        $excluded = [
-            '18-u-s-c-2257',
-            'dmca',
-            'privacy-policy-top-models-webcam',
-            'terms-of-use-of-top-models-webcam-directory',
-            'submit-a-video',
-        ];
-
-        if (is_page($excluded)) {
             return false;
         }
 
@@ -339,6 +331,24 @@ if (!function_exists('tmw_featured_models_find_primary_main_close_pos')) {
     }
 }
 
+if (!function_exists('tmw_featured_models_find_category_main_close_pos')) {
+    function tmw_featured_models_find_category_main_close_pos(string $content) {
+        if ($content === '') {
+            return false;
+        }
+
+        $aside_pos = stripos($content, '<aside');
+        $left = $aside_pos !== false ? substr($content, 0, $aside_pos) : $content;
+        $main_close_pos = strripos($left, '</main>');
+        if ($main_close_pos === false) {
+            return false;
+        }
+
+        $GLOBALS['tmw_featured_models_primary_region'] = ['pos' => $main_close_pos, 'anchor' => 'category-main-close'];
+        return $main_close_pos;
+    }
+}
+
 if (!function_exists('tmw_featured_models_find_primary_locked_insert_pos')) {
     function tmw_featured_models_find_primary_locked_insert_pos(string $content) {
         if ($content === '') {
@@ -386,6 +396,7 @@ if (!function_exists('tmw_featured_models_inject_into_buffer')) {
         }
 
         $force = tmw_featured_models_is_force_relocate_context();
+        $is_category = is_category();
 
         if (strpos($buffer, 'data-tmw-featured-lockbox="1"') !== false) {
             tmw_featured_models_log_request('skipped-existing', false);
@@ -400,6 +411,20 @@ if (!function_exists('tmw_featured_models_inject_into_buffer')) {
         $block_to_insert = $markup;
         $insert_pos = false;
         $anchor_label = 'append';
+
+        if ($is_category) {
+            $insert_pos = tmw_featured_models_find_category_main_close_pos($buffer);
+            if ($insert_pos === false) {
+                tmw_featured_models_log_request('category-no-main', false);
+                $GLOBALS['tmw_featured_models_markup'] = '';
+                return $buffer;
+            }
+
+            $buffer = substr_replace($buffer, $block_to_insert, $insert_pos, 0);
+            tmw_featured_models_log_request('category-main-close', $insert_pos);
+            $GLOBALS['tmw_featured_models_markup'] = '';
+            return $buffer;
+        }
 
         if ($force) {
             $insert_pos = tmw_featured_models_find_primary_locked_insert_pos($buffer);

@@ -328,6 +328,10 @@ if (!function_exists('tmw_featured_pick_terms')) {
 }
 if (!function_exists('tmw_featured_models_shortcode')) {
   function tmw_featured_models_shortcode($atts = []): string {
+    if (function_exists('tmw_featured_models_should_output_block') && !tmw_featured_models_should_output_block()) {
+      return '';
+    }
+
     if (!wp_style_is('retrotube-child-style', 'enqueued')) {
       wp_enqueue_style(
         'retrotube-child-style',
@@ -653,6 +657,37 @@ add_shortcode('actors_flipboxes', 'tmw_models_flipboxes_cb');      // alias / ba
 /* ======================================================================
  * FEATURED MODELS SHORTCODE HELPERS
  * ====================================================================== */
+if (!function_exists('tmw_featured_models_should_output_block')) {
+  function tmw_featured_models_should_output_block(): bool {
+    if (!empty($GLOBALS['tmw_featured_models_disabled'])) {
+      return false;
+    }
+
+    if (!is_page()) {
+      return true;
+    }
+
+    $excluded_pages = [
+      '18-u-s-c-2257',
+      'dmca',
+      'privacy-policy-top-models-webcam',
+      'terms-of-use-of-top-models-webcam-directory',
+      'models',
+      'submit-a-video',
+    ];
+
+    if (is_page($excluded_pages)) {
+      return false;
+    }
+
+    $models_page = get_page_by_path('models');
+    if ($models_page instanceof WP_Post && (int) get_queried_object_id() === (int) $models_page->ID) {
+      return false;
+    }
+
+    return true;
+  }
+}
 if (!function_exists('tmw_clean_featured_shortcode')) {
   function tmw_clean_featured_shortcode($value) {
     $value = is_string($value) ? trim($value) : '';
