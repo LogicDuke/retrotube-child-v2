@@ -967,8 +967,8 @@ a.tag-link {
  * Like/Dislike button vertical centering fix in model title block.
  */
 .title-block #rating {
-  padding-top: 5px;
-  padding-bottom: 5px;
+  padding-top: 2px;
+  padding-bottom: 2px;
   margin-top: 0;
   margin-bottom: 0;
 }
@@ -982,23 +982,23 @@ a.tag-link {
 .title-block #rating #video-rate .like-dislike,
 .title-block #rating #video-rate > a,
 .title-block #rating #video-rate > span {
-  margin-top: 5px;
-  margin-bottom: 5px;
+  margin-top: 2px;
+  margin-bottom: 2px;
 }
 
 .title-block #video-rate {
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 5px 0;
+  gap: 2px;
+  padding: 2px 0;
 }
 
 .title-block .like-btn,
 .title-block .dislike-btn,
 .title-block [class*="like"],
 .title-block [class*="dislike"] {
-  margin-top: 5px !important;
-  margin-bottom: 5px !important;
+  margin-top: 2px !important;
+  margin-bottom: 2px !important;
   padding-top: 0;
   padding-bottom: 0;
 }
