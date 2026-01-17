@@ -498,6 +498,11 @@ function tmw_models_flipboxes_cb($atts){
     'img_source'     => 'auto',
   ], $atts);
 
+  // Prevent custom pg-based pagination on homepage.
+  if (is_front_page() || is_home()) {
+    $a['show_pagination'] = false;
+  }
+
   $paged = isset($_GET[$a['page_var']]) ? max(1, intval($_GET[$a['page_var']])) : max(1, intval(get_query_var('paged')), intval(get_query_var('page')));
   $per_page   = max(1, (int)$a['per_page']);
   $offset     = ($paged - 1) * $per_page;

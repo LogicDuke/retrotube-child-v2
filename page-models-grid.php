@@ -9,12 +9,23 @@ get_header();
 <div class="tmw-layout">
   <main id="primary" class="site-main" data-mobile-guard="true">
     <?php
-      echo tmw_models_flipboxes_cb([
-        'per_page'        => 12,
-        'cols'            => 3,
-        'show_pagination' => true,
-        'page_var'        => 'pg',
-      ]);
+      if (is_front_page() || is_home()) :
+        if (have_posts()) :
+          while (have_posts()) :
+            the_post();
+            get_template_part('template-parts/content', 'model');
+          endwhile;
+
+          the_posts_navigation();
+        endif;
+      else :
+        echo tmw_models_flipboxes_cb([
+          'per_page'        => 12,
+          'cols'            => 3,
+          'show_pagination' => true,
+          'page_var'        => 'pg',
+        ]);
+      endif;
     ?>
   </main>
   <?php get_sidebar(); ?>

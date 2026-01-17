@@ -42,6 +42,7 @@ define('TMW_CHILD_URL',  get_stylesheet_directory_uri());
 require_once TMW_CHILD_PATH . '/inc/bootstrap.php';
 require_once __DIR__ . '/inc/tmw-tml-bridge.php';
 require_once TMW_CHILD_PATH . '/inc/frontend/tmw-voting.php';
+require_once __DIR__ . '/inc/tmw-hooks.php';
 
 // Ensure legacy experiments don't affect the default reset email contents.
 remove_all_filters('retrieve_password_message');
