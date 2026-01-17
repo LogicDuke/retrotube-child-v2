@@ -79,7 +79,7 @@ function tmw_render_model_slot_banner_zone(int $post_id): string
 // Backwards compatibility alias
 function tmw_render_model_slot_banner(int $post_id): string
 {
-    return tmw_render_model_slot_banner_zone($post_id);
+    return call_user_func('tmw_render_model_slot_banner_zone', $post_id);
 }
 
 // Helper functions
