@@ -1,117 +1,6 @@
 <?php
 
 /* ======================================================================
- * ADMIN DEBUG
- * ====================================================================== */
-if (defined('TMW_DEBUG') && TMW_DEBUG) {
-  add_action('template_redirect', function () {
-    $do_debug = isset($_GET['awdebug']) || isset($_GET['aw_diag']);
-    if (!$do_debug) {
-      return;
-    }
-
-    if (!is_user_logged_in() || !current_user_can('manage_options')) {
-      status_header(403);
-      exit('Forbidden');
-    }
-
-    header('Content-Type: text/plain; charset=utf-8');
-
-    echo "AWEMPIRE_FEED_URL defined: " . (defined('AWEMPIRE_FEED_URL') ? 'YES' : 'NO') . "\n";
-    if (defined('AWEMPIRE_FEED_URL')) {
-      echo "Feed URL: " . AWEMPIRE_FEED_URL . "\n";
-      $resp  = wp_remote_get(AWEMPIRE_FEED_URL, ['timeout' => 15]);
-      $code  = wp_remote_retrieve_response_code($resp);
-      $body  = wp_remote_retrieve_body($resp);
-      $json  = json_decode($body, true);
-
-      $count = 0;
-      if (is_array($json)) {
-        if (isset($json['data']['models']) && is_array($json['data']['models'])) {
-          $count = count($json['data']['models']);
-        } elseif (isset($json['models']) && is_array($json['models'])) {
-          $count = count($json['models']);
-        }
-      }
-      echo "HTTP status: {$code}\n";
-      echo "Decoded items: {$count}\n";
-      echo "Body preview: " . substr($body, 0, 200) . "\n\n";
-    }
-
-    $terms = get_terms(['taxonomy' => 'models', 'number' => 5, 'hide_empty' => false]);
-    foreach ($terms as $t) {
-      $card  = function_exists('tmw_aw_card_data') ? tmw_aw_card_data($t->term_id) : [];
-      $front = $card['front'] ?? '';
-      $back  = $card['back']  ?? '';
-      echo "TERM: {$t->name} ({$t->slug})\n";
-      echo "  front: {$front}\n";
-      echo "  back : {$back}\n";
-      if ($front && strpos($front, 'data:') !== 0) {
-        $h = wp_remote_head($front);
-        echo "  front HEAD: " . wp_remote_retrieve_response_code($h) . "\n";
-      }
-      if ($back && strpos($back, 'data:') !== 0) {
-        $h = wp_remote_head($back);
-        echo "  back  HEAD: " . wp_remote_retrieve_response_code($h) . "\n";
-      }
-      echo "\n";
-    }
-    exit;
-  });
-
-  add_action('template_redirect', function () {
-    if (!isset($_GET['awfind'])) {
-      return;
-    }
-
-    if (!is_user_logged_in() || !current_user_can('manage_options')) {
-      status_header(403);
-      exit('Forbidden');
-    }
-
-    header('Content-Type: text/plain; charset=utf-8');
-
-    $q = strtolower(trim((string) $_GET['awfind']));
-    $feed = function_exists('tmw_aw_get_feed') ? tmw_aw_get_feed() : [];
-    $out = [];
-    foreach ((array) $feed as $row) {
-      $vals = [
-        $row['performerId']   ?? '',
-        $row['displayName']   ?? '',
-        $row['nickname']      ?? '',
-        $row['name']          ?? '',
-        $row['uniqueModelId'] ?? '',
-      ];
-      foreach ($vals as $v) {
-        if ($v && strpos(strtolower($v), $q) !== false) {
-          $picked = function_exists('tmw_aw_pick_images_from_row') ? tmw_aw_pick_images_from_row($row) : [null, null];
-          $out[] = [
-            'performerId' => $row['performerId'] ?? '',
-            'displayName' => $row['displayName'] ?? '',
-            'nickname'    => $row['nickname'] ?? '',
-            'front'       => $picked[0] ?? '',
-            'back'        => $picked[1] ?? '',
-            'link'        => $row['tracking_url'] ?? ($row['url'] ?? ''),
-          ];
-          break;
-        }
-      }
-    }
-
-    echo "Query: {$q}\nMatches: " . count($out) . "\n\n";
-    foreach (array_slice($out, 0, 20) as $r) {
-      echo "performerId : {$r['performerId']}\n";
-      echo "displayName : {$r['displayName']}\n";
-      echo "nickname    : {$r['nickname']}\n";
-      echo "front       : {$r['front']}\n";
-      echo "back        : {$r['back']}\n";
-      echo "link        : {$r['link']}\n\n";
-    }
-    exit;
-  });
-}
-
-/* ======================================================================
  * SLOT BANNER BACKFILL TOOL
  * ====================================================================== */
 add_action('admin_menu', function () {
@@ -170,10 +59,6 @@ add_action('admin_post_tmw_slot_banner_backfill', function () {
     } else {
       $skipped++;
     }
-  }
-
-  if (defined('TMW_DEBUG') && TMW_DEBUG) {
-    error_log('[TMW-SLOT-META] backfill updated=' . $updated . ' skipped=' . $skipped . ' total=' . $total);
   }
 
   $redirect = add_query_arg([
@@ -251,10 +136,6 @@ if (!function_exists('tmw_render_banner_position_box')) {
 
     echo '<input type="range" min="0" max="100" step="1" value="' . esc_attr($value) . '" id="tmwBannerSlider" class="tmw-slider" name="banner_focal_y">
     <p><small>Vertical focus (%): <span id="tmwBannerValue">' . esc_html($value) . '</span> (0=top, 100=bottom)</small></p>';
-
-    if (defined('TMW_BANNER_DEBUG') && TMW_BANNER_DEBUG) {
-      echo '<p><code>Resolved URL: ' . esc_html($banner ? $banner : 'EMPTY') . '</code></p>';
-    }
 
     ob_start();
     ?>
@@ -529,12 +410,10 @@ function rt_child_sync_model_profile( $model_post_id, $video_post_id ) {
         update_post_meta( $model_post_id, 'rt_model_videos', $related );
     }
 
-    tmw_debug_log('[ModelSync] Synced performer “' . $performer_name . '” (' . $model_post_id . ') with video ' . $video_post_id);
 }
 
 add_action('after_switch_theme', function () {
     flush_rewrite_rules();
-    tmw_debug_log('[ModelFix] Flushed rewrite rules after theme activation.');
 });
 
 /**
@@ -635,7 +514,6 @@ add_action('admin_init', function() {
 // === [TMW-MODEL-COMMENTS] Enable comments for model post type ===
 add_action( 'init', function() {
     add_post_type_support( 'model', 'comments' );
-    tmw_debug_log('[TMW-MODEL-COMMENTS] Comment support enabled for post type: model');
 });
 
 
@@ -643,7 +521,6 @@ add_action( 'init', function() {
 add_filter( 'comments_open', function( $open, $post_id ) {
     $post = get_post( $post_id );
     if ( $post && $post->post_type === 'model' ) {
-        tmw_debug_log('[TMW-MODEL-COMMENTS-FORCE] Forcing comments open for ' . $post->post_title);
         return true;
     }
     return $open;
@@ -670,104 +547,6 @@ add_action( 'init', function() {
                 'ID' => $model->ID,
                 'comment_status' => 'open',
             ]);
-            tmw_debug_log('[TMW-MODEL-COMMENTS-FORCE] Comment status set to open for ' . $model->post_title);
         }
     }
 });
-
-
-if (defined('TMW_DEBUG') && TMW_DEBUG) {
-  add_action('wp_ajax_tmw_flipbox_audit_log', 'tmw_flipbox_audit_log');
-  add_action('wp_ajax_nopriv_tmw_flipbox_audit_log', 'tmw_flipbox_audit_log');
-  function tmw_flipbox_audit_log() {
-      if (isset($_POST['msg'])) {
-          $msg = sanitize_text_field($_POST['msg']);
-          tmw_debug_log($msg);
-      }
-      wp_die();
-  }
-
-  add_action('wp_ajax_tmw_flipbox_deep_audit_log', 'tmw_flipbox_deep_audit_log');
-  add_action('wp_ajax_nopriv_tmw_flipbox_deep_audit_log', 'tmw_flipbox_deep_audit_log');
-  function tmw_flipbox_deep_audit_log() {
-      if (isset($_POST['msg'])) {
-          tmw_debug_log(sanitize_text_field($_POST['msg']));
-      }
-      wp_die();
-  }
-
-  add_action('wp_ajax_tmw_flipbox_intercept_log', 'tmw_flipbox_intercept_log');
-  add_action('wp_ajax_nopriv_tmw_flipbox_intercept_log', 'tmw_flipbox_intercept_log');
-  function tmw_flipbox_intercept_log() {
-      if (isset($_POST['msg'])) {
-          tmw_debug_log(sanitize_text_field($_POST['msg']));
-      }
-      wp_die();
-  }
-
-  add_action('wp_enqueue_scripts', function () {
-      wp_dequeue_script('tmw-flipbox-mobile-fix');
-      wp_dequeue_script('flipbox-mobile-fix');
-      wp_dequeue_script('tmw-flipbox-intercept');
-      wp_dequeue_script('tmw-flipbox-audit');
-      wp_dequeue_script('tmw-flipbox-deep-audit');
-
-      wp_enqueue_script(
-          'tmw-flipbox-debug',
-          get_stylesheet_directory_uri() . '/js/tmw-flipbox-debug.js',
-          ['jquery'],
-          time(),
-          true
-      );
-
-      wp_localize_script('tmw-flipbox-debug', 'tmwDebug', [
-          'ajaxurl' => admin_url('admin-ajax.php'),
-          'nonce'   => wp_create_nonce('tmw_flipbox_debug')
-      ]);
-  }, 9999);
-
-  add_action('wp_ajax_tmw_flipbox_debug_log', 'tmw_flipbox_debug_log');
-  add_action('wp_ajax_nopriv_tmw_flipbox_debug_log', 'tmw_flipbox_debug_log');
-  function tmw_flipbox_debug_log() {
-      check_ajax_referer('tmw_flipbox_debug', 'nonce');
-      if (!empty($_POST['msg'])) {
-          tmw_debug_log('[TMW-FLIPBOX-DEBUG] ' . sanitize_text_field($_POST['msg']));
-      }
-      wp_die();
-  }
-
-  add_action('wp_enqueue_scripts', function () {
-      foreach ([
-          'tmw-flipbox-mobile-fix',
-          'flipbox-mobile-fix',
-          'tmw-flipbox-intercept',
-          'tmw-flipbox-audit',
-          'tmw-flipbox-deep-audit'
-      ] as $handle) {
-          if (wp_script_is($handle, 'enqueued')) {
-              wp_dequeue_script($handle);
-              tmw_debug_log("[TMW-FLIPBOX-AUDIT] Dequeued old script: {$handle}");
-          }
-      }
-
-      $src = get_stylesheet_directory_uri() . '/js/tmw-flipbox-debug.js';
-      wp_enqueue_script('tmw-flipbox-debug', $src, ['jquery'], time(), true);
-
-      $inline = <<<JS
-jQuery(function($){
-  console.log('[TMW-FLIPBOX-DEBUG] Inline ping triggered.');
-  $.post(ajaxurl,{action:'tmw_flipbox_debug_ping',t:(new Date()).toISOString()});
-});
-JS;
-      wp_add_inline_script('tmw-flipbox-debug', $inline, 'after');
-  }, 9999);
-
-  add_action('wp_ajax_tmw_flipbox_debug_ping', function(){
-      tmw_debug_log('[TMW-FLIPBOX-DEBUG] ✅ Script executed and ping received.');
-      wp_die();
-  });
-  add_action('wp_ajax_nopriv_tmw_flipbox_debug_ping', function(){
-      tmw_debug_log('[TMW-FLIPBOX-DEBUG] ✅ Script executed and ping received.');
-      wp_die();
-  });
-}

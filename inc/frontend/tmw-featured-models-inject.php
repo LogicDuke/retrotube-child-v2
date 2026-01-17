@@ -136,42 +136,6 @@ if (!function_exists('tmw_featured_models_is_force_relocate_context')) {
     }
 }
 
-if (!function_exists('tmw_featured_models_debug_log')) {
-    function tmw_featured_models_debug_log(string $tag, string $message): void {
-        if (!defined('TMW_DEBUG') || !TMW_DEBUG) {
-            return;
-        }
-
-        error_log('[' . $tag . '] ' . $message);
-    }
-}
-
-if (!function_exists('tmw_featured_models_log_request')) {
-    function tmw_featured_models_log_request(string $anchor_label, $insert_pos): void {
-        if (!defined('TMW_DEBUG') || !TMW_DEBUG) {
-            return;
-        }
-
-        if (!empty($GLOBALS['tmw_featured_models_log_emitted'])) {
-            return;
-        }
-
-        $GLOBALS['tmw_featured_models_log_emitted'] = true;
-
-        $uri = isset($_SERVER['REQUEST_URI']) ? (string) $_SERVER['REQUEST_URI'] : '';
-        $pos_value = $insert_pos === false ? 'false' : (string) $insert_pos;
-        $message = 'uri=' . $uri
-            . ' page_categories=' . (is_page('categories') ? '1' : '0')
-            . ' is_category=' . (is_category() ? '1' : '0')
-            . ' is_tag=' . (is_tag() ? '1' : '0')
-            . ' is_paged=' . (is_paged() ? '1' : '0')
-            . ' anchor=' . $anchor_label
-            . ' pos=' . $pos_value;
-
-        tmw_featured_models_debug_log('TMW-FEATURED-INJECT][TMW-FEATURED-POS', $message);
-    }
-}
-
 if (!function_exists('tmw_featured_models_get_page_type')) {
     function tmw_featured_models_get_page_type(): string {
         if (is_category()) {
@@ -397,7 +361,6 @@ if (!function_exists('tmw_featured_models_inject_into_buffer')) {
         $force = tmw_featured_models_is_force_relocate_context();
 
         if (strpos($buffer, 'data-tmw-featured-lockbox="1"') !== false) {
-            tmw_featured_models_log_request('skipped-existing', false);
             $GLOBALS['tmw_featured_models_markup'] = '';
             return $buffer;
         }
@@ -444,8 +407,6 @@ if (!function_exists('tmw_featured_models_inject_into_buffer')) {
         if ($insert_pos !== false) {
             $buffer = substr_replace($buffer, $block_to_insert, $insert_pos, 0);
         }
-
-        tmw_featured_models_log_request($anchor_label, $insert_pos);
 
         $GLOBALS['tmw_featured_models_markup'] = '';
         return $buffer;

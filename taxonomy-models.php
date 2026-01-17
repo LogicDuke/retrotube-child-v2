@@ -4,9 +4,6 @@
  * Displays the flipbox grid, matching the Models Grid page layout.
  */
 
-if (defined('TMW_DEBUG') && TMW_DEBUG) {
-  error_log('[TMW-MODEL-AUDIT] taxonomy-models.php loaded for ' . single_term_title('', false));
-}
 get_header();
 $tmw_video_widget_class = class_exists('TMW_WP_Widget_Videos_Block_Fixed') ? 'TMW_WP_Widget_Videos_Block_Fixed' : 'wpst_WP_Widget_Videos_Block';
 ?>

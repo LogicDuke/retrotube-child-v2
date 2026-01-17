@@ -49,10 +49,6 @@ function tmw_rewrite_video_filter_hrefs_to_videos_page($html) {
         return 'href=' . $quote . esc_url($new_url) . $quote;
     }, $html);
 
-    if (defined('TMW_DEBUG') && TMW_DEBUG) {
-        error_log('[TMW-VIDEO-LINKS] rewrote ' . $count . ' href(s) in video widget output');
-    }
-
     return $updated;
 }
 

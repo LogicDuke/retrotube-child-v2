@@ -232,41 +232,6 @@ add_action('wp_head', function(){
   echo '<script>document.addEventListener("DOMContentLoaded",function(){var i=document.querySelector(".video-grid img, .tmw-grid img");if(i){i.setAttribute("fetchpriority","high");i.setAttribute("decoding","async");i.removeAttribute("loading");}});</script>';
 });
 
-add_action('wp_enqueue_scripts', function () {
-  if (!defined('TMW_DEBUG') || !TMW_DEBUG || is_admin()) {
-    return;
-  }
-
-  $post_type = get_post_type();
-  $script_handles = [];
-  $style_handles  = [];
-
-  global $wp_scripts, $wp_styles;
-
-  if ($wp_scripts instanceof WP_Scripts) {
-    foreach ((array) $wp_scripts->queue as $handle) {
-      if (stripos($handle, 'slot') !== false) {
-        $script_handles[] = $handle;
-      }
-    }
-  }
-
-  if ($wp_styles instanceof WP_Styles) {
-    foreach ((array) $wp_styles->queue as $handle) {
-      if (stripos($handle, 'slot') !== false) {
-        $style_handles[] = $handle;
-      }
-    }
-  }
-
-  $script_report = empty($script_handles) ? '(none)' : implode('|', $script_handles);
-  $style_report  = empty($style_handles) ? '(none)' : implode('|', $style_handles);
-
-  if (defined('TMW_DEBUG') && TMW_DEBUG) {
-    error_log('[TMW-SLOT-AUDIT] enqueue slot assets on post_type=' . ($post_type ?: 'null') . ' scripts=' . $script_report . ' styles=' . $style_report);
-  }
-}, 200);
-
 if ( file_exists( get_stylesheet_directory() . '/inc/tmw-tax-bind-models-video.php' ) ) {
     require_once get_stylesheet_directory() . '/inc/tmw-tax-bind-models-video.php';
 }
@@ -277,7 +242,7 @@ if ( file_exists( get_stylesheet_directory() . '/inc/tmw-tax-bind-models-video.p
  */
 add_filter('autoptimize_filter_css_exclude', function ($list) {
     // Keep the child stylesheet separate for predictable cascade, and ensure
-    // the late inline hero fix stays untouched for debug toggles.
+    // the late inline hero fix stays untouched for cache stability.
     $extra = ',retrotube-child-style';
     return is_string($list) ? $list . $extra : $extra;
 });

@@ -1,38 +1,6 @@
 <?php
 $model_id   = get_the_ID();
 $model_name = get_the_title();
-$tmw_debug_enabled = defined('TMW_DEBUG') && TMW_DEBUG;
-
-if ($tmw_debug_enabled) {
-	$model_slug = get_post_field('post_name', $model_id);
-	$slot_enabled_exists = metadata_exists('post', $model_id, '_tmw_slot_enabled');
-	$slot_shortcode_exists = metadata_exists('post', $model_id, '_tmw_slot_shortcode');
-	$slot_enabled_value = $slot_enabled_exists ? get_post_meta($model_id, '_tmw_slot_enabled', true) : '';
-	$slot_shortcode_value = $slot_shortcode_exists ? get_post_meta($model_id, '_tmw_slot_shortcode', true) : '';
-	$slot_is_enabled = function_exists('tmw_model_slot_is_enabled') ? tmw_model_slot_is_enabled((int) $model_id) : ($slot_enabled_value === '1');
-	$slot_shortcode = function_exists('tmw_model_slot_get_shortcode')
-		? tmw_model_slot_get_shortcode((int) $model_id)
-		: ($slot_shortcode_value !== '' ? $slot_shortcode_value : '[tmw_slot_machine]');
-	$slot_raw_len = 0;
-	if (function_exists('tmw_render_model_slot_banner')) {
-		$slot_output = do_shortcode($slot_shortcode);
-		$slot_raw_len = is_string($slot_output) ? strlen(trim($slot_output)) : 0;
-	}
-	$wpst_like_exists = function_exists('wpst_get_post_like_link');
-	$wpst_rate_exists = function_exists('wpst_get_post_like_rate');
-	$like_html = $wpst_like_exists ? wpst_get_post_like_link($model_id) : '';
-	$like_html_len = is_string($like_html) ? strlen(trim($like_html)) : 0;
-	$like_has_markup = $like_html_len > 0 && strpos($like_html, '<') !== false;
-
-	error_log('[TMW-SLOT-AUDIT] model_id=' . $model_id . ' slug=' . ($model_slug !== '' ? $model_slug : 'unknown'));
-	if ($slot_enabled_exists || $slot_shortcode_exists) {
-		error_log('[TMW-SLOT-AUDIT] slot_meta enabled_exists=' . ($slot_enabled_exists ? 'yes' : 'no') . ' enabled_value=' . ($slot_enabled_value !== '' ? $slot_enabled_value : 'empty') . ' shortcode_exists=' . ($slot_shortcode_exists ? 'yes' : 'no') . ' shortcode_value=' . ($slot_shortcode_value !== '' ? $slot_shortcode_value : 'empty'));
-	}
-	error_log('[TMW-SLOT-AUDIT] slot_enabled=' . ($slot_is_enabled ? 'yes' : 'no') . ' shortcode=' . $slot_shortcode . ' raw_len=' . $slot_raw_len);
-	error_log('[TMW-LIKE-AUDIT] wpst_get_post_like_link_exists=' . ($wpst_like_exists ? 'yes' : 'no') . ' wpst_get_post_like_rate_exists=' . ($wpst_rate_exists ? 'yes' : 'no') . ' like_html_len=' . $like_html_len . ' has_vote_markup=' . ($like_has_markup ? 'yes' : 'no'));
-	error_log('[TMW-MODEL-AUDIT] template-parts/content-model.php loaded for ' . $model_name);
-}
-
 $banner_url      = tmw_resolve_model_banner_url( $model_id );
 
 $cta_url   = function_exists( 'get_field' ) ? get_field( 'model_link', $model_id ) : '';
@@ -67,11 +35,6 @@ $is_rated_yet   = ( 0 === ( $likes_count + $dislikes_count ) ) ? ' not-rated-yet
         <header class="entry-header">
 
                 <div class="video-player box-shadow model-banner">
-                        <?php
-                        if ( defined( 'TMW_BANNER_DEBUG' ) && TMW_BANNER_DEBUG ) {
-                                echo "\n<!-- TMW Banner URL: " . esc_html( $banner_url ? $banner_url : 'EMPTY' ) . " -->\n"; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-                        }
-                        ?>
                         <?php if ( ! tmw_render_model_banner( $model_id, 'frontend' ) ) : ?>
                                 <div class="tmw-banner-container">
                                         <div class="tmw-banner-frame frontend">
@@ -93,10 +56,6 @@ $is_rated_yet   = ( 0 === ( $likes_count + $dislikes_count ) ) ? ' not-rated-yet
                                 <p class="model-cta-note"><?php echo wp_kses_post( $cta_note ); ?></p>
                         <?php endif; ?>
                 </div>
-
-		<?php if ( $tmw_debug_enabled ) : ?>
-			<?php error_log( '[TMW-MODEL-HEADER] Using video-style header block on model=' . $model_name ); ?>
-		<?php endif; ?>
 
 		<div class="title-block box-shadow">
 			<?php the_title( '<h1 class="entry-title model-name" itemprop="name">', '</h1>' ); ?>
@@ -161,17 +120,13 @@ $is_rated_yet   = ( 0 === ( $likes_count + $dislikes_count ) ) ? ' not-rated-yet
                                 <div class="video-description">
                                         <?php if ( xbox_get_field_value( 'wpst-options', 'show-description-video-about' ) == 'on' ) : ?>
                                                 <div class="desc <?php echo ( xbox_get_field_value( 'wpst-options', 'truncate-description' ) == 'on' ) ? 'more' : ''; ?>">
-													<!-- [TMW-SLOT-AUDIT] BEGIN the_content -->
                                                         <?php the_content(); ?>
-													<!-- [TMW-SLOT-AUDIT] END the_content -->
                                                 </div>
                                         <?php endif; ?>
                                 </div>
 
 								<?php if ( xbox_get_field_value( 'wpst-options', 'show-categories-video-about' ) == 'on' || xbox_get_field_value( 'wpst-options', 'show-tags-video-about' ) == 'on' ) : ?>
-										<!-- [TMW-SLOT-AUDIT] BEGIN tags -->
                                         <div class="tags"><?php wpst_entry_footer(); ?></div>
-								<!-- [TMW-SLOT-AUDIT] END tags -->
                                 <?php endif; ?>
 						</div>
 			</div><!-- END .tab-content -->
@@ -180,25 +135,8 @@ $is_rated_yet   = ( 0 === ( $likes_count + $dislikes_count ) ) ? ' not-rated-yet
 			if (function_exists('tmw_render_model_slot_banner_zone')) :
 				$tmw_slot_html = tmw_render_model_slot_banner_zone((int) get_the_ID());
 				if ($tmw_slot_html !== '') :
-					if (defined('TMW_DEBUG') && TMW_DEBUG) {
-						error_log('[TMW-SLOT-FIX] template content-model.php echo len=' . strlen($tmw_slot_html) . ' model_id=' . get_the_ID());
-					}
 					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 					echo $tmw_slot_html;
-				elseif (defined('TMW_DEBUG') && TMW_DEBUG) :
-					// Debug comment showing current meta values
-					$d_id = get_the_ID();
-					$d_en = get_post_meta($d_id, '_tmw_slot_enabled', true);
-					$d_mo = get_post_meta($d_id, '_tmw_slot_mode', true);
-					$d_sc = get_post_meta($d_id, '_tmw_slot_shortcode', true);
-					printf(
-						'<!-- TMW_SLOT_DEBUG: post_id=%d enabled="%s" mode="%s" shortcode="%s" shortcode_exists=%s -->',
-						$d_id,
-						esc_attr($d_en),
-						esc_attr($d_mo),
-						esc_attr($d_sc),
-						shortcode_exists('tmw_slot_machine') ? 'yes' : 'NO'
-					);
 				endif;
 			endif;
 			// === END TMW SLOT BANNER ZONE ===
@@ -213,9 +151,7 @@ $is_rated_yet   = ( 0 === ( $likes_count + $dislikes_count ) ) ? ' not-rated-yet
                                         <span class="tag-title">
                                                 <i class="fa fa-tags" aria-hidden="true"></i>
                                                 <?php
-                                                echo $tmw_model_tags_count === 0
-                                                        ? esc_html__('(No tags linked — audit mode)', 'retrotube')
-                                                        : esc_html__('Tags:', 'retrotube');
+                                                echo esc_html__('Tags:', 'retrotube');
                                                 ?>
                                         </span>
                                         <?php if ($tmw_model_tags_count > 0 && is_array($tmw_model_tags)) : ?>

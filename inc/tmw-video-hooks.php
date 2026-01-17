@@ -519,7 +519,6 @@ function tmw_models_flipboxes_cb($atts){
   ob_start();
   printf('<div class="tmw-grid tmw-cols-%d">', (int)$a['cols']);
 
-  tmw_debug_log('[TMW-FLIPBOX] Sponsored slot removed between flipbox 8 and 9.');
 
   $schema_items = [];
 

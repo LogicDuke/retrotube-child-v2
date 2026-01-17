@@ -61,7 +61,6 @@
             method: 'POST',
             data: { meta: meta },
         }).then(function () {
-            console.log('[TMW-SLOT] Meta synced:', meta);
         }).catch(function (err) {
             console.error('[TMW-SLOT] Sync failed:', err);
         });

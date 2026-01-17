@@ -26,43 +26,7 @@ function tmw_child_perf_buffer_start(): void {
     }
 
     $started = true;
-    $GLOBALS['tmw_perf_buffer_counts'] = [
-        'gtag' => 0,
-        'ads' => 0,
-        'fb' => 0,
-        'cf' => 0,
-        'gtranslate' => 0,
-        'vjs' => 0,
-        'quality' => 0,
-        'bxslider' => 0,
-    ];
-
     ob_start('tmw_child_perf_buffer_rewrite');
-
-    register_shutdown_function(function () {
-        if (!defined('TMW_DEBUG') || !TMW_DEBUG) {
-            return;
-        }
-        if (empty($GLOBALS['tmw_perf_buffer_counts'])) {
-            return;
-        }
-        $counts = $GLOBALS['tmw_perf_buffer_counts'];
-        $total = array_sum($counts);
-        if ($total === 0) {
-            return;
-        }
-        error_log(sprintf(
-            '[TMW-PERF-BUFFER] Rewrote scripts: gtag=%d ads=%d fb=%d cf=%d gtranslate=%d vjs=%d quality=%d bxslider=%d.',
-            $counts['gtag'],
-            $counts['ads'],
-            $counts['fb'],
-            $counts['cf'],
-            $counts['gtranslate'],
-            $counts['vjs'],
-            $counts['quality'],
-            $counts['bxslider']
-        ));
-    });
 }
 add_action('template_redirect', 'tmw_child_perf_buffer_start', 0);
 
@@ -107,8 +71,6 @@ function tmw_child_perf_buffer_rewrite(string $html): string {
         if ($key === null) {
             return $tag;
         }
-
-        $GLOBALS['tmw_perf_buffer_counts'][$key]++;
 
         $flags = [
             'async' => preg_match('/\basync\b/i', $tag) === 1,

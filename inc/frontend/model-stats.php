@@ -9,8 +9,6 @@ if ( ! function_exists( 'tmw_model_stats_increment_views' ) ) {
             return;
         }
 
-        $debug = defined( 'TMW_DEBUG' ) && TMW_DEBUG;
-
         $wpst_used = '';
         foreach ( [
             'wpst_set_post_views',
@@ -35,13 +33,6 @@ if ( ! function_exists( 'tmw_model_stats_increment_views' ) ) {
             $cur = is_numeric( $cur ) ? (int) $cur : 0;
             update_post_meta( $post_id, $key, $cur + 1 );
 
-            if ( $debug ) {
-                error_log( '[TMW-MODEL-STATS] increment fallback model_id=' . $post_id . ' new=' . ( $cur + 1 ) );
-            }
-        } else {
-            if ( $debug ) {
-                error_log( '[TMW-MODEL-STATS] increment via ' . $wpst_used . ' model_id=' . $post_id );
-            }
         }
     }
 }

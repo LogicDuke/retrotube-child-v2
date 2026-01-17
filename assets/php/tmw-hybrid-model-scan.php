@@ -36,7 +36,6 @@ if (!function_exists('tmw_cli_scan_model_videos')) {
 
       $slugs = tmw_hybrid_scan_video($post_id, $directory);
       $matched += count($slugs);
-      tmw_hybrid_scan_log_result($post_id, $slugs, $directory);
       $processed++;
     }
 
@@ -348,27 +347,5 @@ if (!function_exists('tmw_hybrid_scan_prepare_text')) {
     $text = trim(preg_replace('/\s+/', ' ', $text));
 
     return $text;
-  }
-}
-
-if (!function_exists('tmw_hybrid_scan_log_result')) {
-  function tmw_hybrid_scan_log_result($post_id, array $model_slugs, array $directory) {
-    $title = get_post_field('post_title', $post_id);
-    $title = $title !== null ? (string) $title : '';
-    if ($title === '') {
-      $title = 'Post #' . (int) $post_id;
-    }
-
-    $title = trim(preg_replace('/\s+/', ' ', wp_strip_all_tags($title)));
-
-    if (empty($model_slugs)) {
-      $summary = 'NONE';
-    } else {
-      $summary = implode(', ', $model_slugs);
-    }
-
-    if (defined('TMW_DEBUG') && TMW_DEBUG) {
-      error_log(sprintf('[TMW-HYBRID-SCAN] %s → %s', $title, $summary));
-    }
   }
 }

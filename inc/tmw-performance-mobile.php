@@ -11,18 +11,6 @@ function tmw_perf_mobile_is_target_request() {
 }
 
 /**
- * Write a debug log entry when TMW_DEBUG is enabled.
- *
- * @param string $message
- * @return void
- */
-function tmw_perf_mobile_log($message) {
-    if (defined('TMW_DEBUG') && TMW_DEBUG) {
-        error_log($message);
-    }
-}
-
-/**
  * Check if a stylesheet URL should be async-loaded on model pages.
  *
  * @param string $href
@@ -163,7 +151,6 @@ add_filter('style_loader_tag', function ($html, $handle, $href, $media) {
 
     static $logged = false;
     if (!$logged) {
-        tmw_perf_mobile_log('[TMW-PERF] Async CSS enabled on model page');
         $logged = true;
     }
 
@@ -245,7 +232,6 @@ function tmw_perf_mobile_buffer_rewrite_scripts($buffer) {
     );
 
     if ($count > 0) {
-        tmw_perf_mobile_log('[TMW-PERF] Buffer rewrote delayed scripts: ' . $count);
     }
 
     return $buffer;

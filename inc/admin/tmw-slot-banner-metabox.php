@@ -154,9 +154,4 @@ add_action('save_post_model', function ($post_id) {
         }
     }
 
-    if (defined('TMW_DEBUG') && TMW_DEBUG) {
-        $stored_shortcode = get_post_meta($post_id, '_tmw_slot_shortcode', true);
-        $shortcode_len = strlen((string) $stored_shortcode);
-        error_log('[TMW-SLOT-FIX] save post_id=' . $post_id . ' enabled=' . ($enabled ? '1' : '0') . ' mode=' . $mode . ' shortcode_len=' . $shortcode_len);
-    }
 }, 10, 1);

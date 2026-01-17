@@ -41,22 +41,6 @@ function tmw_perf_should_delay_thirdparty(): bool {
 }
 
 /**
- * Log performance debug messages with consistent prefixes.
- */
-function tmw_perf_debug_log(string $message): void {
-    $normalized = preg_replace('/^\[TMW-PERF\]\s*/', '[PERF] ', $message);
-
-    if (function_exists('tmw_debug_log')) {
-        tmw_debug_log($normalized);
-        return;
-    }
-
-    if (defined('TMW_DEBUG') && TMW_DEBUG) {
-        error_log('[TMW] ' . $normalized);
-    }
-}
-
-/**
  * Case-insensitive substring matcher for asset source URLs.
  *
  * @param string $src Source URL to check.
@@ -167,8 +151,6 @@ function tmw_perf_defer_thirdparty_script_tag(string $tag, string $handle, strin
         $attrs .= ' ' . trim($match[0]);
     }
 
-    tmw_perf_debug_log('[TMW-PERF] Deferred 3P script: ' . esc_url_raw($src));
-
     return sprintf(
         '<script type="text/tmw-deferred" data-src="%s"%s></script>',
         esc_url($src),
@@ -186,17 +168,11 @@ function tmw_perf_enqueue_thirdparty_loader(): void {
 
     $path = get_stylesheet_directory() . '/js/tmw-thirdparty-delay.js';
     if (!file_exists($path)) {
-        tmw_perf_debug_log('[TMW-PERF] Missing loader: js/tmw-thirdparty-delay.js');
         return;
     }
 
     $filemtime = filemtime($path);
-    if ($filemtime === false) {
-        tmw_perf_debug_log('[TMW-PERF] Unable to read loader mtime: js/tmw-thirdparty-delay.js');
-        $version = null;
-    } else {
-        $version = (string) $filemtime;
-    }
+    $version = $filemtime === false ? null : (string) $filemtime;
 
     wp_enqueue_script(
         'tmw-thirdparty-delay',
