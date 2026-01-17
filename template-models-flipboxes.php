@@ -12,13 +12,22 @@ $GLOBALS['tmw_featured_models_disabled'] = true;
 
 get_header();
 
-// Get the page content for the SEO accordion
-$page_content = get_the_content();
-$page_content = apply_filters('the_content', $page_content);
-$page_content = str_replace(']]>', ']]&gt;', $page_content);
-// Strip any shortcodes that might have been rendered
-$page_content = strip_tags($page_content, '<p><br><strong><em><a><ul><ol><li>');
-$page_content = trim($page_content);
+// Capture the page content for the SEO accordion while allowing the full content to render.
+$page_content = '';
+$page_content_raw = '';
+if (have_posts()) {
+  while (have_posts()) {
+    the_post();
+    ob_start();
+    the_content();
+    $page_content_raw = ob_get_clean();
+    $page_content = str_replace(']]>', ']]&gt;', $page_content_raw);
+    // Strip any shortcodes that might have been rendered
+    $page_content = strip_tags($page_content, '<p><br><strong><em><a><ul><ol><li>');
+    $page_content = trim($page_content);
+    break;
+  }
+}
 ?>
 <main id="primary" class="site-main">
   <div class="tmw-layout container">
@@ -26,6 +35,12 @@ $page_content = trim($page_content);
       <header class="entry-header">
         <h1 class="widget-title"><span class="tmw-star">★</span> Models</h1>
       </header>
+
+      <?php if (!empty($page_content_raw)) : ?>
+        <div class="entry-content tmw-models-intro">
+          <?php echo $page_content_raw; ?>
+        </div>
+      <?php endif; ?>
       
       <?php if (!empty($page_content)) : ?>
         <!-- SEO Text Accordion - Matches Video/Model page styling -->
