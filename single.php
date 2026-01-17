@@ -42,6 +42,9 @@ get_header();
           <?php comments_template(); ?>
         <?php endif; ?>
       <?php endwhile; ?>
+      <?php if (is_singular('video')) : ?>
+        <?php get_template_part('partials/featured-models-block'); ?>
+      <?php endif; ?>
     </main>
   </div>
   <aside id="sidebar" class="widget-area with-sidebar-right" role="complementary">
