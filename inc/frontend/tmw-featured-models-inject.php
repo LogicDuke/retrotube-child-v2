@@ -18,6 +18,14 @@ if (!function_exists('tmw_featured_models_should_inject')) {
             return false;
         }
 
+        if (!empty($GLOBALS['tmw_featured_models_disabled'])) {
+            return false;
+        }
+
+        if (function_exists('is_post_type_archive') && is_post_type_archive('model')) {
+            return false;
+        }
+
         if (is_category() || is_tag()) {
             return true;
         }
