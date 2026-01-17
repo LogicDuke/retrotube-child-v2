@@ -52,6 +52,7 @@ if (!function_exists('tmw_featured_models_should_inject')) {
             'privacy-policy-top-models-webcam',
             'terms-of-use-of-top-models-webcam-directory',
             'submit-a-video',
+            'models',
         ];
 
         if (is_page($excluded)) {
