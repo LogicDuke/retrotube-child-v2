@@ -498,12 +498,15 @@ function tmw_models_flipboxes_cb($atts){
     'img_source'     => 'auto',
   ], $atts);
 
-  // Prevent custom pg-based pagination on homepage.
-  if (is_front_page() || is_home()) {
-    $a['show_pagination'] = false;
+  $page_var = is_string($a['page_var']) && $a['page_var'] !== '' ? $a['page_var'] : 'pg';
+  $paged_qv = max(1, (int) get_query_var('paged'), (int) get_query_var('page'));
+  $paged = $paged_qv;
+  if ($paged_qv === 1 && isset($_GET[$page_var])) {
+    $legacy_paged = (int) $_GET[$page_var];
+    if ($legacy_paged > 1) {
+      $paged = $legacy_paged;
+    }
   }
-
-  $paged = isset($_GET[$a['page_var']]) ? max(1, intval($_GET[$a['page_var']])) : max(1, intval(get_query_var('paged')), intval(get_query_var('page')));
   $per_page   = max(1, (int)$a['per_page']);
   $offset     = ($paged - 1) * $per_page;
   $hide_empty = filter_var($a['hide_empty'], FILTER_VALIDATE_BOOLEAN);
@@ -624,17 +627,48 @@ function tmw_models_flipboxes_cb($atts){
   echo '</div>';
 
   if (filter_var($a['show_pagination'], FILTER_VALIDATE_BOOLEAN) && $total_p > 1){
-    $base  = remove_query_arg($a['page_var']);
-    $base  = add_query_arg($a['page_var'], '%#%', $base);
-    $links = paginate_links([
-      'base'      => $base,
-      'format'    => '',
-      'current'   => $paged,
-      'total'     => $total_p,
-      'type'      => 'array',
-      'prev_text' => '« Prev',
-      'next_text' => 'Next »',
-    ]);
+    $pretty = (bool) get_option('permalink_structure');
+    $is_front = is_front_page() || is_home();
+    $is_models_grid_page = $is_front || is_page_template('page-models-grid.php');
+
+    if (function_exists('tmw_debug_log') && defined('TMW_DEBUG') && TMW_DEBUG) {
+      tmw_debug_log(sprintf(
+        '[TMW-PAGINATION] models_flipboxes paged=%d total=%d total_pages=%d show_pagination=%s is_front=%s pretty=%s',
+        (int) $paged,
+        (int) $total,
+        (int) $total_p,
+        filter_var($a['show_pagination'], FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false',
+        $is_front ? 'true' : 'false',
+        $pretty ? 'true' : 'false'
+      ));
+    }
+
+    if ($pretty && $is_models_grid_page) {
+      $big = 999999999;
+      $base = str_replace($big, '%#%', esc_url(get_pagenum_link($big)));
+      $links = paginate_links([
+        'base'      => $base,
+        'format'    => '',
+        'current'   => $paged,
+        'total'     => $total_p,
+        'type'      => 'array',
+        'prev_text' => '',
+        'next_text' => '',
+        'mid_size'  => 1,
+      ]);
+    } else {
+      $base  = remove_query_arg($page_var);
+      $base  = add_query_arg($page_var, '%#%', $base);
+      $links = paginate_links([
+        'base'      => $base,
+        'format'    => '',
+        'current'   => $paged,
+        'total'     => $total_p,
+        'type'      => 'array',
+        'prev_text' => '« Prev',
+        'next_text' => 'Next »',
+      ]);
+    }
     if (!empty($links)) {
       echo '<nav class="tmw-pagination" aria-label="Pagination">';
       foreach ($links as $l) echo $l;
