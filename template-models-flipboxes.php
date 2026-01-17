@@ -13,7 +13,6 @@ $GLOBALS['tmw_featured_models_disabled'] = true;
 get_header();
 
 // Capture the page content for the SEO accordion while allowing the full content to render.
-$page_content = '';
 $page_content_raw = '';
 if (have_posts()) {
   while (have_posts()) {
@@ -21,10 +20,6 @@ if (have_posts()) {
     ob_start();
     the_content();
     $page_content_raw = ob_get_clean();
-    $page_content = str_replace(']]>', ']]&gt;', $page_content_raw);
-    // Strip any shortcodes that might have been rendered
-    $page_content = strip_tags($page_content, '<p><br><strong><em><a><ul><ol><li>');
-    $page_content = trim($page_content);
     break;
   }
 }
@@ -37,12 +32,6 @@ if (have_posts()) {
       </header>
 
       <?php if (!empty($page_content_raw)) : ?>
-        <div class="entry-content tmw-models-intro">
-          <?php echo $page_content_raw; ?>
-        </div>
-      <?php endif; ?>
-      
-      <?php if (!empty($page_content)) : ?>
         <!-- SEO Text Accordion - Matches Video/Model page styling -->
         <style>
           /* Container for the SEO accordion */
@@ -134,7 +123,7 @@ if (have_posts()) {
         
         <div class="tmw-models-seo-accordion">
           <div id="tmw-seo-desc" class="desc more">
-            <?php echo $page_content; ?>
+            <?php echo wp_kses_post($page_content_raw); ?>
           </div>
           <div class="morelink-wrap">
             <a id="tmw-seo-toggle" class="morelink" href="javascript:void(0);">
