@@ -103,10 +103,6 @@ function tmw_handle_vote_ajax(): void {
     $total   = $likes + $dislikes;
     $percent = $total > 0 ? round(($likes / $total) * 100, 0) : 0;
 
-    if (defined('TMW_DEBUG') && TMW_DEBUG) {
-        error_log('[TMW-VOTE] post_id=' . $post_id . ' vote=' . $vote_type . ' likes=' . $likes . ' dislikes=' . $dislikes);
-    }
-
     wp_send_json_success([
         'likes'    => $likes,
         'dislikes' => $dislikes,

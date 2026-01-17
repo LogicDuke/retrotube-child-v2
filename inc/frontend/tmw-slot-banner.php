@@ -25,8 +25,6 @@ add_action('widgets_init', function () {
  */
 function tmw_render_model_slot_banner_zone(int $post_id): string
 {
-    $debug = (defined('WP_DEBUG') && WP_DEBUG) || (defined('TMW_DEBUG') && TMW_DEBUG);
-
     $enabled = get_post_meta($post_id, '_tmw_slot_enabled', true);
     if ($enabled !== '1') {
         return '';
@@ -63,10 +61,6 @@ function tmw_render_model_slot_banner_zone(int $post_id): string
         if ($out !== '') {
             $source = 'shortcode_fallback';
         }
-    }
-
-    if ($debug) {
-        error_log('[TMW-SLOT] model_id=' . $post_id . ' enabled=' . $enabled . ' mode=' . $mode . ' source=' . ($source !== '' ? $source : 'none') . ' shortcode_len=' . strlen($fallback_shortcode) . ' out_len=' . strlen($out));
     }
 
     if ($out === '') {

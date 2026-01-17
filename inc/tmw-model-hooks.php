@@ -1,30 +1,6 @@
 <?php
 
-// Toggle this to true temporarily to inspect banner resolution in logs/comments.
-if (!defined('TMW_BANNER_DEBUG')) {
-  define('TMW_BANNER_DEBUG', false);
-}
-
 require_once get_stylesheet_directory() . '/assets/php/tmw-hybrid-model-scan.php';
-
-if (!function_exists('tmw_debug_log')) {
-  /**
-   * Log debug messages for the TMW theme when enabled.
-   *
-   * @param mixed $message Message to log.
-   */
-  function tmw_debug_log($message): void {
-    if (!defined('TMW_DEBUG') || !TMW_DEBUG) {
-      return;
-    }
-
-    if (!is_string($message)) {
-      $message = print_r($message, true);
-    }
-
-    error_log('[TMW] ' . $message);
-  }
-}
 
 // === TMW v3.1.5 — Label alias for model tags ===
 add_filter('the_content', function ($content) {
@@ -226,27 +202,6 @@ add_action('init', 'tmw_register_hybrid_scan_cli');
  * 🧩 TMW Flipbox Force Ajax + Footer Fix (v2.9.3)
  * Ensures ajaxurl exists and wp_footer() output includes our ping script.
  */
-add_action('wp_footer', function () {
-    ?>
-    <script>
-    window.ajaxurl = window.ajaxurl || "<?php echo admin_url('admin-ajax.php'); ?>";
-    console.log('[TMW-FLIPBOX-DEBUG] Footer ping initializing...');
-    fetch(window.ajaxurl + '?action=tmw_flipbox_debug_ping_footer&t=' + Date.now())
-        .then(r => r.text())
-        .then(() => console.log('[TMW-FLIPBOX-DEBUG] Footer ping sent.'));
-    </script>
-    <?php
-}, 9999);
-
-add_action('wp_ajax_tmw_flipbox_debug_ping_footer', function(){
-    tmw_debug_log('[TMW-FLIPBOX-DEBUG] ✅ Footer ping executed (js confirmed).');
-    wp_die();
-});
-add_action('wp_ajax_nopriv_tmw_flipbox_debug_ping_footer', function(){
-    tmw_debug_log('[TMW-FLIPBOX-DEBUG] ✅ Footer ping executed (js confirmed).');
-    wp_die();
-});
-
 /**
  * Unified banner resolver used by both admin preview and the front-end.
  * Priority: post-level ACF/legacy sources -> taxonomy ACF & feed helpers -> featured image fallback.
@@ -377,10 +332,6 @@ if (!function_exists('tmw_resolve_model_banner_url')) {
       $banner_url = set_url_scheme($banner_url, 'https');
     }
 
-    if ((defined('WP_DEBUG') && WP_DEBUG) || TMW_BANNER_DEBUG) {
-      $debug_post = $post_id ?: (int) $original_post_id;
-          }
-
     return $banner_url ? esc_url_raw($banner_url) : '';
   }
 }
@@ -397,9 +348,6 @@ if (!function_exists('tmw_get_model_banner_url')) {
    */
   function tmw_get_model_banner_url($post_id) {
     $banner = tmw_resolve_model_banner_url($post_id);
-
-    if (empty($banner) && TMW_BANNER_DEBUG) {
-          }
 
     return $banner;
   }
@@ -848,13 +796,9 @@ if (!function_exists('tmw_sync_model_term_to_post')) {
 
       if ($needs_update) {
         $result = wp_update_post($update_data, true);
-        if (!is_wp_error($result)) {
-          tmw_debug_log("[ModelSync] Updated CPT model for {$title} (slug: {$slug})");
-        } else {
-          tmw_debug_log('[ModelSync] Failed to update model post for ' . $slug . ': ' . $result->get_error_message());
+        if (is_wp_error($result)) {
+          return;
         }
-      } else {
-        tmw_debug_log("[ModelSync] Model post already up to date for {$slug}");
       }
 
       return;
@@ -868,10 +812,8 @@ if (!function_exists('tmw_sync_model_term_to_post')) {
       'post_status'  => 'publish',
     ]);
 
-    if (!is_wp_error($post_id)) {
-      tmw_debug_log("[ModelSync] Created CPT model for term {$title} (slug: {$slug})");
-    } else {
-      tmw_debug_log('[ModelSync] Failed to create model post for ' . $slug . ': ' . $post_id->get_error_message());
+    if (is_wp_error($post_id)) {
+      return;
     }
   }
 }
@@ -888,7 +830,6 @@ add_action('init', function () {
   ]);
 
   if (is_wp_error($terms)) {
-    tmw_debug_log('[ModelSync] Failed to fetch models terms for retroactive sync: ' . $terms->get_error_message());
     return;
   }
 
@@ -897,7 +838,6 @@ add_action('init', function () {
   }
 
   update_option('tmw_models_synced', true);
-  tmw_debug_log('[ModelSync] Retroactive sync completed for existing taxonomy terms.');
 }, 20);
 
 /* ======================================================================
@@ -2281,7 +2221,6 @@ add_action('template_redirect', function () {
       $maybe = get_page_by_path($term->slug, OBJECT, 'model');
       if ($maybe) {
         $to = get_permalink($maybe);
-        tmw_debug_log('[ModelFix] Redirecting taxonomy term to CPT: ' . $term->slug . ' → ' . $to);
         wp_redirect($to, 301);
         exit;
       }
@@ -2291,7 +2230,6 @@ add_action('template_redirect', function () {
 
 add_action('after_switch_theme', function () {
   flush_rewrite_rules();
-  tmw_debug_log('[ModelFix] Flushed rewrite rules after theme switch.');
 });
 
 // 1) Always show a Model/Models line on single video pages.

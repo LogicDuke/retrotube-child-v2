@@ -13,12 +13,6 @@ spl_autoload_register(function($class){
 /** Constants shared across modules */
 require_once __DIR__ . '/constants.php';
 
-/** Emergency front-end fatal logging */
-$tmw_fatal = __DIR__ . '/frontend/tmw-fatal-catcher.php';
-if (file_exists($tmw_fatal)) {
-    require_once $tmw_fatal;
-}
-
 // Shared CLI/helpers for hybrid model scan.
 $hybrid_scan = TMW_CHILD_PATH . '/assets/php/tmw-hybrid-model-scan.php';
 if (is_readable($hybrid_scan)) {
@@ -58,10 +52,3 @@ if (is_admin()) {
     require_once __DIR__ . '/admin/tmw-slot-banner-metabox.php';
     require_once __DIR__ . '/admin/editor-tweaks.php';
 }
-
-/** Debug toggle (harmless log pings) */
-add_action('init', function () {
-    if (defined('TMW_DEBUG') && TMW_DEBUG) {
-        error_log('[TMW-V410] bootstrap loaded');
-    }
-}, 1);

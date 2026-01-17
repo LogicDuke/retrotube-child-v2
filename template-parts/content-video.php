@@ -193,8 +193,6 @@ if ( has_post_thumbnail() && wp_get_attachment_url( get_post_thumbnail_id() ) ) 
 
 	<?php
 	// [TMW-VIDEO-TAGS] v4.5.1 — Unified tag layout 100% identical to model page
-	$tmw_debug_enabled = defined( 'TMW_DEBUG' ) && TMW_DEBUG;
-
 	if ( xbox_get_field_value( 'wpst-options', 'show-tags-video-about' ) == 'on' ) :
 		$video_tags = get_the_tags( get_the_ID() );
 		$video_tags_count = is_array( $video_tags ) ? count( $video_tags ) : 0;
@@ -216,11 +214,7 @@ if ( has_post_thumbnail() && wp_get_attachment_url( get_post_thumbnail_id() ) ) 
 			<?php endforeach; ?>
 		</div>
 		<!-- === END TMW-VIDEO-TAGS-UNIFIED === -->
-		<?php
-			if ( $tmw_debug_enabled ) {
-				error_log( '[TMW-VIDEO-TAGS] rendered with unified layout on video=' . get_the_title() . ' (ID=' . get_the_ID() . ')' );
-			}
-		endif;
+		<?php endif;
 	endif;
 
 	// Categories - SAME styling as tags (red pills)

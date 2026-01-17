@@ -7,19 +7,6 @@ if (is_readable($banner_autoload)) {
     require_once $banner_autoload;
 }
 
-if (defined('TMW_DEBUG') && TMW_DEBUG) {
-    add_action('init', function () {
-        error_log('[TMW-V410] cleanup: removed legacy background assets');
-    }, 2);
-}
-
-// v3.5.4 — Flip CTA offset loaded sentinel.
-add_action('wp_head', function () {
-    if (defined('TMW_DEBUG') && TMW_DEBUG) {
-        error_log('[TMW-FLIP-CTA] v3.5.4 style.css CTA offset rules active');
-    }
-}, 1);
-
 /**
  * Admin: capture the preview's actual hero height and store it as _tmw_offset_base.
  * Kept for legacy records while the old pixel offset meta is still present.

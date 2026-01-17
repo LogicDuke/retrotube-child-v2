@@ -13,16 +13,6 @@ if (!defined('ABSPATH')) {
 // Disabled: featured models placement is handled by output-buffer injection to guarantee left-column lock.
 return;
 
-if (!function_exists('tmw_featured_models_archive_lock_log')) {
-    function tmw_featured_models_archive_lock_log(string $message): void {
-        if (!defined('TMW_DEBUG') || !TMW_DEBUG) {
-            return;
-        }
-
-        error_log('[TMW-FEATURED-LOCK] ' . $message);
-    }
-}
-
 if (!function_exists('tmw_featured_models_archive_lock_is_target')) {
     function tmw_featured_models_archive_lock_is_target(): bool {
         if (is_admin() || wp_doing_ajax() || wp_doing_cron()) {
@@ -137,11 +127,6 @@ if (!function_exists('tmw_featured_models_archive_lock_append_nav')) {
         }
 
         tmw_featured_models_archive_lock_mark_printed();
-        $context = tmw_featured_models_archive_lock_get_context();
-        tmw_featured_models_archive_lock_log(
-            'printed=nav ctx=' . $context['context'] . ' term_id=' . $context['term_id']
-        );
-
         return $navigation . "\n" . $markup;
     }
 }
@@ -174,11 +159,6 @@ if (!function_exists('tmw_featured_models_archive_lock_loop_end')) {
         }
 
         tmw_featured_models_archive_lock_mark_printed();
-        $context = tmw_featured_models_archive_lock_get_context();
-        tmw_featured_models_archive_lock_log(
-            'printed=loop_end ctx=' . $context['context'] . ' term_id=' . $context['term_id']
-        );
-
         echo $markup;
     }
 }

@@ -59,7 +59,5 @@
     document.head.appendChild(css);
 
     // Trace
-    if (window.console && console.log) console.log('[TMW-RP-POPUP] Reset form pulled into popup');
   });
 })();
-
