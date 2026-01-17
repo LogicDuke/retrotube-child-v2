@@ -646,12 +646,12 @@ function tmw_models_flipboxes_cb($atts){
     if ($pretty && $is_models_grid_page) {
       $big = 999999999;
       $base = str_replace($big, '%#%', esc_url(get_pagenum_link($big)));
-      $links = paginate_links([
+      $pagination = paginate_links([
         'base'      => $base,
         'format'    => '',
         'current'   => $paged,
         'total'     => $total_p,
-        'type'      => 'array',
+        'type'      => 'plain',
         'prev_text' => '',
         'next_text' => '',
         'mid_size'  => 1,
@@ -659,19 +659,24 @@ function tmw_models_flipboxes_cb($atts){
     } else {
       $base  = remove_query_arg($page_var);
       $base  = add_query_arg($page_var, '%#%', $base);
-      $links = paginate_links([
+      $pagination = paginate_links([
         'base'      => $base,
         'format'    => '',
         'current'   => $paged,
         'total'     => $total_p,
-        'type'      => 'array',
+        'type'      => 'plain',
         'prev_text' => '« Prev',
         'next_text' => 'Next »',
       ]);
     }
-    if (!empty($links)) {
-      echo '<nav class="tmw-pagination" aria-label="Pagination">';
-      foreach ($links as $l) echo $l;
+    if (!empty($pagination)) {
+      if (defined('TMW_DEBUG') && TMW_DEBUG) {
+        error_log('[TMW-PAGINATION] flipboxes pagination rendered (parent-style classes enabled).');
+      }
+      echo '<nav class="navigation pagination tmw-pagination" aria-label="Pagination">';
+      echo '<div class="nav-links">';
+      echo $pagination;
+      echo '</div>';
       echo '</nav>';
     }
   }
