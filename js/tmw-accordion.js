@@ -1,14 +1,14 @@
 /**
- * TMW Global Accordion JavaScript v3.1
+ * TMW Global Accordion JavaScript v3.2
  * Unified accordion behavior for ALL pages
- * 
+ *
  * Features:
  * - TMW custom accordion (home page, etc.)
  * - Fixes Readmore.js scroll behavior (scrolls UP on close)
  * - Arrow direction: DOWN when closed, UP when open
  *
  * @package RetrotubeChild
- * @version 3.1.0
+ * @version 3.2.0
  */
 
 (function() {
@@ -17,7 +17,7 @@
     // Wait for DOM ready
     document.addEventListener('DOMContentLoaded', function() {
         initTMWAccordion();
-        fixReadmoreScrollBehavior();
+        initReadmoreAccordions();
     });
 
     /**
@@ -26,29 +26,34 @@
      */
     function initTMWAccordion() {
         var accordions = document.querySelectorAll('.tmw-accordion');
-        
+
         accordions.forEach(function(accordion) {
             var content = accordion.querySelector('.tmw-accordion-content');
             var toggle = accordion.querySelector('.tmw-accordion-toggle');
-            
+
             if (!content || !toggle) return;
-            
-            // Get text span and icon
+
+            if (toggle.dataset.tmwAccordionBound === 'true') {
+                return;
+            }
+
+            toggle.dataset.tmwAccordionBound = 'true';
+
+            applyLineClamp(content);
+            evaluateToggleVisibility(content, toggle);
+
             var textSpan = toggle.querySelector('.tmw-accordion-text');
             var icon = toggle.querySelector('i');
-            
-            // Translations (can be customized)
+
             var readMoreText = toggle.getAttribute('data-readmore-text') || 'Read more';
             var closeText = toggle.getAttribute('data-close-text') || 'Close';
-            
-            // Click handler
+
             toggle.addEventListener('click', function(e) {
                 e.preventDefault();
-                
+
                 var isCollapsed = content.classList.contains('more');
-                
+
                 if (isCollapsed) {
-                    // Expand
                     content.classList.remove('more');
                     toggle.classList.add('expanded');
                     if (textSpan) textSpan.textContent = closeText;
@@ -57,7 +62,6 @@
                         icon.classList.add('fa-chevron-up');
                     }
                 } else {
-                    // Collapse
                     content.classList.add('more');
                     toggle.classList.remove('expanded');
                     if (textSpan) textSpan.textContent = readMoreText;
@@ -65,8 +69,7 @@
                         icon.classList.remove('fa-chevron-up');
                         icon.classList.add('fa-chevron-down');
                     }
-                    
-                    // Scroll to accordion top
+
                     scrollToElement(accordion);
                 }
             });
@@ -77,65 +80,96 @@
      * Fix Readmore.js scroll behavior on video/model pages
      * Makes it scroll UP (to the accordion) when closing instead of DOWN
      */
-    function fixReadmoreScrollBehavior() {
-        // Wait a bit for Readmore.js to initialize
+    function initReadmoreAccordions() {
         setTimeout(function() {
-            var morelinks = document.querySelectorAll('a.morelink[data-readmore-toggle], a[data-readmore-toggle]');
-            
-            morelinks.forEach(function(link) {
-                ensureReadmoreTextSpan(link);
-                syncReadmoreState(link);
+            var morelinks = document.querySelectorAll('a.morelink[data-readmore-toggle], a[data-readmore-toggle].morelink, a.morelink, a[data-readmore-toggle]');
 
-                // Add our click handler
+            morelinks.forEach(function(link) {
                 if (link.dataset.tmwAccordionBound === 'true') {
                     return;
                 }
 
                 link.dataset.tmwAccordionBound = 'true';
+                link.classList.add('tmw-accordion-readmore');
+                ensureReadmoreTextSpan(link);
+                ensureReadmoreIcon(link);
+                normalizeReadmoreLabels(link);
+                syncReadmoreState(link);
 
                 link.addEventListener('click', function(e) {
                     e.preventDefault();
-                    var toggleId = link.getAttribute('data-readmore-toggle');
-                    var content = toggleId ? document.getElementById(toggleId) : null;
+
+                    var content = getReadmoreContent(link);
                     var wasExpanded = link.getAttribute('aria-expanded') === 'true';
-                    
-                    if (!content) {
-                        // Try to find content as previous sibling
-                        content = link.previousElementSibling;
-                    }
-                    
-                    if (!content) return;
-                    
-                    // Check if we're closing (content is currently expanded)
-                    var isExpanded = wasExpanded;
-                    if (link.getAttribute('aria-expanded') === null) {
-                        isExpanded = content.style.height !== '' &&
-                                     parseInt(content.style.height, 10) > 100;
-                    }
-                    
-                    // If closing, scroll to the content area after animation
-                    if (isExpanded) {
+
+                    if (wasExpanded) {
                         setTimeout(function() {
-                            // Find the video-description container or parent
-                            var container = link.closest('.video-description') || 
-                                          link.closest('.entry-content') ||
-                                          content.parentElement;
-                            
+                            var container = link.closest('.video-description') ||
+                                link.closest('.entry-content') ||
+                                content ||
+                                link.parentElement;
+
                             if (container) {
                                 scrollToElement(container);
                             }
-                        }, 350); // Wait for Readmore.js animation
+                        }, 350);
                     }
 
-                    // Update toggle text and icon after Readmore.js updates
                     setTimeout(function() {
                         ensureReadmoreTextSpan(link);
+                        ensureReadmoreIcon(link);
+                        normalizeReadmoreLabels(link);
                         syncReadmoreState(link);
                     }, 350);
-
                 });
             });
         }, 500);
+    }
+
+    /**
+     * Apply custom line clamp value using CSS variable.
+     * @param {Element} content - The accordion content element
+     */
+    function applyLineClamp(content) {
+        var lines = content.getAttribute('data-tmw-accordion-lines');
+        if (!lines) return;
+        content.style.setProperty('--tmw-accordion-lines', lines);
+    }
+
+    /**
+     * Hide the toggle when content doesn't overflow.
+     * @param {Element} content - The accordion content element
+     * @param {Element} toggle - The toggle link
+     */
+    function evaluateToggleVisibility(content, toggle) {
+        var toggleWrap = toggle.closest('.tmw-accordion-toggle-wrap');
+        if (!toggleWrap || !content.classList.contains('more')) return;
+
+        var needsToggle = contentOverflows(content);
+        if (!needsToggle) {
+            toggleWrap.style.display = 'none';
+        }
+    }
+
+    /**
+     * Check if content exceeds the clamped height.
+     * @param {Element} content - The accordion content element
+     * @returns {boolean}
+     */
+    function contentOverflows(content) {
+        var clone = content.cloneNode(true);
+        clone.classList.remove('more');
+        clone.style.visibility = 'hidden';
+        clone.style.position = 'absolute';
+        clone.style.height = 'auto';
+        clone.style.maxHeight = 'none';
+        clone.style.webkitLineClamp = 'unset';
+        clone.style.width = content.getBoundingClientRect().width + 'px';
+        document.body.appendChild(clone);
+
+        var needsToggle = clone.scrollHeight > content.clientHeight + 5;
+        document.body.removeChild(clone);
+        return needsToggle;
     }
 
     /**
@@ -144,12 +178,11 @@
      */
     function scrollToElement(element) {
         if (!element) return;
-        
-        var headerOffset = 120; // Account for fixed header
+
+        var headerOffset = 120;
         var elementPosition = element.getBoundingClientRect().top;
         var offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-        
-        // Only scroll if element is above current view
+
         if (elementPosition < 0) {
             window.scrollTo({
                 top: offsetPosition,
@@ -166,17 +199,9 @@
         if (!link) return;
 
         var existingSpan = link.querySelector('.tmw-accordion-text');
-        if (existingSpan) {
-            if (!link.getAttribute('data-readmore-text')) {
-                var isExpanded = link.getAttribute('aria-expanded') === 'true';
-                link.setAttribute('data-readmore-text', isExpanded ? 'Read more' : existingSpan.textContent.trim());
-            }
-            return;
-        }
+        if (existingSpan) return;
 
-        var icon = link.querySelector('i');
         var textNodes = [];
-
         link.childNodes.forEach(function(node) {
             if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
                 textNodes.push(node);
@@ -193,19 +218,43 @@
         textSpan.className = 'tmw-accordion-text';
         textSpan.textContent = combinedText;
 
-        if (!link.getAttribute('data-readmore-text')) {
-            var isExpanded = link.getAttribute('aria-expanded') === 'true';
-            link.setAttribute('data-readmore-text', isExpanded ? 'Read more' : combinedText);
-        }
-
         textNodes.forEach(function(node) {
             link.removeChild(node);
         });
 
+        var icon = link.querySelector('i');
         if (icon) {
             link.insertBefore(textSpan, icon);
         } else {
             link.appendChild(textSpan);
+        }
+    }
+
+    /**
+     * Ensure Readmore.js links have an icon for styling
+     * @param {Element} link - The Readmore.js toggle link
+     */
+    function ensureReadmoreIcon(link) {
+        if (!link || link.querySelector('i')) return;
+
+        var icon = document.createElement('i');
+        icon.className = 'fa fa-chevron-down';
+        link.appendChild(icon);
+    }
+
+    /**
+     * Normalize Readmore.js labels for consistent behavior
+     * @param {Element} link - The Readmore.js toggle link
+     */
+    function normalizeReadmoreLabels(link) {
+        if (!link) return;
+
+        if (!link.getAttribute('data-readmore-text')) {
+            link.setAttribute('data-readmore-text', 'Read more');
+        }
+
+        if (!link.getAttribute('data-close-text')) {
+            link.setAttribute('data-close-text', 'Close');
         }
     }
 
@@ -215,8 +264,6 @@
      */
     function syncReadmoreState(link) {
         if (!link) return;
-
-        ensureReadmoreTextSpan(link);
 
         var textSpan = link.querySelector('.tmw-accordion-text');
         var icon = link.querySelector('i');
@@ -234,20 +281,34 @@
     }
 
     /**
+     * Resolve the Readmore.js content element
+     * @param {Element} link - The Readmore.js toggle link
+     * @returns {Element|null}
+     */
+    function getReadmoreContent(link) {
+        if (!link) return null;
+
+        var toggleId = link.getAttribute('data-readmore-toggle');
+        if (toggleId) {
+            return document.getElementById(toggleId);
+        }
+
+        return link.previousElementSibling;
+    }
+
+    /**
      * Also handle dynamically loaded content (AJAX)
      */
     if (typeof MutationObserver !== 'undefined') {
         var observer = new MutationObserver(function(mutations) {
             mutations.forEach(function(mutation) {
                 if (mutation.addedNodes.length) {
-                    // Re-initialize for any new accordions
                     initTMWAccordion();
-                    fixReadmoreScrollBehavior();
+                    initReadmoreAccordions();
                 }
             });
         });
-        
-        // Start observing
+
         observer.observe(document.body, {
             childList: true,
             subtree: true

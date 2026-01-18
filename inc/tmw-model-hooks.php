@@ -1871,26 +1871,6 @@ add_action('template_redirect', function(){
   get_header();
   ?>
   <div class="tmw-model-page">
-    <style>
-      .page-header, .entry-header, .single__header, .post__header, .rt-top-banner, .hero, .tmw-model-hero { display:none !important; }
-
-      .tmw-model-grid{display:grid;grid-template-columns:1fr;gap:24px}
-      @media(min-width: 992px){ .tmw-model-grid{grid-template-columns:2fr 1fr} }
-      .tmw-model-main{min-width:0}
-
-      .tmw-model-banner{
-        margin:10px 0 20px;
-        border-radius:12px;
-      }
-      .tmw-model-banner .tmw-model-banner-frame{
-        border-radius:12px;
-      }
-      .tmw-model-title{margin:10px 0 12px}
-      .tmw-bio.js-clamp{display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden;-webkit-line-clamp:<?php echo (int)$read_lines; ?>}
-      .tmw-bio-toggle{margin-top:.5rem}
-      .tmw-featured-flipboxes{margin-top:24px}
-    </style>
-
     <div class="container tmw-model-grid">
       <main class="tmw-model-main">
         <?php if ($banner_src): ?>
@@ -1911,19 +1891,20 @@ add_action('template_redirect', function(){
 
         <h1 class="tmw-model-title"><?php echo esc_html($term->name); ?></h1>
 
-        <div class="tmw-bio-wrap">
-          <div id="tmw-bio" class="tmw-bio js-clamp">
+        <div class="tmw-accordion tmw-bio-wrap">
+          <div id="tmw-bio" class="tmw-accordion-content more" data-tmw-accordion-lines="<?php echo (int) $read_lines; ?>">
             <?php
               if ($bio) echo wpautop($bio);
               else echo '<p>'.esc_html__('No biography provided yet.','retrotube-child').'</p>';
             ?>
           </div>
           <?php if ($bio): ?>
-            <p class="tmw-bio-toggle">
-              <a class="morelink" href="#" aria-controls="tmw-bio" aria-expanded="false">
-                <?php esc_html_e('Read more','retrotube-child'); ?> <i class="fa fa-chevron-down"></i>
+            <div class="tmw-accordion-toggle-wrap">
+              <a class="tmw-accordion-toggle" href="javascript:void(0);" data-tmw-accordion-toggle aria-controls="tmw-bio">
+                <span class="tmw-accordion-text"><?php esc_html_e('Read more','retrotube-child'); ?></span>
+                <i class="fa fa-chevron-down"></i>
               </a>
-            </p>
+            </div>
           <?php endif; ?>
         </div>
 
@@ -1940,37 +1921,6 @@ add_action('template_redirect', function(){
       </aside>
     </div>
   </div>
-
-  <script>
-  (function(){
-    var bio = document.getElementById('tmw-bio');
-    var wrap = document.querySelector('.tmw-bio-toggle');
-    if (!bio || !wrap) return;
-
-    var clone = bio.cloneNode(true);
-    clone.style.visibility='hidden'; clone.style.position='absolute';
-    clone.style.webkitLineClamp='unset'; clone.classList.remove('js-clamp');
-    document.body.appendChild(clone);
-    var needs = clone.scrollHeight > bio.clientHeight + 5;
-    document.body.removeChild(clone);
-    if (!needs) { wrap.style.display='none'; return; }
-
-    var link = wrap.querySelector('a.morelink');
-    link.addEventListener('click', function(e){
-      e.preventDefault();
-      var expanded = link.getAttribute('aria-expanded') === 'true';
-      if (expanded) {
-        bio.classList.add('js-clamp');
-        link.setAttribute('aria-expanded','false');
-        link.innerHTML = 'Read more <i class="fa fa-chevron-down"></i>';
-      } else {
-        bio.classList.remove('js-clamp');
-        link.setAttribute('aria-expanded','true');
-        link.innerHTML = 'Close <i class="fa fa-chevron-up"></i>';
-      }
-    });
-  })();
-  </script>
   <?php
   get_footer();
   exit;

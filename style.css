@@ -469,6 +469,52 @@ article[id^="post-"]::before {
     line-height: 1.2em;
 }
 
+/* =========================
+   Model taxonomy layout
+   ========================= */
+.tax-models .page-header,
+.tax-models .entry-header,
+.tax-models .single__header,
+.tax-models .post__header,
+.tax-models .rt-top-banner,
+.tax-models .hero,
+.tax-models .tmw-model-hero {
+  display: none !important;
+}
+
+.tax-models .tmw-model-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+@media (min-width: 992px) {
+  .tax-models .tmw-model-grid {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
+.tax-models .tmw-model-main {
+  min-width: 0;
+}
+
+.tax-models .tmw-model-banner {
+  margin: 10px 0 20px;
+  border-radius: 12px;
+}
+
+.tax-models .tmw-model-banner .tmw-model-banner-frame {
+  border-radius: 12px;
+}
+
+.tax-models .tmw-model-title {
+  margin: 10px 0 12px;
+}
+
+.tax-models .tmw-featured-flipboxes {
+  margin-top: 24px;
+}
+
 /* Model tags base rules */
 .tmw-model-tags.post-tags.entry-tags {
   margin-top: 15px;

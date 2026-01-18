@@ -38,130 +38,17 @@ $page_content = trim($page_content);
       </header>
       
       <?php if (!empty($page_content)) : ?>
-        <!-- SEO Text Accordion - Matches Video/Model page styling -->
-        <style>
-          /* Container for the SEO accordion */
-          .tmw-models-seo-accordion {
-            margin: 0 0 20px;
-            padding: 0 20px 15px;
-            background: transparent;
-          }
-          
-          /* Description container - matches .video-description .desc.more */
-          .tmw-models-seo-accordion .desc {
-            font-size: 14px;
-            line-height: 1.6;
-            color: #ccc;
-            margin: 0;
-            padding: 0;
-          }
-          
-          /* Clamped state - show only 1 line */
-          .tmw-models-seo-accordion .desc.more {
-            display: -webkit-box;
-            -webkit-box-orient: vertical;
-            -webkit-line-clamp: 1;
-            overflow: hidden;
-            max-height: 1.6em;
-          }
-          
-          .tmw-models-seo-accordion .desc p {
-            margin: 0;
-            display: inline;
-          }
-          
-          .tmw-models-seo-accordion .desc p + p {
-            margin-top: 10px;
-            display: block;
-          }
-          
-          /* Read more link container - centered with red lines */
-          .tmw-models-seo-accordion .morelink-wrap {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-top: 15px;
-            gap: 0;
-          }
-          
-          /* Red gradient lines on both sides */
-          .tmw-models-seo-accordion .morelink-wrap::before,
-          .tmw-models-seo-accordion .morelink-wrap::after {
-            content: '';
-            flex: 1;
-            height: 2px;
-            background: linear-gradient(90deg, transparent 0%, #e74c3c 100%);
-          }
-          
-          .tmw-models-seo-accordion .morelink-wrap::after {
-            background: linear-gradient(90deg, #e74c3c 0%, transparent 100%);
-          }
-          
-          /* The Read more link itself */
-          .tmw-models-seo-accordion .morelink {
-            color: #e74c3c;
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            padding: 0 15px;
-            white-space: nowrap;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: color 0.2s ease;
-          }
-          
-          .tmw-models-seo-accordion .morelink:hover {
-            color: #ff6b5b;
-          }
-          
-          .tmw-models-seo-accordion .morelink i {
-            font-size: 12px;
-            transition: transform 0.3s ease;
-          }
-          
-          /* Rotate chevron when expanded */
-          .tmw-models-seo-accordion .morelink.expanded i {
-            transform: rotate(180deg);
-          }
-        </style>
-        
-        <div class="tmw-models-seo-accordion">
-          <div id="tmw-seo-desc" class="desc more">
+        <div class="tmw-accordion">
+          <div id="tmw-seo-desc" class="tmw-accordion-content more" data-tmw-accordion-lines="1">
             <?php echo $page_content; ?>
           </div>
-          <div class="morelink-wrap">
-            <a id="tmw-seo-toggle" class="morelink" href="javascript:void(0);">
-              <?php esc_html_e('Read more', 'retrotube-child'); ?> <i class="fa fa-chevron-down"></i>
+          <div class="tmw-accordion-toggle-wrap">
+            <a id="tmw-seo-toggle" class="tmw-accordion-toggle" href="javascript:void(0);" data-tmw-accordion-toggle>
+              <span class="tmw-accordion-text"><?php esc_html_e('Read more', 'retrotube-child'); ?></span>
+              <i class="fa fa-chevron-down"></i>
             </a>
           </div>
         </div>
-        
-        <script>
-        (function(){
-          var desc = document.getElementById('tmw-seo-desc');
-          var toggle = document.getElementById('tmw-seo-toggle');
-          if (!desc || !toggle) return;
-
-          toggle.addEventListener('click', function(e){
-            e.preventDefault();
-            var isExpanded = !desc.classList.contains('more');
-            
-            if (isExpanded) {
-              // Collapse
-              desc.classList.add('more');
-              toggle.classList.remove('expanded');
-              toggle.innerHTML = '<?php echo esc_js(__('Read more', 'retrotube-child')); ?> <i class="fa fa-chevron-down"></i>';
-            } else {
-              // Expand
-              desc.classList.remove('more');
-              toggle.classList.add('expanded');
-              toggle.innerHTML = '<?php echo esc_js(__('Close', 'retrotube-child')); ?> <i class="fa fa-chevron-up"></i>';
-            }
-          });
-        })();
-        </script>
       <?php endif; ?>
       
       <?php
