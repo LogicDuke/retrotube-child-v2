@@ -14,11 +14,11 @@ tmw_render_sidebar_layout('category-archive', function () {
       <?php if (have_posts()) : ?>
         <header class="page-header">
           <?php
-          $archive_title = single_term_title('', false);
-          if ($archive_title === '') {
-              $archive_title = wp_strip_all_tags(get_the_archive_title());
+          $title = single_cat_title('', false);
+          if ($title === '') {
+              $title = wp_strip_all_tags(get_the_archive_title());
           }
-          echo tmw_render_title_bar($archive_title, 1);
+          echo tmw_render_title_bar($title, 1);
           ?>
           <?php the_archive_description('<div class="archive-description">', '</div>'); ?>
         </header>
