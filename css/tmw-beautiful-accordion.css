@@ -1,0 +1,172 @@
+/**
+ * TMW Beautiful Accordion Styling v2.0
+ * Adds red gradient lines to video and model page accordions
+ * 
+ * IMPORTANT: This file must be in /css/tmw-beautiful-accordion.css
+ *
+ * @package RetrotubeChild
+ * @version 2.0.0
+ */
+
+/* ============================================
+   VIDEO & MODEL PAGE - BEAUTIFUL ACCORDION
+   Targets the Readmore.js generated structure
+   ============================================ */
+
+/* 
+   HTML Structure after Readmore.js runs:
+   <div class="video-description">
+     <div class="desc more" data-readmore style="height:XXpx">
+       [content]
+     </div>
+     <a data-readmore-toggle href="#" class="morelink">Read more <i></i></a>
+   </div>
+*/
+
+/* ============================================
+   TARGET: The morelink created by Readmore.js
+   ============================================ */
+
+/* Primary selector - targets the toggle link */
+a.morelink[data-readmore-toggle],
+a[data-readmore-toggle].morelink,
+.video-description a.morelink,
+.video-description [data-readmore-toggle] {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    margin-top: 15px !important;
+    padding: 0 !important;
+    text-decoration: none !important;
+    color: #e74c3c !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    position: relative !important;
+}
+
+/* Left red gradient line */
+a.morelink[data-readmore-toggle]::before,
+a[data-readmore-toggle].morelink::before,
+.video-description a.morelink::before,
+.video-description [data-readmore-toggle]::before {
+    content: '' !important;
+    flex: 1 !important;
+    height: 2px !important;
+    background: linear-gradient(90deg, transparent 0%, #e74c3c 100%) !important;
+    display: block !important;
+}
+
+/* Right red gradient line */
+a.morelink[data-readmore-toggle]::after,
+a[data-readmore-toggle].morelink::after,
+.video-description a.morelink::after,
+.video-description [data-readmore-toggle]::after {
+    content: '' !important;
+    flex: 1 !important;
+    height: 2px !important;
+    background: linear-gradient(90deg, #e74c3c 0%, transparent 100%) !important;
+    display: block !important;
+}
+
+/* Hover effect */
+a.morelink[data-readmore-toggle]:hover,
+a[data-readmore-toggle].morelink:hover,
+.video-description a.morelink:hover,
+.video-description [data-readmore-toggle]:hover {
+    color: #ff6b5b !important;
+}
+
+/* ============================================
+   FIX: Text and icon need padding from lines
+   ============================================ */
+
+/* Wrap the text content */
+a.morelink[data-readmore-toggle],
+a[data-readmore-toggle].morelink,
+.video-description a.morelink {
+    gap: 0 !important;
+}
+
+/* The actual text needs to be visible between the lines */
+/* Since ::before and ::after are flex items, the text goes in between */
+
+/* Icon styling */
+a.morelink i,
+a[data-readmore-toggle] i,
+.video-description a.morelink i,
+.video-description [data-readmore-toggle] i {
+    font-size: 12px !important;
+    transition: transform 0.3s ease !important;
+    margin-left: 6px !important;
+    padding-right: 15px !important;
+}
+
+/* Add padding to separate text from lines */
+/* This is tricky because the text is a text node, not an element */
+/* We use padding on the link itself for the inner spacing */
+
+/* ============================================
+   ENTRY CONTENT CONTEXT (Model pages)
+   ============================================ */
+
+.entry-content a.morelink[data-readmore-toggle],
+.entry-content a[data-readmore-toggle].morelink,
+.entry-content .video-description a.morelink,
+#video-about a.morelink,
+#video-about [data-readmore-toggle],
+.tab-content a.morelink,
+.tab-content [data-readmore-toggle] {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    margin-top: 15px !important;
+    color: #e74c3c !important;
+}
+
+/* ============================================
+   MOBILE RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    a.morelink[data-readmore-toggle],
+    a[data-readmore-toggle].morelink,
+    .video-description a.morelink,
+    .video-description [data-readmore-toggle] {
+        font-size: 13px !important;
+    }
+    
+    a.morelink[data-readmore-toggle]::before,
+    a.morelink[data-readmore-toggle]::after,
+    .video-description a.morelink::before,
+    .video-description a.morelink::after {
+        min-width: 20px !important;
+    }
+}
+
+/* ============================================
+   OVERRIDE ANY PARENT THEME STYLES
+   ============================================ */
+
+/* Kill any default styling */
+.video-description a.morelink,
+a.morelink[data-readmore-toggle] {
+    float: none !important;
+    clear: both !important;
+    text-align: center !important;
+}
+
+/* Make sure description container is full width */
+.video-description {
+    width: 100% !important;
+    position: relative !important;
+}
+
+/* Ensure .desc doesn't interfere */
+.video-description .desc {
+    width: 100% !important;
+}
