@@ -24,9 +24,9 @@ if ($models_page) {
     // Apply content filters (processes shortcodes, etc.)
     $seo_text = apply_filters('the_content', $seo_text);
     
-    // Strip tags but keep basic formatting
-    $seo_text = strip_tags($seo_text, '<p><br><strong><em><b><i><a><h2><h3><ul><ol><li>');
+    // Sanitize accordion HTML with a WordPress-native allowlist.
     $seo_text = trim($seo_text);
+    $seo_text = tmw_sanitize_accordion_html($seo_text);
 }
 ?>
 <main id="primary" class="site-main">
