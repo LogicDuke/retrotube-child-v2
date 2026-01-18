@@ -117,19 +117,19 @@ if (!function_exists('tmw_accordion_shortcode')) {
 
 add_shortcode('tmw_accordion', 'tmw_accordion_shortcode');
 
-if (!function_exists('tmw_archive_description_to_accordion')) {
+if (!function_exists('tmw_category_archive_desc_to_accordion')) {
   /**
-   * Wrap archive descriptions in the unified accordion.
+   * Wrap category descriptions in the unified accordion.
    *
    * @param string $description Archive description HTML.
    * @return string
    */
-  function tmw_archive_description_to_accordion(string $description): string {
+  function tmw_category_archive_desc_to_accordion(string $description): string {
     if (is_admin()) {
       return $description;
     }
 
-    if (!(is_category() || is_tag() || is_archive())) {
+    if (!is_category()) {
       return $description;
     }
 
@@ -141,17 +141,17 @@ if (!function_exists('tmw_archive_description_to_accordion')) {
       return $description;
     }
 
-    $lines = (int) apply_filters('tmw_archive_desc_lines', 1);
+    $lines = (int) apply_filters('tmw_category_desc_lines', 1);
     $queried_id = get_queried_object_id();
 
     return tmw_render_accordion([
       'content_html'    => $description,
       'lines'           => $lines,
       'collapsed'       => true,
-      'accordion_class' => 'tmw-accordion--archive-desc',
-      'id_base'         => $queried_id ? 'tmw-archive-desc-' . $queried_id : 'tmw-archive-desc-',
+      'accordion_class' => 'tmw-accordion--category-desc',
+      'id_base'         => $queried_id ? 'tmw-category-desc-' . $queried_id : 'tmw-category-desc-',
     ]);
   }
 }
 
-add_filter('get_the_archive_description', 'tmw_archive_description_to_accordion', 20);
+add_filter('get_the_archive_description', 'tmw_category_archive_desc_to_accordion', 20);
