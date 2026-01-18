@@ -83,13 +83,14 @@
             var morelinks = document.querySelectorAll('a.morelink[data-readmore-toggle], a[data-readmore-toggle]');
             
             morelinks.forEach(function(link) {
-                // Store original click handlers
-                var originalOnClick = link.onclick;
-                
+                ensureReadmoreTextSpan(link);
+                syncReadmoreState(link);
+
                 // Add our click handler
                 link.addEventListener('click', function(e) {
                     var toggleId = link.getAttribute('data-readmore-toggle');
                     var content = toggleId ? document.getElementById(toggleId) : null;
+                    var wasExpanded = link.getAttribute('aria-expanded') === 'true';
                     
                     if (!content) {
                         // Try to find content as previous sibling
@@ -99,8 +100,11 @@
                     if (!content) return;
                     
                     // Check if we're closing (content is currently expanded)
-                    var isExpanded = content.style.height !== '' && 
-                                     parseInt(content.style.height) > 100;
+                    var isExpanded = wasExpanded;
+                    if (link.getAttribute('aria-expanded') === null) {
+                        isExpanded = content.style.height !== '' &&
+                                     parseInt(content.style.height, 10) > 100;
+                    }
                     
                     // If closing, scroll to the content area after animation
                     if (isExpanded) {
@@ -115,6 +119,12 @@
                             }
                         }, 350); // Wait for Readmore.js animation
                     }
+
+                    // Update toggle text and icon after Readmore.js updates
+                    setTimeout(function() {
+                        syncReadmoreState(link);
+                    }, 350);
+
                 });
             });
         }, 500);
@@ -137,6 +147,66 @@
                 top: offsetPosition,
                 behavior: 'smooth'
             });
+        }
+    }
+
+    /**
+     * Ensure Readmore.js links have a text span for styling
+     * @param {Element} link - The Readmore.js toggle link
+     */
+    function ensureReadmoreTextSpan(link) {
+        if (!link || link.querySelector('.tmw-accordion-text')) return;
+
+        var icon = link.querySelector('i');
+        var textNodes = [];
+
+        link.childNodes.forEach(function(node) {
+            if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+                textNodes.push(node);
+            }
+        });
+
+        if (!textNodes.length) return;
+
+        var combinedText = textNodes.map(function(node) {
+            return node.textContent.trim();
+        }).join(' ');
+
+        var textSpan = document.createElement('span');
+        textSpan.className = 'tmw-accordion-text';
+        textSpan.textContent = combinedText;
+
+        textNodes.forEach(function(node) {
+            link.removeChild(node);
+        });
+
+        if (icon) {
+            link.insertBefore(textSpan, icon);
+        } else {
+            link.appendChild(textSpan);
+        }
+    }
+
+    /**
+     * Sync Readmore.js toggle state with text/icon
+     * @param {Element} link - The Readmore.js toggle link
+     */
+    function syncReadmoreState(link) {
+        if (!link) return;
+
+        var textSpan = link.querySelector('.tmw-accordion-text');
+        var icon = link.querySelector('i');
+        var readMoreText = link.getAttribute('data-readmore-text') ||
+            (textSpan ? textSpan.textContent.trim() : 'Read more');
+        var closeText = link.getAttribute('data-close-text') || 'Close';
+        var isExpanded = link.getAttribute('aria-expanded') === 'true';
+
+        if (!textSpan) return;
+
+        textSpan.textContent = isExpanded ? closeText : readMoreText;
+        if (icon) {
+            icon.classList.toggle('fa-chevron-up', isExpanded);
+            icon.classList.toggle('fa-chevron-down', !isExpanded);
         }
     }
 

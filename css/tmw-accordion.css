@@ -95,19 +95,38 @@
     position: relative;
 }
 
-/* Dark underline that turns red on hover */
-.tmw-accordion-toggle::after {
+/* Shared text underline styling */
+.tmw-accordion-text,
+a.morelink[data-readmore-toggle] .tmw-accordion-text,
+a[data-readmore-toggle].morelink .tmw-accordion-text,
+.video-description a.morelink .tmw-accordion-text,
+.video-description [data-readmore-toggle] .tmw-accordion-text {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    color: inherit;
+}
+
+.tmw-accordion-text::after,
+a.morelink[data-readmore-toggle] .tmw-accordion-text::after,
+a[data-readmore-toggle].morelink .tmw-accordion-text::after,
+.video-description a.morelink .tmw-accordion-text::after,
+.video-description [data-readmore-toggle] .tmw-accordion-text::after {
     content: '';
     position: absolute;
     bottom: -3px;
-    left: 15px;
-    right: 15px;
+    left: 0;
+    right: 0;
     height: 1px;
     background-color: #333;
     transition: background-color 0.2s ease;
 }
 
-.tmw-accordion-toggle:hover::after {
+.tmw-accordion-toggle:hover .tmw-accordion-text::after,
+a.morelink[data-readmore-toggle]:hover .tmw-accordion-text::after,
+a[data-readmore-toggle].morelink:hover .tmw-accordion-text::after,
+.video-description a.morelink:hover .tmw-accordion-text::after,
+.video-description [data-readmore-toggle]:hover .tmw-accordion-text::after {
     background-color: #e74c3c;
 }
 
@@ -202,33 +221,12 @@ a[data-readmore-toggle] i,
 /* We need a wrapper span around the text to add the underline */
 /* Since Readmore.js doesn't provide this, we use a different approach */
 
-/* Create underline effect using box-shadow on the text portion */
+/* Readmore.js links - ensure underline uses our span approach */
 .video-description a.morelink,
-a.morelink[data-readmore-toggle] {
-    /* The text content gets an underline via text-decoration */
+a.morelink[data-readmore-toggle],
+a[data-readmore-toggle].morelink,
+.video-description [data-readmore-toggle] {
     text-decoration: none !important;
-}
-
-/* Create underline effect by targeting the link when it contains text */
-/* Use a pseudo-element positioned over the text area */
-
-/* Alternative: Add visual separator line above the toggle */
-.video-description {
-    position: relative !important;
-}
-
-/* Add the dark line effect above the morelink */
-.video-description a.morelink[data-readmore-toggle],
-.video-description a[data-readmore-toggle] {
-    border-top: 1px solid #333 !important;
-    padding-top: 8px !important;
-    margin-top: 10px !important;
-    transition: border-color 0.2s ease, color 0.2s ease !important;
-}
-
-.video-description a.morelink[data-readmore-toggle]:hover,
-.video-description a[data-readmore-toggle]:hover {
-    border-top-color: #e74c3c !important;
 }
 
 /* ============================================
@@ -282,6 +280,7 @@ a.morelink[data-readmore-toggle] {
     float: none !important;
     clear: both !important;
     text-align: center !important;
+    text-decoration: none !important;
 }
 
 /* Make sure description container is full width */
