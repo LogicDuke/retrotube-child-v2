@@ -81,6 +81,30 @@
     background: linear-gradient(90deg, #e74c3c 0%, transparent 100%);
 }
 
+/* Reset active/focus visuals */
+.tmw-accordion-toggle,
+.tmw-accordion-toggle:focus,
+.tmw-accordion-toggle:active,
+.tmw-accordion-toggle:focus-visible,
+.tmw-accordion-readmore,
+.tmw-accordion-readmore:focus,
+.tmw-accordion-readmore:active,
+.tmw-accordion-readmore:focus-visible {
+    background: transparent !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    outline: none !important;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.tmw-accordion-toggle-wrap:hover::before {
+    background: linear-gradient(90deg, transparent 0%, #ff6b5b 100%);
+}
+
+.tmw-accordion-toggle-wrap:hover::after {
+    background: linear-gradient(90deg, #ff6b5b 0%, transparent 100%);
+}
+
 /* === THE TOGGLE LINK === */
 .tmw-accordion-toggle {
     color: #e74c3c;
@@ -98,6 +122,10 @@
 
 .tmw-accordion-toggle:hover {
     color: #ff6b5b;
+}
+
+.tmw-accordion-toggle-wrap:hover .tmw-accordion-toggle .tmw-accordion-text::after {
+    background-color: #ff6b5b;
 }
 
 /* Text with dark underline */

@@ -171,23 +171,21 @@ if ( has_post_thumbnail() && wp_get_attachment_url( get_post_thumbnail_id() ) ) 
 				<div id="video-about" class="width<?php echo $width; ?>">
 				<div class="video-description">
 					<?php if ( xbox_get_field_value( 'wpst-options', 'show-description-video-about' ) == 'on' ) : ?>
-						<?php
-						ob_start();
-						the_content();
-						$tmw_desc_html = ob_get_clean();
-
-						if (function_exists('tmw_render_accordion')) {
-							echo tmw_render_accordion([
-								'content_html'    => $tmw_desc_html,
-								'lines'           => (int) apply_filters('tmw_video_desc_lines', 20, get_the_ID()),
-								'collapsed'       => (xbox_get_field_value('wpst-options', 'truncate-description') == 'on'),
-								'accordion_class' => 'tmw-accordion--video-desc',
-								'id_base'         => 'tmw-video-desc-' . get_the_ID(),
-							]);
-						} else {
-							echo $tmw_desc_html;
-						}
-						?>
+						<?php if ( xbox_get_field_value( 'wpst-options', 'truncate-description' ) == 'on' ) : ?>
+							<div class="tmw-accordion tmw-accordion--video-desc">
+								<div id="tmw-video-desc-<?php echo (int) get_the_ID(); ?>" class="tmw-accordion-content tmw-accordion-collapsed more" data-tmw-accordion-lines="1">
+									<?php the_content(); ?>
+								</div>
+								<div class="tmw-accordion-toggle-wrap">
+									<a class="tmw-accordion-toggle" href="javascript:void(0);" data-tmw-accordion-toggle aria-controls="tmw-video-desc-<?php echo (int) get_the_ID(); ?>" aria-expanded="false" data-readmore-text="<?php echo esc_attr__( 'Read more', 'retrotube-child' ); ?>" data-close-text="<?php echo esc_attr__( 'Close', 'retrotube-child' ); ?>">
+										<span class="tmw-accordion-text"><?php esc_html_e( 'Read more', 'retrotube-child' ); ?></span>
+										<i class="fa fa-chevron-down"></i>
+									</a>
+								</div>
+							</div>
+						<?php else : ?>
+							<?php the_content(); ?>
+						<?php endif; ?>
 					<?php endif; ?>
 				</div>
 
