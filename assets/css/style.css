@@ -27,3 +27,15 @@
   gap: 1.5rem;
   margin-top: 1.5rem;
 }
+
+/* Model bio: Videos Featuring — force titles to white */
+.tmw-model-videos .video-title a,
+.tmw-model-videos .video-title a:visited {
+  color: #fff !important;
+}
+
+.tmw-model-videos .video-title a:hover,
+.tmw-model-videos .video-title a:focus {
+  color: #fff !important;
+  text-decoration: underline;
+}
