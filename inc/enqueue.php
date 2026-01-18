@@ -49,6 +49,25 @@ add_action('wp_enqueue_scripts', function () {
     $child_version
   );
 
+  $accordion_style_path = get_stylesheet_directory() . '/css/tmw-accordion.css';
+  $accordion_style_ver  = file_exists($accordion_style_path) ? filemtime($accordion_style_path) : $child_version;
+  wp_enqueue_style(
+    'tmw-accordion',
+    get_stylesheet_directory_uri() . '/css/tmw-accordion.css',
+    ['retrotube-child-style'],
+    $accordion_style_ver
+  );
+
+  $accordion_script_path = get_stylesheet_directory() . '/js/tmw-accordion.js';
+  $accordion_script_ver  = file_exists($accordion_script_path) ? filemtime($accordion_script_path) : $child_version;
+  wp_enqueue_script(
+    'tmw-accordion',
+    get_stylesheet_directory_uri() . '/js/tmw-accordion.js',
+    [],
+    $accordion_script_ver,
+    true
+  );
+
   $model_videos_path = get_stylesheet_directory() . '/assets/css/style.css';
   if (file_exists($model_videos_path)) {
     $model_videos_ver = filemtime($model_videos_path) ?: $child_version;

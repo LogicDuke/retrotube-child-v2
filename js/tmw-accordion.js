@@ -14,7 +14,8 @@
         readMoreText: 'Read more',
         closeText: 'Close',
         headerOffset: 120,
-        animationDelay: 350
+        defaultLines: 1,
+        fallbackLineHeight: 16
     };
 
     // Run on DOM ready
@@ -25,96 +26,87 @@
     }
 
     function init() {
-        // Initialize both accordion types
-        initCustomAccordions();
-        
-        // Readmore.js needs a delay to generate its elements
-        setTimeout(initReadmoreAccordions, 500);
+        initTMWAccordions();
     }
 
     /* =============================================
        CUSTOM TMW ACCORDIONS
-       Used on: Homepage, Model taxonomy
+       Used on: Homepage, Model taxonomy, Video/Model pages
        ============================================= */
-    function initCustomAccordions() {
-        var toggles = document.querySelectorAll('.tmw-accordion-toggle');
+    function initTMWAccordions() {
+        var accordions = document.querySelectorAll('.tmw-accordion');
 
-        toggles.forEach(function(toggle) {
-            // Skip if already initialized
+        accordions.forEach(function(accordion) {
+            var toggle = accordion.querySelector('.tmw-accordion-toggle');
+            var content = accordion.querySelector('.tmw-accordion-content');
+            if (!toggle || !content) return;
+
             if (toggle.getAttribute('data-tmw-init') === 'done') return;
             toggle.setAttribute('data-tmw-init', 'done');
 
-            // Find elements
-            var accordion = toggle.closest('.tmw-accordion');
-            if (!accordion) return;
+            var toggleWrap = toggle.closest('.tmw-accordion-toggle-wrap');
 
-            var content = accordion.querySelector('.tmw-accordion-content');
-            if (!content) return;
+            var lines = parseInt(content.getAttribute('data-tmw-accordion-lines'), 10);
+            if (!lines || lines < 1) {
+                lines = CONFIG.defaultLines;
+            }
+            content.style.setProperty('--tmw-accordion-lines', lines);
+
+            if (content.id && !toggle.getAttribute('aria-controls')) {
+                toggle.setAttribute('aria-controls', content.id);
+            }
+
+            var readMoreText = toggle.getAttribute('data-readmore-text') || CONFIG.readMoreText;
+            var closeText = toggle.getAttribute('data-close-text') || CONFIG.closeText;
 
             var textSpan = toggle.querySelector('.tmw-accordion-text');
+            if (!textSpan) {
+                textSpan = document.createElement('span');
+                textSpan.className = 'tmw-accordion-text';
+                textSpan.textContent = readMoreText;
+                toggle.insertBefore(textSpan, toggle.firstChild);
+            }
+
             var icon = toggle.querySelector('i, .fa');
 
-            // Click handler
+            var lineHeight = parseFloat(window.getComputedStyle(content).lineHeight);
+            if (!lineHeight) {
+                lineHeight = CONFIG.fallbackLineHeight;
+            }
+
+            var maxHeight = lineHeight * lines;
+            var needsToggle = content.scrollHeight > maxHeight + 1;
+
+            if (!needsToggle) {
+                content.classList.remove('tmw-accordion-collapsed');
+                setToggleState(toggle, textSpan, icon, true, readMoreText, closeText);
+                if (toggleWrap) {
+                    toggleWrap.setAttribute('hidden', 'hidden');
+                }
+                return;
+            }
+
+            if (toggleWrap) {
+                toggleWrap.removeAttribute('hidden');
+            }
+
+            var isExpanded = !content.classList.contains('tmw-accordion-collapsed');
+            setToggleState(toggle, textSpan, icon, isExpanded, readMoreText, closeText);
+
             toggle.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
 
-                var isCollapsed = content.classList.contains('more');
+                var isCollapsed = content.classList.contains('tmw-accordion-collapsed');
 
                 if (isCollapsed) {
-                    // EXPAND
-                    content.classList.remove('more');
-                    if (textSpan) textSpan.textContent = CONFIG.closeText;
-                    if (icon) swapIcon(icon, 'up');
+                    content.classList.remove('tmw-accordion-collapsed');
+                    setToggleState(toggle, textSpan, icon, true, readMoreText, closeText);
                 } else {
-                    // COLLAPSE
-                    content.classList.add('more');
-                    if (textSpan) textSpan.textContent = CONFIG.readMoreText;
-                    if (icon) swapIcon(icon, 'down');
-                    
-                    // Scroll to top
+                    content.classList.add('tmw-accordion-collapsed');
+                    setToggleState(toggle, textSpan, icon, false, readMoreText, closeText);
                     scrollToElement(accordion);
                 }
-            });
-        });
-    }
-
-    /* =============================================
-       READMORE.JS ACCORDIONS
-       Used on: Video pages, Model single pages
-       ============================================= */
-    function initReadmoreAccordions() {
-        var links = document.querySelectorAll('.video-description a.morelink, a.morelink[data-readmore-toggle], a[data-readmore-toggle].morelink');
-
-        links.forEach(function(link) {
-            // Skip if already initialized
-            if (link.getAttribute('data-tmw-init') === 'done') return;
-            link.setAttribute('data-tmw-init', 'done');
-
-            // Wrap text in span for underline styling
-            wrapTextInSpan(link);
-
-            // Ensure icon exists
-            ensureIcon(link);
-
-            // Set initial state
-            syncState(link);
-
-            // Click handler - DON'T prevent default, let Readmore.js work
-            link.addEventListener('click', function() {
-                var wasExpanded = link.getAttribute('aria-expanded') === 'true';
-
-                // After Readmore.js animation, sync our state
-                setTimeout(function() {
-                    syncState(link);
-
-                    // If we just collapsed, scroll up
-                    var nowExpanded = link.getAttribute('aria-expanded') === 'true';
-                    if (wasExpanded && !nowExpanded) {
-                        var container = link.closest('.video-description') || link.parentElement;
-                        scrollToElement(container);
-                    }
-                }, CONFIG.animationDelay);
             });
         });
     }
@@ -128,7 +120,7 @@
      */
     function swapIcon(icon, direction) {
         if (!icon) return;
-        
+
         if (direction === 'up') {
             icon.classList.remove('fa-chevron-down');
             icon.classList.add('fa-chevron-up');
@@ -139,68 +131,13 @@
     }
 
     /**
-     * Wrap text nodes in span for styling
+     * Sync toggle state (text + icon)
      */
-    function wrapTextInSpan(link) {
-        if (!link) return;
-        if (link.querySelector('.tmw-accordion-text')) return;
-
-        var icon = link.querySelector('i, .fa');
-        var textContent = '';
-
-        // Collect text nodes
-        var textNodes = [];
-        link.childNodes.forEach(function(node) {
-            if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
-                textNodes.push(node);
-                textContent += node.textContent.trim() + ' ';
-            }
-        });
-
-        textContent = textContent.trim() || CONFIG.readMoreText;
-
-        // Remove old text nodes
-        textNodes.forEach(function(node) {
-            node.parentNode.removeChild(node);
-        });
-
-        // Create span
-        var span = document.createElement('span');
-        span.className = 'tmw-accordion-text';
-        span.textContent = textContent;
-
-        // Insert before icon or append
-        if (icon && icon.parentNode === link) {
-            link.insertBefore(span, icon);
-        } else {
-            link.appendChild(span);
-        }
-    }
-
-    /**
-     * Ensure link has an icon
-     */
-    function ensureIcon(link) {
-        if (!link) return;
-        if (link.querySelector('i, .fa')) return;
-
-        var icon = document.createElement('i');
-        icon.className = 'fa fa-chevron-down';
-        link.appendChild(icon);
-    }
-
-    /**
-     * Sync Readmore.js link state (text + icon)
-     */
-    function syncState(link) {
-        if (!link) return;
-
-        var isExpanded = link.getAttribute('aria-expanded') === 'true';
-        var textSpan = link.querySelector('.tmw-accordion-text');
-        var icon = link.querySelector('i, .fa');
+    function setToggleState(toggle, textSpan, icon, isExpanded, readMoreText, closeText) {
+        toggle.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
 
         if (textSpan) {
-            textSpan.textContent = isExpanded ? CONFIG.closeText : CONFIG.readMoreText;
+            textSpan.textContent = isExpanded ? closeText : readMoreText;
         }
 
         if (icon) {
@@ -215,11 +152,11 @@
         if (!element) return;
 
         var rect = element.getBoundingClientRect();
-        
+
         // Only scroll if element is above viewport
         if (rect.top < 0) {
             var scrollY = window.pageYOffset + rect.top - CONFIG.headerOffset;
-            
+
             window.scrollTo({
                 top: scrollY,
                 behavior: 'smooth'
@@ -233,15 +170,13 @@
     if (typeof MutationObserver !== 'undefined') {
         var observer = new MutationObserver(function(mutations) {
             var shouldInit = false;
-            
+
             mutations.forEach(function(mutation) {
                 mutation.addedNodes.forEach(function(node) {
                     if (node.nodeType === 1) {
-                        if (node.classList && (
-                            node.classList.contains('tmw-accordion') ||
-                            node.classList.contains('video-description') ||
-                            node.querySelector && node.querySelector('.tmw-accordion, .video-description, a.morelink')
-                        )) {
+                        if (node.classList && node.classList.contains('tmw-accordion')) {
+                            shouldInit = true;
+                        } else if (node.querySelector && node.querySelector('.tmw-accordion')) {
                             shouldInit = true;
                         }
                     }
@@ -249,8 +184,7 @@
             });
 
             if (shouldInit) {
-                initCustomAccordions();
-                setTimeout(initReadmoreAccordions, 100);
+                initTMWAccordions();
             }
         });
 

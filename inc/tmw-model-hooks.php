@@ -1892,7 +1892,7 @@ add_action('template_redirect', function(){
         <h1 class="tmw-model-title"><?php echo esc_html($term->name); ?></h1>
 
         <div class="tmw-accordion tmw-bio-wrap">
-          <div id="tmw-bio" class="tmw-accordion-content more" data-tmw-accordion-lines="<?php echo (int) $read_lines; ?>">
+          <div id="tmw-bio" class="tmw-accordion-content tmw-accordion-collapsed" data-tmw-accordion-lines="<?php echo (int) $read_lines; ?>">
             <?php
               if ($bio) echo wpautop($bio);
               else echo '<p>'.esc_html__('No biography provided yet.','retrotube-child').'</p>';
