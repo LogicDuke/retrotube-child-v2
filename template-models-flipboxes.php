@@ -24,9 +24,9 @@ if (have_posts()) {
     wp_reset_postdata();
 }
 
-// Strip HTML but keep basic formatting tags
-$page_content = strip_tags($page_content, '<p><br><strong><em><b><i><a>');
+// Sanitize accordion HTML with a WordPress-native allowlist.
 $page_content = trim($page_content);
+$page_content = tmw_sanitize_accordion_html($page_content);
 ?>
 <main id="primary" class="site-main">
   <div class="tmw-layout container">

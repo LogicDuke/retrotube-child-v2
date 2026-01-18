@@ -1,6 +1,43 @@
 <?php
 if (!defined('ABSPATH')) { exit; }
 
+if (!function_exists('tmw_sanitize_accordion_html')) {
+  /**
+   * Sanitize accordion HTML using a WordPress-native allowlist.
+   *
+   * @param string $html Accordion content HTML.
+   * @return string
+   */
+  function tmw_sanitize_accordion_html(string $html): string {
+    $allowed = wp_kses_allowed_html('post');
+
+    $allowed['div'] = array_merge($allowed['div'] ?? [], [
+      'class' => true,
+      'id'    => true,
+    ]);
+    $allowed['span'] = array_merge($allowed['span'] ?? [], [
+      'class' => true,
+      'id'    => true,
+    ]);
+
+    foreach (['h2', 'h3', 'h4'] as $heading) {
+      $allowed[$heading] = array_merge($allowed[$heading] ?? [], [
+        'class' => true,
+        'id'    => true,
+      ]);
+    }
+
+    foreach (['pre', 'code', 'kbd', 'samp'] as $tag) {
+      $allowed[$tag] = array_merge($allowed[$tag] ?? [], [
+        'class' => true,
+        'id'    => true,
+      ]);
+    }
+
+    return wp_kses($html, $allowed);
+  }
+}
+
 if (!function_exists('tmw_render_accordion')) {
   /**
    * Render a reusable TMW accordion block.
