@@ -188,17 +188,23 @@ add_filter('site_transient_update_themes', function($value) {
 });
 
 /**
- * Enqueue TMW Beautiful Accordion styling for video/model pages
+ * Enqueue unified TMW accordion styling and behavior.
  */
-add_action('wp_enqueue_scripts', 'tmw_enqueue_beautiful_accordion_css', 20);
+add_action('wp_enqueue_scripts', 'tmw_enqueue_unified_accordion_assets', 20);
 
-function tmw_enqueue_beautiful_accordion_css() {
-    if (is_singular('post') || is_singular('model') || is_singular('video')) {
-        wp_enqueue_style(
-            'tmw-beautiful-accordion',
-            get_stylesheet_directory_uri() . '/css/tmw-beautiful-accordion.css',
-            array(),
-            '1.0.0'
-        );
-    }
+function tmw_enqueue_unified_accordion_assets() {
+    wp_enqueue_style(
+        'tmw-accordion',
+        get_stylesheet_directory_uri() . '/css/tmw-accordion.css',
+        array(),
+        '3.0.1'
+    );
+
+    wp_enqueue_script(
+        'tmw-accordion',
+        get_stylesheet_directory_uri() . '/js/tmw-accordion.js',
+        array(),
+        '3.0.1',
+        true
+    );
 }
