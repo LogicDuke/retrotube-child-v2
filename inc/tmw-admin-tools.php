@@ -422,15 +422,8 @@ add_action('after_switch_theme', function () {
  * Date: 2025-10-19
  */
 
-if (!function_exists('tmw_taxonomy_fix_log')) {
-  function tmw_taxonomy_fix_log($message) {
-    // Logging intentionally disabled during audit cleanup.
-  }
-}
-
 add_action('init', function() {
   if (!taxonomy_exists('models')) {
-    tmw_taxonomy_fix_log('Warning: "models" taxonomy not found.');
     return;
   }
 
@@ -438,7 +431,6 @@ add_action('init', function() {
     tmw_bind_models_taxonomy();
   }
 
-  tmw_taxonomy_fix_log('Ensured "models" taxonomy is registered for video post type.');
 }, 20);
 
 if (!function_exists('tmw_extract_model_slug_from_title')) {
@@ -469,7 +461,6 @@ if (!function_exists('tmw_autolink_video_models')) {
 
     $slug = tmw_extract_model_slug_from_title(strtolower($title));
     if (!$slug) {
-      tmw_taxonomy_fix_log("No model slug detected for video ID {$post_id}. Title: {$title}");
       return;
     }
 
@@ -480,9 +471,6 @@ if (!function_exists('tmw_autolink_video_models')) {
 
     if ($term instanceof WP_Term) {
       wp_set_post_terms($post_id, [$term->term_id], 'models', true);
-      tmw_taxonomy_fix_log("Auto-linked video ID {$post_id} to model term {$term->slug} (#{$term->term_id}).");
-    } else {
-      tmw_taxonomy_fix_log("No matching model term found for slug {$slug} (video ID {$post_id}).");
     }
   }
 }
@@ -509,7 +497,6 @@ add_action('admin_init', function() {
   }
 
   update_option('tmw_models_relinked_v156', 1);
-  tmw_taxonomy_fix_log('Retroactive relinker completed.');
 }, 20);
 // === [TMW-MODEL-COMMENTS] Enable comments for model post type ===
 add_action( 'init', function() {

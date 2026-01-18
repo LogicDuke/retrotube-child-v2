@@ -11,20 +11,19 @@
 ## ✅ Duplicate / Redundant Enqueues
 - [TMW-AUDIT] Core assets already handled in `inc/enqueue.php` (`retrotube-parent`, `retrotube-child-style`, `rt-child-flip`; lines 29-78). Secondary re-queues in `inc/tmw-admin-tools.php` (lines 255-281 and 796-804) re-enqueue or dequeue/requeue the same handles at `9999`, causing double work and cache busting; consolidate into the main enqueue helper. 【F:inc/enqueue.php†L29-L78】【F:inc/tmw-admin-tools.php†L255-L304】【F:inc/tmw-admin-tools.php†L796-L804】
 - [TMW-AUDIT] Admin banner helpers (`tmw-admin-banner-style`, `tmw-banner-admin-align`) are enqueued in both `inc/tmw-admin-tools.php` (lines 272-295) and `inc/admin/model-banner-meta-box.php` (lines 10-36). Keep a single source (prefer the scoped `/inc/admin` module). 【F:inc/tmw-admin-tools.php†L272-L295】【F:inc/admin/model-banner-meta-box.php†L10-L36】
-- [TMW-AUDIT] Flipbox debug scripts enqueue twice inside the same debug block (lines 735-783). Collapse into one guarded loader tied to `TMW_DEBUG` and avoid duplicate Ajax bindings. 【F:inc/tmw-admin-tools.php†L735-L783】
+- [TMW-AUDIT] Flipbox debug scripts enqueue twice inside the same debug block (lines 735-783). Collapse into one guarded loader and avoid duplicate Ajax bindings. 【F:inc/tmw-admin-tools.php†L735-L783】
 - [TMW-AUDIT] `wp_enqueue_style('retrotube-child-style')` is called in admin enqueue hooks (`inc/tmw-admin-tools.php` lines 265-269, `inc/admin/model-banner-meta-box.php` lines 28-33, `inc/tmw-model-hooks.php` lines 1378-1404). Verify whether admin actually needs the front-end stylesheet; if not, drop to reduce editor payload. 【F:inc/tmw-model-hooks.php†L1378-L1404】
 
 ## ✅ Move-to-/inc/ (or consolidate) Recommendations
 - [TMW-AUDIT] The flipbox link guards are duplicated inline in `archive-model.php` (lines 16-53) and `template-models-flipboxes.php` (lines 12-60). Extract a single helper in `inc/frontend/flipboxes.php` and share it across templates. 【F:archive-model.php†L16-L53】【F:template-models-flipboxes.php†L12-L60】
 - [TMW-AUDIT] `taxonomy-models.php` directly logs and renders widgets; shift the `[TMW-MODEL-AUDIT]` logger and widget args into `inc/frontend/taxonomies.php` to keep templates presentation-only. 【F:taxonomy-models.php†L7-L45】
-- [TMW-AUDIT] Inline `wp_add_inline_style` audit CSS inside `single-model.php` (lines 9-12) should move to a conditional helper in `inc/frontend/model-banner.php` so templates stay lean when audit mode is disabled. 【F:single-model.php†L7-L56】
+- [TMW-AUDIT] Inline `wp_add_inline_style` audit CSS inside `single-model.php` (lines 9-12) should move to a conditional helper in `inc/frontend/model-banner.php` so templates stay lean when the helper is disabled. 【F:single-model.php†L7-L56】
 - [TMW-AUDIT] Consolidate Ajax endpoints and logging utilities living in `inc/tmw-admin-tools.php` into purpose-specific modules under `/inc/admin/` (e.g., `flipbox-debug`, `model-sync`) to keep `editor-tweaks.php` minimal. 【F:inc/admin/editor-tweaks.php†L1-L7】【F:inc/tmw-admin-tools.php†L700-L792】
 
 ## ✅ Debug / Logging Toggles to Disable Before Release
 - [TMW-AUDIT] Front-end templates emit `[TMW-*]` logs on every request: `taxonomy-models.php` (line 7), `single-model.php` (lines 7, 31, 46, 56), and `template-parts/content-model.php` (lines 5, 91-129) should wrap logs behind a `WP_DEBUG`/constant check. 【F:taxonomy-models.php†L7-L45】【F:single-model.php†L7-L56】【F:template-parts/content-model.php†L5-L129】
 - [TMW-AUDIT] `inc/enqueue.php` reports slot handles on each page load (lines 156-194); guard or remove before production. 【F:inc/enqueue.php†L156-L194】
 - [TMW-AUDIT] Persistent audits like `inc/tmw-register-audit.php` (lines 12-105), `inc/tmw-tml-bridge.php` (lines 7-17), and `inc/tmw-mail-transport.php` (lines 22-86) log to `debug.log`. Add master toggles or disable modules when launch-ready. 【F:inc/tmw-register-audit.php†L12-L105】【F:inc/tmw-tml-bridge.php†L7-L17】【F:inc/tmw-mail-transport.php†L22-L86】
-- [TMW-AUDIT] `wp-content/mu-plugins/tmw-mail-audit.php` logs every email (`[MAIL]` tag); deactivate for production to avoid leaking addresses. 【F:wp-content/mu-plugins/tmw-mail-audit.php†L1-L3】
 - [TMW-AUDIT] Ship with `wp-content/debug.log` removed and ensure `WP_DEBUG_LOG` is false in production.
 
 ## ✅ Performance Quick Wins (ranked)
@@ -63,4 +62,3 @@
 - Normalize heading hierarchy in `page-models-grid.php` and related templates.
 - Add accessible focus/touch handling for flipboxes (JS + ARIA roles) and ensure mobile behavior matches desktop expectations.
 - Inject structured data (`ItemList`, `Person`) for flipbox archives and ensure CTA buttons expose meaningful text to assistive tech.
-
