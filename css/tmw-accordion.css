@@ -1,5 +1,5 @@
 /**
- * TMW Global Accordion Styling v3.0
+ * TMW Global Accordion Styling v3.1
  * Unified accordion styling for ALL pages (home, video, model, etc.)
  * 
  * Features:
@@ -9,7 +9,7 @@
  * - Consistent styling across all pages
  *
  * @package RetrotubeChild
- * @version 3.0.0
+ * @version 3.1.0
  */
 
 /* ============================================
@@ -73,10 +73,12 @@
     flex: 1;
     height: 2px;
     background: linear-gradient(90deg, transparent 0%, #e74c3c 100%);
+    margin: 0 15px 0 0;
 }
 
 .tmw-accordion-toggle-wrap::after {
     background: linear-gradient(90deg, #e74c3c 0%, transparent 100%);
+    margin: 0 0 0 15px;
 }
 
 /* The toggle link itself */
@@ -86,11 +88,9 @@
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
-    padding: 0 15px;
     white-space: nowrap;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
     transition: color 0.2s ease;
     position: relative;
 }
@@ -136,12 +136,7 @@ a[data-readmore-toggle].morelink:hover .tmw-accordion-text::after,
 
 .tmw-accordion-toggle i {
     font-size: 12px;
-    transition: transform 0.3s ease;
-}
-
-/* Arrow points UP when expanded */
-.tmw-accordion-toggle.expanded i {
-    transform: rotate(180deg);
+    margin-left: 6px;
 }
 
 
@@ -180,6 +175,7 @@ a[data-readmore-toggle].morelink::before,
     height: 2px !important;
     background: linear-gradient(90deg, transparent 0%, #e74c3c 100%) !important;
     display: block !important;
+    margin-right: 15px !important;
 }
 
 /* Right red gradient line */
@@ -192,6 +188,7 @@ a[data-readmore-toggle].morelink::after,
     height: 2px !important;
     background: linear-gradient(90deg, #e74c3c 0%, transparent 100%) !important;
     display: block !important;
+    margin-left: 15px !important;
 }
 
 /* Hover effect */
@@ -208,9 +205,7 @@ a[data-readmore-toggle] i,
 .video-description a.morelink i,
 .video-description [data-readmore-toggle] i {
     font-size: 12px !important;
-    transition: transform 0.3s ease !important;
     margin-left: 6px !important;
-    padding-right: 15px !important;
 }
 
 /* ============================================

@@ -1,5 +1,5 @@
 /**
- * TMW Global Accordion JavaScript v3.0
+ * TMW Global Accordion JavaScript v3.1
  * Unified accordion behavior for ALL pages
  * 
  * Features:
@@ -8,7 +8,7 @@
  * - Arrow direction: DOWN when closed, UP when open
  *
  * @package RetrotubeChild
- * @version 3.0.0
+ * @version 3.1.0
  */
 
 (function() {
@@ -87,7 +87,14 @@
                 syncReadmoreState(link);
 
                 // Add our click handler
+                if (link.dataset.tmwAccordionBound === 'true') {
+                    return;
+                }
+
+                link.dataset.tmwAccordionBound = 'true';
+
                 link.addEventListener('click', function(e) {
+                    e.preventDefault();
                     var toggleId = link.getAttribute('data-readmore-toggle');
                     var content = toggleId ? document.getElementById(toggleId) : null;
                     var wasExpanded = link.getAttribute('aria-expanded') === 'true';
@@ -122,6 +129,7 @@
 
                     // Update toggle text and icon after Readmore.js updates
                     setTimeout(function() {
+                        ensureReadmoreTextSpan(link);
                         syncReadmoreState(link);
                     }, 350);
 
@@ -137,7 +145,7 @@
     function scrollToElement(element) {
         if (!element) return;
         
-        var headerOffset = 100; // Account for fixed header
+        var headerOffset = 120; // Account for fixed header
         var elementPosition = element.getBoundingClientRect().top;
         var offsetPosition = elementPosition + window.pageYOffset - headerOffset;
         
@@ -155,7 +163,16 @@
      * @param {Element} link - The Readmore.js toggle link
      */
     function ensureReadmoreTextSpan(link) {
-        if (!link || link.querySelector('.tmw-accordion-text')) return;
+        if (!link) return;
+
+        var existingSpan = link.querySelector('.tmw-accordion-text');
+        if (existingSpan) {
+            if (!link.getAttribute('data-readmore-text')) {
+                var isExpanded = link.getAttribute('aria-expanded') === 'true';
+                link.setAttribute('data-readmore-text', isExpanded ? 'Read more' : existingSpan.textContent.trim());
+            }
+            return;
+        }
 
         var icon = link.querySelector('i');
         var textNodes = [];
@@ -176,6 +193,11 @@
         textSpan.className = 'tmw-accordion-text';
         textSpan.textContent = combinedText;
 
+        if (!link.getAttribute('data-readmore-text')) {
+            var isExpanded = link.getAttribute('aria-expanded') === 'true';
+            link.setAttribute('data-readmore-text', isExpanded ? 'Read more' : combinedText);
+        }
+
         textNodes.forEach(function(node) {
             link.removeChild(node);
         });
@@ -194,10 +216,11 @@
     function syncReadmoreState(link) {
         if (!link) return;
 
+        ensureReadmoreTextSpan(link);
+
         var textSpan = link.querySelector('.tmw-accordion-text');
         var icon = link.querySelector('i');
-        var readMoreText = link.getAttribute('data-readmore-text') ||
-            (textSpan ? textSpan.textContent.trim() : 'Read more');
+        var readMoreText = link.getAttribute('data-readmore-text') || 'Read more';
         var closeText = link.getAttribute('data-close-text') || 'Close';
         var isExpanded = link.getAttribute('aria-expanded') === 'true';
 
