@@ -197,14 +197,14 @@ function tmw_enqueue_unified_accordion_assets() {
         'tmw-accordion',
         get_stylesheet_directory_uri() . '/css/tmw-accordion.css',
         array(),
-        '3.0.1'
+        '5.0.0'
     );
 
     wp_enqueue_script(
         'tmw-accordion',
         get_stylesheet_directory_uri() . '/js/tmw-accordion.js',
         array(),
-        '3.0.1',
+        '5.0.0',
         true
     );
 }
