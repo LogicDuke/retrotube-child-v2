@@ -107,6 +107,8 @@
                     setToggleState(toggle, textSpan, icon, false, readMoreText, closeText);
                     scrollToElement(accordion);
                 }
+
+                toggle.blur();
             });
         });
     }
@@ -135,6 +137,8 @@
      */
     function setToggleState(toggle, textSpan, icon, isExpanded, readMoreText, closeText) {
         toggle.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+        toggle.classList.toggle('tmw-accordion-expanded', isExpanded);
+        toggle.classList.remove('expanded');
 
         if (textSpan) {
             textSpan.textContent = isExpanded ? closeText : readMoreText;
