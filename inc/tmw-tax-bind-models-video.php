@@ -3,7 +3,7 @@ if (!defined('ABSPATH')) { exit; }
 
 /**
  * Hardened binding: attach taxonomy "models" to CPT "video" after all CPTs are registered.
- * Idempotent and quiet (no duplicates). Logs once in WP_DEBUG environments.
+ * Idempotent and quiet (no duplicates).
  */
 
 function tmw_bind_models_to_video_once() {

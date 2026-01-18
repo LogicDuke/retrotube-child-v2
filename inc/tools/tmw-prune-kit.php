@@ -229,7 +229,14 @@ function tmw_prune_apply($report, $all = false) {
 }
 
 function tmw_prune_emit_footer($data, $mode) {
-    add_action('wp_footer', function () use ($data, $mode) {
+    $format_list = function ($items) {
+        if (!is_array($items)) {
+            return '';
+        }
+        return wp_json_encode($items, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    };
+
+    add_action('wp_footer', function () use ($data, $mode, $format_list) {
         echo '<div style="position:fixed;z-index:999999;bottom:12px;right:12px;background:#111;color:#fff;padding:14px 16px;border-radius:8px;max-width:520px;font:14px/1.4 sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.35)">';
         if ($mode === 'report') {
             echo '<strong>✅ TMW Prune Report generated</strong><br>';
@@ -238,19 +245,19 @@ function tmw_prune_emit_footer($data, $mode) {
             echo '<a href="'.esc_url($data['apply_known']).'" style="color:#0bf">Apply (known-safe)</a>&nbsp;&nbsp;|&nbsp;&nbsp;';
             echo '<a href="'.esc_url($data['apply_all']).'" style="color:#f66" onclick="return confirm(\'Apply ALL suggested removals? Files will be moved to .trash.\')">Apply ALL (dangerous)</a>';
             echo '</div>';
-            echo '<details style="margin-top:8px"><summary>Keep list ('.count($data['keep']).')</summary><pre style="white-space:pre-wrap">'.esc_html(print_r($data['keep'], true)).'</pre></details>';
-            echo '<details><summary>Unused candidates ('.count($data['unused']).')</summary><pre style="white-space:pre-wrap">'.esc_html(print_r($data['unused'], true)).'</pre></details>';
-            echo '<details><summary>Known-safe legacy ('.count($data['known_safe']).')</summary><pre style="white-space:pre-wrap">'.esc_html(print_r($data['known_safe'], true)).'</pre></details>';
+            echo '<details style="margin-top:8px"><summary>Keep list ('.count($data['keep']).')</summary><pre style="white-space:pre-wrap">'.esc_html($format_list($data['keep'])).'</pre></details>';
+            echo '<details><summary>Unused candidates ('.count($data['unused']).')</summary><pre style="white-space:pre-wrap">'.esc_html($format_list($data['unused'])).'</pre></details>';
+            echo '<details><summary>Known-safe legacy ('.count($data['known_safe']).')</summary><pre style="white-space:pre-wrap">'.esc_html($format_list($data['known_safe'])).'</pre></details>';
         } else {
             echo '<strong>🧹 TMW Prune: '.esc_html($mode).'</strong><br>';
             if (!empty($data['moved'])) {
                 echo 'Moved to: <code>'.esc_html($data['trash_dir']).'</code><br>';
                 echo 'Files moved ('.count($data['moved']).')';
-                echo '<details><summary>Show</summary><pre style="white-space:pre-wrap">'.esc_html(print_r($data['moved'], true)).'</pre></details>';
+                echo '<details><summary>Show</summary><pre style="white-space:pre-wrap">'.esc_html($format_list($data['moved'])).'</pre></details>';
             }
             if (!empty($data['failed'])) {
                 echo '<div style="color:#f88">Failed (check permissions):</div>';
-                echo '<pre style="white-space:pre-wrap">'.esc_html(print_r($data['failed'], true)).'</pre>';
+                echo '<pre style="white-space:pre-wrap">'.esc_html($format_list($data['failed'])).'</pre>';
             }
             echo '<div style="margin-top:6px"><a href="'.esc_url(add_query_arg('tmw_prune','report',home_url('/'))).'" style="color:#0bf">Back to Report</a></div>';
         }

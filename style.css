@@ -30,13 +30,8 @@
    2. Hero / Banner
    ========================= */
 .tmw-model-hero {
-  margin: 0 0 18px;
+  margin: 0 auto 18px;
   position: relative;
-}
-
-.tmw-model-hero {
-  margin-left: auto;
-  margin-right: auto;
 }
 
 .tmw-banner-container,
@@ -81,6 +76,7 @@
 .single-model .tmw-banner-frame {
   position: relative;
   overflow: hidden;
+  background-color: #000;
 }
 
 .tmw-banner-frame .no-banner-placeholder {
@@ -473,7 +469,7 @@ article[id^="post-"]::before {
     line-height: 1.2em;
 }
 
-/* [TMW-MODEL-TAGS-AUDIT] base rules */
+/* Model tags base rules */
 .tmw-model-tags.post-tags.entry-tags {
   margin-top: 15px;
   padding: 12px 0;
@@ -729,76 +725,6 @@ a.tag-link {
 }
 
 
-/* (Optional safety) ensure the frame can show its background */
-.single-model .tmw-banner-frame { background-color: #000; overflow: hidden; }
-/* v4.0.3 — Mobile center alignment for related videos on single model pages */
-@media (max-width: 840px) {
-  /* Try common containers used by RetroTube + our child theme */
-  .single-model .tmw-related-videos,
-  .single-model .related-videos,
-  .single-model .entry-related,
-  .single-model .related-posts,
-  .single-model .video-grid,
-  .single-model .videos,
-  .single-model .posts,
-  .single-model .loop-videos {
-    /* Works for flex and grid; harmless for block */
-    justify-content: center !important;
-    justify-items: center !important;
-    text-align: center !important; /* fallback for inline-block flow */
-  }
-
-  /* Center individual cards regardless of layout model */
-  .single-model .tmw-related-videos > *,
-  .single-model .related-videos > *,
-  .single-model .entry-related > *,
-  .single-model .related-posts > *,
-  .single-model .video-grid > *,
-  .single-model .videos > *,
-  .single-model .posts > li,
-  .single-model .loop-videos > * {
-    margin-left: auto !important;
-    margin-right: auto !important;
-  }
-
-  /* Optional, safe fallback when the list is block-flow (no flex/grid) */
-  .single-model .posts > li {
-    display: inline-block;      /* allow centering via text-align on parent */
-    text-align: left;           /* keep card content aligned as before */
-    vertical-align: top;
-  }
-}
-@media (max-width: 840px) {
-  /* Center containers (already present in v4.0.3; harmless if duplicated) */
-  .single-model .video-grid,
-  .single-model .posts,
-  .single-model .loop-videos,
-  .single-model .related-videos,
-  .single-model .entry-related {
-    justify-content: center !important;
-    justify-items: center !important;
-    text-align: center !important;
-  }
-
-  /* Make each card the same width on any phone */
-  .single-model .video-grid > *,
-  .single-model .posts > li,
-  .single-model .loop-videos > * {
-    width: clamp(320px, 92vw, 560px);
-    margin-left: auto !important;
-    margin-right: auto !important;
-  }
-
-  /* Ensure thumbs fill the card width cleanly */
-  .single-model .video-grid img,
-  .single-model .posts img,
-  .single-model .loop-videos img {
-    width: 100% !important;
-    height: auto !important;
-    display: block;
-  }
-}
-
 /* v4.0.3-b — Mobile: center cards without vw overflow */
 @media (max-width: 840px) {
   /* Center the list itself (harmless if already centered) */
@@ -957,12 +883,6 @@ a.tag-link {
 }
 
 
-.tmw-slot-banner-zone {
-  display: block;
-  clear: both;
-  margin: 20px 0;
-}
-
 /**
  * Like/Dislike button vertical centering fix in model title block.
  */
@@ -1012,108 +932,6 @@ a.tag-link {
   vertical-align: middle;
 }
 
-/**
- * Unified Tags Styling - Video & Model pages
- * Ensures both use identical layout
- */
-
-/* Base container for both video and model tags */
-.post-tags.entry-tags.tmw-video-tags,
-.post-tags.entry-tags.tmw-model-tags {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  padding: 15px 0;
-  margin: 15px 0;
-}
-
-/* Tags: label with icon */
-.tmw-video-tags .tag-title,
-.tmw-model-tags .tag-title {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-weight: 600;
-  color: #fff;
-  margin-right: 5px;
-}
-
-.tmw-video-tags .tag-title i,
-.tmw-model-tags .tag-title i {
-  color: #e74c3c;
-  font-size: 14px;
-}
-
-/* Individual tag pills */
-.tmw-video-tags a.label,
-.tmw-model-tags a.label {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background-color: #e74c3c;
-  color: #fff;
-  padding: 5px 12px;
-  border-radius: 3px;
-  text-decoration: none;
-  font-size: 13px;
-  transition: background-color 0.2s ease;
-}
-
-.tmw-video-tags a.label:hover,
-.tmw-model-tags a.label:hover {
-  background-color: #c0392b;
-  color: #fff;
-}
-
-.tmw-video-tags a.label i,
-.tmw-model-tags a.label i {
-  font-size: 11px;
-  opacity: 0.9;
-}
-
-/* Categories styling (if shown separately) */
-.post-categories.entry-categories.tmw-video-categories {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 0;
-  margin: 10px 0 15px 0;
-}
-
-.tmw-video-categories .category-title {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-weight: 600;
-  color: #fff;
-  margin-right: 5px;
-}
-
-.tmw-video-categories .category-title i {
-  color: #3498db;
-  font-size: 14px;
-}
-
-.tmw-video-categories a.label {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background-color: #3498db;
-  color: #fff;
-  padding: 5px 12px;
-  border-radius: 3px;
-  text-decoration: none;
-  font-size: 13px;
-  transition: background-color 0.2s ease;
-}
-
-.tmw-video-categories a.label:hover {
-  background-color: #2980b9;
-  color: #fff;
-}
-
 .tmwfm-slot {
   clear: both;
   width: 100%;
@@ -1125,90 +943,6 @@ a.tag-link {
   content: "";
   display: table;
   clear: both;
-}
-
-/* ============================================================
-   TMW v4.5.0 — VIDEO TAGS: 100% identical to Model Tags
-   Apply the exact same styling from .single-model to .single-post
-   ============================================================ */
-
-/* Video page tags container - same as model */
-.single-post .tmw-model-tags.post-tags.entry-tags,
-.single-post .tmw-video-tags.post-tags.entry-tags {
-  padding: 0;
-  margin: 0 0 12px 0;
-}
-
-/* Video page tag pills - EXACT same as model pills */
-.single-post .tmw-model-tags a,
-.single-post .tmw-model-tags a.label,
-.single-post .tmw-video-tags a,
-.single-post .tmw-video-tags a.label {
-  background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 70%);
-  background-color: #db011a;
-  border: 1px solid #db011a;
-  color: #fff;
-  font-size: 0.85em !important;
-  line-height: 1.28 !important;
-  padding: 2px 6px !important;
-  margin: 0 6px 6px 0 !important;
-  border-radius: 1px;
-  display: inline-block;
-  text-decoration: none;
-}
-
-/* Video page tag pills hover - EXACT same as model */
-.single-post .tmw-model-tags a:hover,
-.single-post .tmw-model-tags a.label:hover,
-.single-post .tmw-video-tags a:hover,
-.single-post .tmw-video-tags a.label:hover {
-  background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.25) 0%, rgba(0, 0, 0, 0.15) 100%);
-  background-color: #db011a;
-  border-color: #db011a;
-  color: #fff;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.25);
-  text-decoration: none;
-}
-
-/* Video page tag icons - EXACT same as model */
-.single-post .tmw-model-tags a.label i,
-.single-post .tmw-model-tags a i.fa,
-.single-post .tmw-video-tags a.label i,
-.single-post .tmw-video-tags a i.fa {
-  font-size: 0.85em !important;
-  margin-right: 5px;
-  line-height: 1;
-  vertical-align: -1px;
-}
-
-/* Video page tag title - EXACT same as model */
-.single-post .tmw-model-tags .tag-title,
-.single-post .tmw-video-tags .tag-title {
-  display: inline-flex;
-  align-items: center;
-  font-weight: 600;
-  color: #fff;
-  margin-right: 6px;
-  gap: 5px;
-}
-
-.single-post .tmw-model-tags .tag-title i.fa-tags,
-.single-post .tmw-video-tags .tag-title i.fa-tags {
-  color: #db011a;
-  font-size: 14px;
-}
-
-/* Mobile responsive - same as model */
-@media (max-width: 600px) {
-  .single-post .tmw-model-tags a,
-  .single-post .tmw-model-tags a.label,
-  .single-post .tmw-video-tags a,
-  .single-post .tmw-video-tags a.label {
-    font-size: 0.85em !important;
-    line-height: 1.28 !important;
-    padding: 2px 6px !important;
-    margin: 0 6px 6px 0 !important;
-  }
 }
 
 /* ============================================================
