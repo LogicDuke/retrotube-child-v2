@@ -1,5 +1,5 @@
 /**
- * TMW Global Accordion Styling v3.1
+ * TMW Global Accordion Styling v3.2
  * Unified accordion styling for ALL pages (home, video, model, etc.)
  * 
  * Features:
@@ -9,7 +9,7 @@
  * - Consistent styling across all pages
  *
  * @package RetrotubeChild
- * @version 3.1.0
+ * @version 3.2.0
  */
 
 /* ============================================
@@ -26,6 +26,7 @@
 }
 
 .tmw-accordion-content {
+    --tmw-accordion-lines: 1;
     font-size: 14px;
     line-height: 1.6;
     color: #ccc;
@@ -37,9 +38,8 @@
 .tmw-accordion-content.more {
     display: -webkit-box;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 1;
+    -webkit-line-clamp: var(--tmw-accordion-lines);
     overflow: hidden;
-    max-height: 1.6em;
 }
 
 .tmw-accordion-content p {
@@ -73,12 +73,12 @@
     flex: 1;
     height: 2px;
     background: linear-gradient(90deg, transparent 0%, #e74c3c 100%);
-    margin: 0 15px 0 0;
+    margin: 0;
 }
 
 .tmw-accordion-toggle-wrap::after {
     background: linear-gradient(90deg, #e74c3c 0%, transparent 100%);
-    margin: 0 0 0 15px;
+    margin: 0;
 }
 
 /* The toggle link itself */
@@ -88,6 +88,7 @@
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
+    padding: 0 15px;
     white-space: nowrap;
     display: inline-flex;
     align-items: center;
@@ -97,10 +98,7 @@
 
 /* Shared text underline styling */
 .tmw-accordion-text,
-a.morelink[data-readmore-toggle] .tmw-accordion-text,
-a[data-readmore-toggle].morelink .tmw-accordion-text,
-.video-description a.morelink .tmw-accordion-text,
-.video-description [data-readmore-toggle] .tmw-accordion-text {
+.tmw-accordion-readmore .tmw-accordion-text {
     position: relative;
     display: inline-flex;
     align-items: center;
@@ -108,10 +106,7 @@ a[data-readmore-toggle].morelink .tmw-accordion-text,
 }
 
 .tmw-accordion-text::after,
-a.morelink[data-readmore-toggle] .tmw-accordion-text::after,
-a[data-readmore-toggle].morelink .tmw-accordion-text::after,
-.video-description a.morelink .tmw-accordion-text::after,
-.video-description [data-readmore-toggle] .tmw-accordion-text::after {
+.tmw-accordion-readmore .tmw-accordion-text::after {
     content: '';
     position: absolute;
     bottom: -3px;
@@ -123,10 +118,7 @@ a[data-readmore-toggle].morelink .tmw-accordion-text::after,
 }
 
 .tmw-accordion-toggle:hover .tmw-accordion-text::after,
-a.morelink[data-readmore-toggle]:hover .tmw-accordion-text::after,
-a[data-readmore-toggle].morelink:hover .tmw-accordion-text::after,
-.video-description a.morelink:hover .tmw-accordion-text::after,
-.video-description [data-readmore-toggle]:hover .tmw-accordion-text::after {
+.tmw-accordion-readmore:hover .tmw-accordion-text::after {
     background-color: #e74c3c;
 }
 
@@ -144,11 +136,8 @@ a[data-readmore-toggle].morelink:hover .tmw-accordion-text::after,
    VIDEO & MODEL PAGE ACCORDION (Readmore.js)
    ============================================ */
 
-/* Primary selector - targets the toggle link */
-a.morelink[data-readmore-toggle],
-a[data-readmore-toggle].morelink,
-.video-description a.morelink,
-.video-description [data-readmore-toggle] {
+/* Readmore.js toggle link */
+.tmw-accordion-readmore {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -166,10 +155,7 @@ a[data-readmore-toggle].morelink,
 }
 
 /* Left red gradient line */
-a.morelink[data-readmore-toggle]::before,
-a[data-readmore-toggle].morelink::before,
-.video-description a.morelink::before,
-.video-description [data-readmore-toggle]::before {
+.tmw-accordion-readmore::before {
     content: '' !important;
     flex: 1 !important;
     height: 2px !important;
@@ -179,10 +165,7 @@ a[data-readmore-toggle].morelink::before,
 }
 
 /* Right red gradient line */
-a.morelink[data-readmore-toggle]::after,
-a[data-readmore-toggle].morelink::after,
-.video-description a.morelink::after,
-.video-description [data-readmore-toggle]::after {
+.tmw-accordion-readmore::after {
     content: '' !important;
     flex: 1 !important;
     height: 2px !important;
@@ -192,54 +175,14 @@ a[data-readmore-toggle].morelink::after,
 }
 
 /* Hover effect */
-a.morelink[data-readmore-toggle]:hover,
-a[data-readmore-toggle].morelink:hover,
-.video-description a.morelink:hover,
-.video-description [data-readmore-toggle]:hover {
+.tmw-accordion-readmore:hover {
     color: #ff6b5b !important;
 }
 
 /* Icon styling */
-a.morelink i,
-a[data-readmore-toggle] i,
-.video-description a.morelink i,
-.video-description [data-readmore-toggle] i {
+.tmw-accordion-readmore i {
     font-size: 12px !important;
     margin-left: 6px !important;
-}
-
-/* ============================================
-   DARK UNDERLINE EFFECT FOR VIDEO/MODEL PAGES
-   This creates the black line that turns red on hover
-   ============================================ */
-
-/* We need a wrapper span around the text to add the underline */
-/* Since Readmore.js doesn't provide this, we use a different approach */
-
-/* Readmore.js links - ensure underline uses our span approach */
-.video-description a.morelink,
-a.morelink[data-readmore-toggle],
-a[data-readmore-toggle].morelink,
-.video-description [data-readmore-toggle] {
-    text-decoration: none !important;
-}
-
-/* ============================================
-   ENTRY CONTENT CONTEXT (Model pages)
-   ============================================ */
-
-.entry-content a.morelink[data-readmore-toggle],
-.entry-content a[data-readmore-toggle].morelink,
-.entry-content .video-description a.morelink,
-#video-about a.morelink,
-#video-about [data-readmore-toggle],
-.tab-content a.morelink,
-.tab-content [data-readmore-toggle] {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 100% !important;
-    color: #e74c3c !important;
 }
 
 /* ============================================
@@ -248,42 +191,14 @@ a[data-readmore-toggle].morelink,
 
 @media (max-width: 768px) {
     .tmw-accordion-toggle,
-    a.morelink[data-readmore-toggle],
-    a[data-readmore-toggle].morelink,
-    .video-description a.morelink,
-    .video-description [data-readmore-toggle] {
+    .tmw-accordion-readmore {
         font-size: 13px !important;
     }
-    
+
     .tmw-accordion-toggle-wrap::before,
     .tmw-accordion-toggle-wrap::after,
-    a.morelink[data-readmore-toggle]::before,
-    a.morelink[data-readmore-toggle]::after,
-    .video-description a.morelink::before,
-    .video-description a.morelink::after {
+    .tmw-accordion-readmore::before,
+    .tmw-accordion-readmore::after {
         min-width: 20px !important;
     }
-}
-
-/* ============================================
-   OVERRIDE ANY PARENT THEME STYLES
-   ============================================ */
-
-/* Kill any default styling */
-.video-description a.morelink,
-a.morelink[data-readmore-toggle] {
-    float: none !important;
-    clear: both !important;
-    text-align: center !important;
-    text-decoration: none !important;
-}
-
-/* Make sure description container is full width */
-.video-description {
-    width: 100% !important;
-}
-
-/* Ensure .desc doesn't interfere */
-.video-description .desc {
-    width: 100% !important;
 }
