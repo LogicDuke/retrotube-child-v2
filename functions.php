@@ -186,25 +186,3 @@ add_filter('site_transient_update_themes', function($value) {
 
     return $value;
 });
-
-/**
- * Enqueue unified TMW accordion styling and behavior.
- */
-add_action('wp_enqueue_scripts', 'tmw_enqueue_unified_accordion_assets', 20);
-
-function tmw_enqueue_unified_accordion_assets() {
-    wp_enqueue_style(
-        'tmw-accordion',
-        get_stylesheet_directory_uri() . '/css/tmw-accordion.css',
-        array(),
-        '5.0.0'
-    );
-
-    wp_enqueue_script(
-        'tmw-accordion',
-        get_stylesheet_directory_uri() . '/js/tmw-accordion.js',
-        array(),
-        '5.0.0',
-        true
-    );
-}

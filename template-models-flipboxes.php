@@ -39,7 +39,7 @@ $page_content = trim($page_content);
       
       <?php if (!empty($page_content)) : ?>
         <div class="tmw-accordion">
-          <div id="tmw-seo-desc" class="tmw-accordion-content more" data-tmw-accordion-lines="1">
+          <div id="tmw-seo-desc" class="tmw-accordion-content tmw-accordion-collapsed" data-tmw-accordion-lines="1">
             <?php echo $page_content; ?>
           </div>
           <div class="tmw-accordion-toggle-wrap">

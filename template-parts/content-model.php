@@ -119,9 +119,23 @@ $is_rated_yet   = ( 0 === ( $likes_count + $dislikes_count ) ) ? ' not-rated-yet
 				<div id="video-about" class="width<?php echo $width; ?>">
                                 <div class="video-description">
                                         <?php if ( xbox_get_field_value( 'wpst-options', 'show-description-video-about' ) == 'on' ) : ?>
-                                                <div class="desc <?php echo ( xbox_get_field_value( 'wpst-options', 'truncate-description' ) == 'on' ) ? 'more' : ''; ?>">
-                                                        <?php the_content(); ?>
-                                                </div>
+                                                <?php
+                                                ob_start();
+                                                the_content();
+                                                $tmw_desc_html = ob_get_clean();
+
+                                                if (function_exists('tmw_render_accordion')) {
+                                                        echo tmw_render_accordion([
+                                                                'content_html'    => $tmw_desc_html,
+                                                                'lines'           => (int) apply_filters('tmw_video_desc_lines', 20, get_the_ID()),
+                                                                'collapsed'       => (xbox_get_field_value('wpst-options', 'truncate-description') == 'on'),
+                                                                'accordion_class' => 'tmw-accordion--video-desc',
+                                                                'id_base'         => 'tmw-video-desc-' . get_the_ID(),
+                                                        ]);
+                                                } else {
+                                                        echo $tmw_desc_html;
+                                                }
+                                                ?>
                                         <?php endif; ?>
                                 </div>
 

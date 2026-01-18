@@ -39,7 +39,7 @@ if ($models_page) {
       <?php if (!empty($seo_text)) : ?>
         <!-- SEO Text Accordion - Uses global TMW accordion styling -->
         <div class="tmw-accordion" id="tmw-models-accordion">
-          <div class="tmw-accordion-content more" id="tmw-seo-desc">
+          <div class="tmw-accordion-content tmw-accordion-collapsed" id="tmw-seo-desc">
             <?php echo $seo_text; ?>
           </div>
           <div class="tmw-accordion-toggle-wrap">

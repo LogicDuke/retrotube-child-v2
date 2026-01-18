@@ -28,15 +28,15 @@
 }
 
 /* Collapsed state */
-.tmw-accordion-content.more {
+.tmw-accordion-content.tmw-accordion-collapsed {
     display: -webkit-box;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 1;
-    max-height: 1.6em;
+    -webkit-line-clamp: var(--tmw-accordion-lines, 1);
+    max-height: calc(1.6em * var(--tmw-accordion-lines, 1));
 }
 
 /* Expanded state */
-.tmw-accordion-content:not(.more) {
+.tmw-accordion-content:not(.tmw-accordion-collapsed) {
     -webkit-line-clamp: unset;
     max-height: 5000px;
 }
@@ -129,119 +129,21 @@
 
 
 /* ============================================
-   READMORE.JS ACCORDION (Video/Model pages)
-   ============================================ */
-
-/* Make the morelink a flex container with red lines */
-.video-description a.morelink,
-a.morelink[data-readmore-toggle],
-a[data-readmore-toggle].morelink {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 100% !important;
-    margin-top: 15px !important;
-    padding: 0 !important;
-    text-decoration: none !important;
-    color: #e74c3c !important;
-    font-size: 14px !important;
-    font-weight: 500 !important;
-    border: none !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    float: none !important;
-    clear: both !important;
-}
-
-/* Left red gradient line */
-.video-description a.morelink::before,
-a.morelink[data-readmore-toggle]::before,
-a[data-readmore-toggle].morelink::before {
-    content: '' !important;
-    flex: 1 !important;
-    height: 2px !important;
-    background: linear-gradient(90deg, transparent 0%, #e74c3c 100%) !important;
-}
-
-/* Right red gradient line */
-.video-description a.morelink::after,
-a.morelink[data-readmore-toggle]::after,
-a[data-readmore-toggle].morelink::after {
-    content: '' !important;
-    flex: 1 !important;
-    height: 2px !important;
-    background: linear-gradient(90deg, #e74c3c 0%, transparent 100%) !important;
-}
-
-/* Hover */
-.video-description a.morelink:hover,
-a.morelink[data-readmore-toggle]:hover,
-a[data-readmore-toggle].morelink:hover {
-    color: #ff6b5b !important;
-}
-
-/* Text span with underline */
-.video-description a.morelink .tmw-accordion-text,
-a.morelink[data-readmore-toggle] .tmw-accordion-text,
-a[data-readmore-toggle].morelink .tmw-accordion-text {
-    position: relative !important;
-    padding: 0 15px !important;
-}
-
-.video-description a.morelink .tmw-accordion-text::after,
-a.morelink[data-readmore-toggle] .tmw-accordion-text::after,
-a[data-readmore-toggle].morelink .tmw-accordion-text::after {
-    content: '' !important;
-    position: absolute !important;
-    bottom: -3px !important;
-    left: 15px !important;
-    right: 15px !important;
-    height: 1px !important;
-    background-color: #333 !important;
-    transition: background-color 0.2s ease !important;
-}
-
-.video-description a.morelink:hover .tmw-accordion-text::after,
-a.morelink[data-readmore-toggle]:hover .tmw-accordion-text::after,
-a[data-readmore-toggle].morelink:hover .tmw-accordion-text::after {
-    background-color: #e74c3c !important;
-}
-
-/* Icon */
-.video-description a.morelink i,
-a.morelink[data-readmore-toggle] i,
-a[data-readmore-toggle].morelink i {
-    font-size: 12px !important;
-    margin-left: 6px !important;
-}
-
-/* Video description container */
-.video-description {
-    width: 100% !important;
-}
-
-.video-description .desc {
-    width: 100% !important;
-}
-
-
-/* ============================================
    MOBILE
    ============================================ */
 
 @media (max-width: 768px) {
-    .tmw-accordion-toggle,
-    .video-description a.morelink,
-    a.morelink[data-readmore-toggle] {
+    .tmw-accordion-toggle {
         font-size: 13px !important;
     }
     
     .tmw-accordion-toggle-wrap::before,
-    .tmw-accordion-toggle-wrap::after,
-    .video-description a.morelink::before,
-    .video-description a.morelink::after,
-    a.morelink[data-readmore-toggle]::before,
-    a.morelink[data-readmore-toggle]::after {
+    .tmw-accordion-toggle-wrap::after {
         min-width: 20px !important;
     }
+}
+
+.archive-description .tmw-accordion {
+    padding-left: 0;
+    padding-right: 0;
 }
