@@ -618,21 +618,41 @@ function tmw_models_flipboxes_cb($atts){
   echo '</div>';
 
   if (filter_var($a['show_pagination'], FILTER_VALIDATE_BOOLEAN) && $total_p > 1){
-    $base  = remove_query_arg($a['page_var']);
-    $base  = add_query_arg($a['page_var'], '%#%', $base);
-    $links = paginate_links([
-      'base'      => $base,
-      'format'    => '',
-      'current'   => $paged,
-      'total'     => $total_p,
-      'type'      => 'array',
-      'prev_text' => '« Prev',
-      'next_text' => 'Next »',
-    ]);
-    if (!empty($links)) {
-      echo '<nav class="tmw-pagination" aria-label="Pagination">';
-      foreach ($links as $l) echo $l;
-      echo '</nav>';
+    $paged_current = $paged;
+    if (function_exists('wpst_page_navi')) {
+      global $paged;
+      $paged_original = $paged;
+      $paged = (int)$paged_current;
+      wpst_page_navi($total_p);
+      $paged = $paged_original;
+    } else {
+      $base  = remove_query_arg($a['page_var']);
+      $base  = add_query_arg($a['page_var'], '%#%', $base);
+      $links = paginate_links([
+        'base'      => $base,
+        'format'    => '',
+        'current'   => $paged,
+        'total'     => $total_p,
+        'type'      => 'array',
+        'prev_text' => '« Prev',
+        'next_text' => 'Next »',
+      ]);
+      if (!empty($links)) {
+        echo '<div class="pagination"><ul>';
+        foreach ($links as $link) {
+          if (strpos($link, 'current') !== false) {
+            $label = wp_strip_all_tags($link);
+            echo '<li><a class="current">' . esc_html($label) . '</a></li>';
+          } elseif (preg_match('/href=(["\'])([^"\']+)\1/', $link, $matches)) {
+            $label = wp_strip_all_tags($link);
+            echo '<li><a href="' . esc_url($matches[2]) . '" class="inactive">' . esc_html($label) . '</a></li>';
+          } elseif (strpos($link, 'dots') !== false) {
+            $label = wp_strip_all_tags($link);
+            echo '<li><a class="inactive">' . esc_html($label) . '</a></li>';
+          }
+        }
+        echo '</ul></div>';
+      }
     }
   }
 
