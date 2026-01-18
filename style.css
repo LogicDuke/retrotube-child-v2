@@ -172,6 +172,34 @@
   margin-top: 28px;
 }
 
+/* ---------- TITLE BAR (screenshot style) ---------- */
+.tmw-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #2d2d2d;
+  color: #fff;
+  padding: 10px 16px;
+  margin: 8px 0 16px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  border-left: 10px solid var(--tmw-accent);
+  border-radius: 4px;
+}
+
+.tmw-title .tmw-star {
+  color: #fff;
+  font-size: 1.1em;
+  line-height: 1;
+}
+
+.tmw-title .tmw-title-text {
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: 1.2;
+}
+
 .tmw-featured-slot--locked {
   clear: both;
   width: 100%;

@@ -13,7 +13,13 @@ tmw_render_sidebar_layout('tag-archive', function () {
     ?>
       <?php if (have_posts()) : ?>
         <header class="page-header">
-          <h1 class="page-title"><?php the_archive_title(); ?></h1>
+          <?php
+          $archive_title = single_term_title('', false);
+          if ($archive_title === '') {
+              $archive_title = wp_strip_all_tags(get_the_archive_title());
+          }
+          echo tmw_render_title_bar($archive_title, 1);
+          ?>
           <?php the_archive_description('<div class="archive-description">', '</div>'); ?>
         </header>
 

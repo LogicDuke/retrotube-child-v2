@@ -170,17 +170,6 @@
 }
 .tmw-pagination .page-numbers:hover{ filter:brightness(1.2); }
 
-/* ---------- TITLE BAR (screenshot style) ---------- */
-.tmw-title{
-  display:flex; align-items:center; gap:10px;
-  background:#2d2d2d; color:#fff;
-  padding:10px 16px; margin:8px 0 16px;
-  font-size:1.25rem; font-weight:700;
-  border-left:10px solid var(--tmw-accent);
-  border-radius:4px;
-}
-.tmw-title .tmw-star{ color:#fff; font-size:1.1em; line-height:1; }
-
 /* ---------- LAYOUT WITH SIDEBAR ---------- */
 .tmw-layout{
   display:grid; grid-template-columns:1fr 320px; gap:24px;
@@ -284,4 +273,3 @@
 .entry-content .flowplayer,
 .entry-content .responsive-embed,
 .entry-content .embed-container { display:none !important; }
-

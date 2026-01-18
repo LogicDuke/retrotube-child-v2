@@ -60,6 +60,25 @@ if (!function_exists('tmw_render_accordion')) {
   }
 }
 
+if (!function_exists('tmw_render_title_bar')) {
+  /**
+   * Render a reusable TMW title bar.
+   *
+   * @param string $title Title text.
+   * @param int $level Heading level.
+   * @return string Title bar HTML.
+   */
+  function tmw_render_title_bar(string $title, int $level = 1): string {
+    $heading_level = min(6, max(1, $level));
+
+    return sprintf(
+      '<div class="tmw-title"><span class="tmw-star">★</span><h%1$d class="tmw-title-text">%2$s</h%1$d></div>',
+      $heading_level,
+      esc_html($title)
+    );
+  }
+}
+
 if (!function_exists('tmw_accordion_shortcode')) {
   /**
    * Shortcode wrapper for the global TMW accordion.
@@ -98,19 +117,19 @@ if (!function_exists('tmw_accordion_shortcode')) {
 
 add_shortcode('tmw_accordion', 'tmw_accordion_shortcode');
 
-if (!function_exists('tmw_wrap_archive_description_in_accordion')) {
+if (!function_exists('tmw_archive_description_to_accordion')) {
   /**
    * Wrap archive descriptions in the unified accordion.
    *
    * @param string $description Archive description HTML.
    * @return string
    */
-  function tmw_wrap_archive_description_in_accordion(string $description): string {
+  function tmw_archive_description_to_accordion(string $description): string {
     if (is_admin()) {
       return $description;
     }
 
-    if (!(is_category() || is_tag() || is_tax())) {
+    if (!(is_category() || is_tag() || is_archive())) {
       return $description;
     }
 
@@ -122,7 +141,7 @@ if (!function_exists('tmw_wrap_archive_description_in_accordion')) {
       return $description;
     }
 
-    $lines = (int) apply_filters('tmw_archive_desc_lines', 3);
+    $lines = (int) apply_filters('tmw_archive_desc_lines', 1);
     $queried_id = get_queried_object_id();
 
     return tmw_render_accordion([
@@ -135,4 +154,4 @@ if (!function_exists('tmw_wrap_archive_description_in_accordion')) {
   }
 }
 
-add_filter('get_the_archive_description', 'tmw_wrap_archive_description_in_accordion', 20);
+add_filter('get_the_archive_description', 'tmw_archive_description_to_accordion', 20);
