@@ -76,9 +76,8 @@ tmw_render_sidebar_layout('', function () use ( $filter, $instance, $tmw_video_w
 
     $intro_is_accordion = $intro_content && stripos( $intro_content, 'tmw-accordion' ) !== false;
     ?>
-      <div class="tmw-title tmw-title--videos-archive">
-        <span class="tmw-star">★</span>
-        <h1 class="tmw-title-text"><i class="fa fa-video-camera"></i> Videos</h1>
+      <header class="entry-header">
+        <h1 class="entry-title"><i class="fa fa-video-camera"></i> Videos</h1>
         <?php if ( $intro_content ) : ?>
           <?php if ( $intro_is_accordion || ! function_exists( 'tmw_render_accordion' ) ) : ?>
             <?php echo $intro_content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
@@ -90,12 +89,13 @@ tmw_render_sidebar_layout('', function () use ( $filter, $instance, $tmw_video_w
                     'accordion_class' => 'tmw-accordion--videos-archive',
                     'collapsed'       => true,
                     'lines'           => 1,
+                    'id_base'         => 'tmw-videos-archive-intro-',
                 )
             ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
             ?>
           <?php endif; ?>
         <?php endif; ?>
-      </div>
+      </header>
 
       <?php if ( $rest_content ) : ?>
         <?php echo $rest_content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
