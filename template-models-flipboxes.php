@@ -33,7 +33,7 @@ $page_content = tmw_sanitize_accordion_html($page_content);
     <section class="tmw-content" data-mobile-guard="true">
       <header class="entry-header">
         <h1 class="page-title">
-          <?php echo is_front_page() ? 'Top Models' : get_the_title(); ?>
+          <?php echo is_front_page() ? '★ Top Models' : get_the_title(); ?>
         </h1>
       </header>
       
