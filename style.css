@@ -200,6 +200,10 @@
   line-height: 1.2;
 }
 
+.page-template-page-videos .entry-header .tmw-accordion {
+  margin-top: 8px;
+}
+
 .tmw-featured-slot--locked {
   clear: both;
   width: 100%;
