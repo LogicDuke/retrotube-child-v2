@@ -192,3 +192,66 @@ if (!function_exists('tmw_category_archive_desc_to_accordion')) {
 }
 
 add_filter('get_the_archive_description', 'tmw_category_archive_desc_to_accordion', 20);
+
+if (!function_exists('tmw_wrap_categories_page_content_in_accordion')) {
+  /**
+   * Wrap the /categories page content in the unified accordion.
+   *
+   * @param string $content Page content HTML.
+   * @return string
+   */
+  function tmw_wrap_categories_page_content_in_accordion(string $content): string {
+    if (is_admin() || wp_doing_ajax() || is_feed()) {
+      return $content;
+    }
+
+    if (!is_page('categories')) {
+      return $content;
+    }
+
+    if (!in_the_loop() || !is_main_query()) {
+      return $content;
+    }
+
+    $queried_id = get_queried_object_id();
+    if ($queried_id && get_the_ID() !== $queried_id) {
+      return $content;
+    }
+
+    if (trim(wp_strip_all_tags($content)) === '') {
+      return $content;
+    }
+
+    if (stripos($content, 'tmw-accordion') !== false) {
+      return $content;
+    }
+
+    $lines = (int) apply_filters('tmw_categories_page_lines', 1);
+    $marker = $queried_id ? '<span id="more-' . $queried_id . '"></span>' : '';
+
+    if ($marker && strpos($content, $marker) !== false) {
+      $parts = explode($marker, $content, 2);
+      $intro = trim($parts[0]);
+      $rest = $marker . $parts[1];
+    } else {
+      $intro = $content;
+      $rest = '';
+    }
+
+    if ($intro === '') {
+      return $content;
+    }
+
+    $accordion_intro = tmw_render_accordion([
+      'content_html'    => $intro,
+      'lines'           => $lines,
+      'collapsed'       => true,
+      'accordion_class' => 'tmw-accordion--categories-page',
+      'id_base'         => 'tmw-categories-page-' . ($queried_id ?: '0') . '-',
+    ]);
+
+    return $accordion_intro . $rest;
+  }
+}
+
+add_filter('the_content', 'tmw_wrap_categories_page_content_in_accordion', 999);
