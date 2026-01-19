@@ -85,7 +85,7 @@ tmw_render_sidebar_layout('', function () use ( $filter, $instance, $tmw_video_w
             <?php
             echo tmw_render_accordion(
                 array(
-                    'content'         => $intro_content,
+                    'content_html'    => $intro_content,
                     'accordion_class' => 'tmw-accordion--videos-archive',
                     'collapsed'       => true,
                     'lines'           => 1,
