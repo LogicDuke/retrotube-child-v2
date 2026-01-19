@@ -200,6 +200,15 @@
   line-height: 1.2;
 }
 
+.tmw-title--videos-archive {
+  flex-wrap: wrap;
+}
+
+.tmw-title--videos-archive .tmw-accordion {
+  flex-basis: 100%;
+  margin-top: 8px;
+}
+
 .tmw-featured-slot--locked {
   clear: both;
   width: 100%;

@@ -58,12 +58,51 @@ if ( $filter ) {
 }
 
 tmw_render_sidebar_layout('', function () use ( $filter, $instance, $tmw_video_widget_class ) {
-    ?>
-      <header class="entry-header">
-        <h1 class="entry-title"><i class="fa fa-video-camera"></i> Videos</h1>
-      </header>
+    $videos_page_id = get_queried_object_id();
+    $raw_content    = $videos_page_id ? (string) get_post_field( 'post_content', $videos_page_id ) : '';
+    $intro_content  = $raw_content;
+    $rest_content   = '';
 
-      <?php if ( $filter ) : ?>
+    if ( strpos( $raw_content, '<!--more-->' ) !== false ) {
+        list( $intro_content, $rest_content ) = explode( '<!--more-->', $raw_content, 2 );
+    }
+
+    $intro_content = trim( apply_filters( 'the_content', $intro_content ) );
+    $rest_content  = trim( apply_filters( 'the_content', $rest_content ) );
+
+    if ( function_exists( 'tmw_sanitize_accordion_html' ) ) {
+        $intro_content = tmw_sanitize_accordion_html( $intro_content );
+    }
+
+    $intro_is_accordion = $intro_content && stripos( $intro_content, 'tmw-accordion' ) !== false;
+    ?>
+      <div class="tmw-title tmw-title--videos-archive">
+        <span class="tmw-star">★</span>
+        <h1 class="tmw-title-text"><i class="fa fa-video-camera"></i> Videos</h1>
+        <?php if ( $intro_content ) : ?>
+          <?php if ( $intro_is_accordion || ! function_exists( 'tmw_render_accordion' ) ) : ?>
+            <?php echo $intro_content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+          <?php else : ?>
+            <?php
+            echo tmw_render_accordion(
+                array(
+                    'content'         => $intro_content,
+                    'accordion_class' => 'tmw-accordion--videos-archive',
+                    'collapsed'       => true,
+                    'lines'           => 1,
+                )
+            ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+            ?>
+          <?php endif; ?>
+        <?php endif; ?>
+      </div>
+
+      <?php if ( $rest_content ) : ?>
+        <?php echo $rest_content; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+      <?php endif; ?>
+    <?php
+      if ( $filter ) :
+        ?>
 
         <?php if ( ! empty( $instance ) ) : ?>
           <?php
