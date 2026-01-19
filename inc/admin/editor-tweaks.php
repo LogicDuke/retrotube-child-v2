@@ -17,7 +17,7 @@ function tmw_enqueue_term_editor_ui($hook) {
         return;
     }
 
-    $allowed_taxonomies = array('category', 'post_tag');
+    $allowed_taxonomies = array('category');
     if (!in_array($screen->taxonomy, $allowed_taxonomies, true)) {
         return;
     }
@@ -46,7 +46,9 @@ function tmw_enqueue_term_editor_ui($hook) {
         . "    textareas.forEach(function(textarea){ textarea.style.minHeight = sizeClass === 'tmw-term-editor-large' ? '420px' : '160px'; });\n"
         . "  }\n"
         . "  function findRowByLabel(text){\n"
-        . "    var rows = document.querySelectorAll('tr');\n"
+        . "    var form = document.querySelector('#edittag');\n"
+        . "    if (!form) { return null; }\n"
+        . "    var rows = form.querySelectorAll('.form-table tr');\n"
         . "    for (var i = 0; i < rows.length; i += 1) {\n"
         . "      var label = rows[i].querySelector('th label');\n"
         . "      if (label && label.textContent && label.textContent.toLowerCase().indexOf(text) !== -1) {\n"
@@ -55,7 +57,7 @@ function tmw_enqueue_term_editor_ui($hook) {
         . "    }\n"
         . "    return null;\n"
         . "  }\n"
-        . "  document.addEventListener('DOMContentLoaded', function(){\n"
+        . "  function run(){\n"
         . "    var mainWrapper = document.querySelector('.term-page-content-wrap');\n"
         . "    if (mainWrapper) {\n"
         . "      applyEditorHeight(mainWrapper.closest('tr') || mainWrapper, 'tmw-term-editor-large');\n"
@@ -65,7 +67,15 @@ function tmw_enqueue_term_editor_ui($hook) {
         . "    }\n"
         . "    var shortIntroRow = findRowByLabel('short intro');\n"
         . "    applyEditorHeight(shortIntroRow, 'tmw-term-editor-small');\n"
-        . "  });\n"
+        . "  }\n"
+        . "  if (document.readyState !== 'loading') {\n"
+        . "    run();\n"
+        . "  } else {\n"
+        . "    document.addEventListener('DOMContentLoaded', run);\n"
+        . "  }\n"
+        . "  window.addEventListener('load', run, { once: true });\n"
+        . "  setTimeout(run, 250);\n"
+        . "  setTimeout(run, 1000);\n"
         . "})();\n"
     );
 }
