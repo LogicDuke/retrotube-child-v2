@@ -315,6 +315,115 @@ add_action('post_tag_add_form_fields', 'tmw_featured_shortcode_term_add_field');
 add_action('category_edit_form_fields', 'tmw_featured_shortcode_term_edit_field');
 add_action('post_tag_edit_form_fields', 'tmw_featured_shortcode_term_edit_field');
 
+if (!function_exists('tmw_category_term_editor_add_fields')) {
+  function tmw_category_term_editor_add_fields($taxonomy) {
+    if ($taxonomy !== 'category') {
+      return;
+    }
+
+    if (defined('TMW_DEBUG') && TMW_DEBUG) {
+      error_log('[TMW-ADMIN] category editor rendered');
+    }
+
+    wp_nonce_field('tmw_category_term_editors_save', 'tmw_category_term_editors_nonce');
+
+    $short_intro = '';
+    $page_content = '';
+    ?>
+    <div class="form-field term-short-intro-wrap">
+      <label for="tmw_term_short_intro"><?php esc_html_e('Short intro shown above the content / video grid. Keep it concise (1–3 short paragraphs).', 'retrotube-child'); ?></label>
+      <?php
+      wp_editor(
+        $short_intro,
+        'tmw_term_short_intro',
+        [
+          'textarea_name' => 'tmw_term_short_intro',
+          'textarea_rows' => 6,
+          'media_buttons' => true,
+        ]
+      );
+      ?>
+    </div>
+    <div class="form-field term-page-content-wrap">
+      <label for="tmw_term_page_content"><?php esc_html_e('Page Content (accordion body)', 'retrotube-child'); ?></label>
+      <?php
+      wp_editor(
+        $page_content,
+        'tmw_term_page_content',
+        [
+          'textarea_name' => 'tmw_term_page_content',
+          'textarea_rows' => 12,
+          'media_buttons' => true,
+        ]
+      );
+      ?>
+    </div>
+    <?php
+  }
+}
+
+if (!function_exists('tmw_category_term_editor_edit_fields')) {
+  function tmw_category_term_editor_edit_fields($term) {
+    if (!($term instanceof WP_Term) || $term->taxonomy !== 'category') {
+      return;
+    }
+
+    if (defined('TMW_DEBUG') && TMW_DEBUG) {
+      error_log('[TMW-ADMIN] category editor rendered');
+    }
+
+    $short_intro = get_term_meta($term->term_id, 'tmw_term_short_intro', true);
+    $short_intro = is_string($short_intro) ? $short_intro : '';
+
+    $page_content_meta = get_term_meta($term->term_id, 'tmw_term_page_content', true);
+    $page_content_meta = is_string($page_content_meta) ? $page_content_meta : '';
+    $page_content = $page_content_meta !== '' ? $page_content_meta : $term->description;
+
+    wp_nonce_field('tmw_category_term_editors_save', 'tmw_category_term_editors_nonce');
+    ?>
+    <tr class="form-field term-short-intro-wrap">
+      <th scope="row">
+        <label for="tmw_term_short_intro"><?php esc_html_e('Short intro shown above the content / video grid. Keep it concise (1–3 short paragraphs).', 'retrotube-child'); ?></label>
+      </th>
+      <td>
+        <?php
+        wp_editor(
+          $short_intro,
+          'tmw_term_short_intro',
+          [
+            'textarea_name' => 'tmw_term_short_intro',
+            'textarea_rows' => 6,
+            'media_buttons' => true,
+          ]
+        );
+        ?>
+      </td>
+    </tr>
+    <tr class="form-field term-page-content-wrap">
+      <th scope="row">
+        <label for="tmw_term_page_content"><?php esc_html_e('Page Content (accordion body)', 'retrotube-child'); ?></label>
+      </th>
+      <td>
+        <?php
+        wp_editor(
+          $page_content,
+          'tmw_term_page_content',
+          [
+            'textarea_name' => 'tmw_term_page_content',
+            'textarea_rows' => 12,
+            'media_buttons' => true,
+          ]
+        );
+        ?>
+      </td>
+    </tr>
+    <?php
+  }
+}
+
+add_action('category_add_form_fields', 'tmw_category_term_editor_add_fields');
+add_action('category_edit_form_fields', 'tmw_category_term_editor_edit_fields');
+
 if (!function_exists('tmw_save_featured_shortcode_term_meta')) {
   function tmw_save_featured_shortcode_term_meta($term_id) {
     if (!is_admin()) {
@@ -346,6 +455,64 @@ add_action('created_category', 'tmw_save_featured_shortcode_term_meta');
 add_action('edited_category', 'tmw_save_featured_shortcode_term_meta');
 add_action('created_post_tag', 'tmw_save_featured_shortcode_term_meta');
 add_action('edited_post_tag', 'tmw_save_featured_shortcode_term_meta');
+
+if (!function_exists('tmw_save_category_term_editors')) {
+  function tmw_save_category_term_editors($term_id, $tt_id = 0) { // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
+    if (!is_admin()) {
+      return;
+    }
+
+    if (!isset($_POST['tmw_category_term_editors_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['tmw_category_term_editors_nonce'])), 'tmw_category_term_editors_save')) {
+      return;
+    }
+
+    if (!current_user_can('manage_categories')) {
+      return;
+    }
+
+    $short_intro = '';
+    if (isset($_POST['tmw_term_short_intro'])) {
+      $short_intro = wp_kses_post(wp_unslash($_POST['tmw_term_short_intro']));
+    }
+
+    if ($short_intro !== '') {
+      update_term_meta($term_id, 'tmw_term_short_intro', $short_intro);
+    } else {
+      delete_term_meta($term_id, 'tmw_term_short_intro');
+    }
+
+    if (isset($_POST['tmw_term_page_content'])) {
+      $page_content = wp_kses_post(wp_unslash($_POST['tmw_term_page_content']));
+
+      update_term_meta($term_id, 'tmw_term_page_content', $page_content);
+
+      $term = get_term($term_id, 'category');
+      if (!$term || is_wp_error($term)) {
+        return;
+      }
+
+      if ($page_content === $term->description) {
+        return;
+      }
+
+      static $is_updating = false;
+      if ($is_updating) {
+        return;
+      }
+
+      $is_updating = true;
+      wp_update_term($term_id, 'category', ['description' => $page_content]);
+      $is_updating = false;
+    }
+
+    if (defined('TMW_DEBUG') && TMW_DEBUG) {
+      error_log('[TMW-ADMIN] category editor saved');
+    }
+  }
+}
+
+add_action('created_category', 'tmw_save_category_term_editors', 10, 2);
+add_action('edited_category', 'tmw_save_category_term_editors', 10, 2);
 /**
  * Fix: Prevent PHP warnings in canonical.php
  * Avoids "Undefined array key host/scheme" and strtolower(null) notices.
