@@ -18,18 +18,16 @@
         fallbackLineHeight: 16
     };
 
-    window.tmwAccordionInit = function() {
-        initTMWAccordions();
-    };
-
     // Run on DOM ready
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', window.tmwAccordionInit);
+        document.addEventListener('DOMContentLoaded', init);
     } else {
-        window.tmwAccordionInit();
+        init();
     }
 
-    window.addEventListener('load', window.tmwAccordionInit, { once: true });
+    function init() {
+        initTMWAccordions();
+    }
 
     /* =============================================
        CUSTOM TMW ACCORDIONS
@@ -43,8 +41,8 @@
             var content = accordion.querySelector('.tmw-accordion-content');
             if (!toggle || !content) return;
 
-            if (toggle.getAttribute('data-tmw-acc-bound') === '1') return;
-            toggle.setAttribute('data-tmw-acc-bound', '1');
+            if (toggle.getAttribute('data-tmw-init') === 'done') return;
+            toggle.setAttribute('data-tmw-init', 'done');
 
             var toggleWrap = toggle.closest('.tmw-accordion-toggle-wrap');
 
@@ -190,7 +188,7 @@
             });
 
             if (shouldInit) {
-                window.tmwAccordionInit();
+                initTMWAccordions();
             }
         });
 
