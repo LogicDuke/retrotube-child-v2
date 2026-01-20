@@ -281,6 +281,10 @@ add_action('save_post', function ($post_id) {
  * ====================================================================== */
 if (!function_exists('tmw_featured_shortcode_term_add_field')) {
   function tmw_featured_shortcode_term_add_field($taxonomy) { // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
+    if (in_array($taxonomy, ['category', 'blog_category'], true) && function_exists('acf_get_field_groups')) { // [TMW-ADMIN-CAT-CLEAN]
+      return;
+    }
+
     wp_nonce_field('tmw_featured_shortcode_term_save', 'tmw_featured_shortcode_term_nonce');
     ?>
     <div class="form-field term-featured-shortcode-wrap">
@@ -294,6 +298,10 @@ if (!function_exists('tmw_featured_shortcode_term_add_field')) {
 
 if (!function_exists('tmw_featured_shortcode_term_edit_field')) {
   function tmw_featured_shortcode_term_edit_field($term) {
+    if ($term instanceof WP_Term && in_array($term->taxonomy, ['category', 'blog_category'], true) && function_exists('acf_get_field_groups')) { // [TMW-ADMIN-CAT-CLEAN]
+      return;
+    }
+
     $value = get_term_meta($term->term_id, 'tmw_featured_shortcode', true);
     $value = is_string($value) ? $value : '';
 
@@ -318,6 +326,10 @@ add_action('post_tag_edit_form_fields', 'tmw_featured_shortcode_term_edit_field'
 if (!function_exists('tmw_category_term_editor_add_fields')) {
   function tmw_category_term_editor_add_fields($taxonomy) {
     if ($taxonomy !== 'category') {
+      return;
+    }
+
+    if (function_exists('acf_get_field_groups')) { // [TMW-ADMIN-CAT-CLEAN]
       return;
     }
 
@@ -365,6 +377,10 @@ if (!function_exists('tmw_category_term_editor_add_fields')) {
 if (!function_exists('tmw_category_term_editor_edit_fields')) {
   function tmw_category_term_editor_edit_fields($term) {
     if (!($term instanceof WP_Term) || $term->taxonomy !== 'category') {
+      return;
+    }
+
+    if (function_exists('acf_get_field_groups')) { // [TMW-ADMIN-CAT-CLEAN]
       return;
     }
 
