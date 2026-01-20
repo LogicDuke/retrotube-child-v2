@@ -33,6 +33,7 @@ require_once __DIR__ . '/frontend/flipboxes.php';
 require_once __DIR__ . '/frontend/comments.php';
 require_once __DIR__ . '/frontend/taxonomies.php';
 require_once __DIR__ . '/frontend/shortcodes.php';
+require_once __DIR__ . '/tmw-taxonomy-pages.php';
 require_once __DIR__ . '/frontend/tmw-taxonomy-page-accordion.php';
 require_once __DIR__ . '/frontend/template-tags.php';
 require_once __DIR__ . '/frontend/model-stats.php';
@@ -51,6 +52,5 @@ require_once __DIR__ . '/seo/schema.php';
 if (is_admin()) {
     require_once __DIR__ . '/admin/metabox-model-banner.php';
     require_once __DIR__ . '/admin/tmw-slot-banner-metabox.php';
-    require_once __DIR__ . '/admin/editor-tweaks.php';
-    require_once __DIR__ . '/admin/tmw-term-editor-sidebar-category.php';
+    require_once __DIR__ . '/tmw-admin-tools.php';
 }
