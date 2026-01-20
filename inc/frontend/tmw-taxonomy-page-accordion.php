@@ -16,25 +16,39 @@ if (!function_exists('tmw_tpa_is_target_archive')) {
   }
 }
 
-if (!function_exists('tmw_tpa_get_term_ref')) {
+if (!function_exists('tmw_tpa_get_linked_post')) {
   /**
-   * Build the ACF term reference string for the queried term.
+   * Resolve the linked taxonomy page post for the current term.
    *
-   * @return string|null
+   * @return WP_Post|null
    */
-  function tmw_tpa_get_term_ref(): ?string {
+  function tmw_tpa_get_linked_post(): ?WP_Post {
     $term = get_queried_object();
     if (!$term instanceof WP_Term) {
       return null;
     }
 
-    return sprintf('%s_%d', $term->taxonomy, $term->term_id);
+    if (!function_exists('tmw_taxpage_get_linked_post_id')) {
+      return null;
+    }
+
+    $post_id = tmw_taxpage_get_linked_post_id($term);
+    if ($post_id <= 0) {
+      return null;
+    }
+
+    $post = get_post($post_id);
+    if (!$post instanceof WP_Post) {
+      return null;
+    }
+
+    return $post;
   }
 }
 
 if (!function_exists('tmw_tpa_filter_archive_title')) {
   /**
-   * [TMW-TAX-PAGE] Override archive titles with ACF SEO H1.
+   * [TMW-TAXPAGE] Override archive titles with linked taxonomy page title.
    *
    * @param string $title Archive title.
    * @return string
@@ -44,21 +58,12 @@ if (!function_exists('tmw_tpa_filter_archive_title')) {
       return $title;
     }
 
-    if (!function_exists('get_field')) {
+    $post = tmw_tpa_get_linked_post();
+    if (!$post) {
       return $title;
     }
 
-    $term_ref = tmw_tpa_get_term_ref();
-    if ($term_ref === null) {
-      return $title;
-    }
-
-    $override = get_field('seo_h1', $term_ref);
-    if (!is_string($override) || trim($override) === '') {
-      return $title;
-    }
-
-    return esc_html($override);
+    return esc_html($post->post_title);
   }
 }
 
@@ -66,7 +71,7 @@ add_filter('get_the_archive_title', 'tmw_tpa_filter_archive_title', 9);
 
 if (!function_exists('tmw_tpa_filter_archive_description')) {
   /**
-   * [TMW-TAX-PAGE-ACF] Merge ACF taxonomy page content into the archive description.
+   * [TMW-TAXPAGE] Render linked taxonomy page content above the video grid.
    *
    * @param string $description Archive description HTML.
    * @return string
@@ -76,50 +81,36 @@ if (!function_exists('tmw_tpa_filter_archive_description')) {
       return $description;
     }
 
-    if (!function_exists('get_field')) {
-      return $description;
-    }
-
     $term = get_queried_object();
     if (!$term instanceof WP_Term) {
       return $description;
     }
 
-    $term_ref = sprintf('%s_%d', $term->taxonomy, $term->term_id);
-
-    $chunks = [];
-    $seo_intro = get_field('seo_intro', $term_ref);
-    if (is_string($seo_intro) && trim($seo_intro) !== '') {
-      $intro_html = apply_filters('the_content', $seo_intro);
-      if (function_exists('tmw_sanitize_accordion_html')) {
-        $intro_html = tmw_sanitize_accordion_html($intro_html);
+    $post = tmw_tpa_get_linked_post();
+    if (!$post) {
+      if (defined('TMW_DEBUG') && TMW_DEBUG) {
+        error_log(sprintf('[TMW-TAXPAGE] No linked taxonomy page for %s:%d', $term->taxonomy, $term->term_id));
       }
-      $chunks[] = $intro_html;
+      return $description;
     }
 
-    $page_content = get_field('page_content', $term_ref);
-    if (is_string($page_content) && trim($page_content) !== '') {
-      $content_html = apply_filters('the_content', $page_content);
-      if (function_exists('tmw_sanitize_accordion_html')) {
-        $content_html = tmw_sanitize_accordion_html($content_html);
-      }
-      $chunks[] = $content_html;
+    $content = '';
+    if (!empty($post->post_excerpt)) {
+      $content .= wpautop(do_shortcode($post->post_excerpt));
     }
 
-    if (trim(wp_strip_all_tags($description)) !== '') {
-      $chunks[] = $description;
+    if (!empty($post->post_content)) {
+      $content .= wpautop(do_shortcode($post->post_content));
     }
 
-    $combined_html = trim(implode("\n", array_filter($chunks)));
-    if (trim(wp_strip_all_tags($combined_html)) === '') {
+    if (trim(wp_strip_all_tags($content)) === '') {
       return $description;
     }
 
     $lines = (int) apply_filters('tmw_taxonomy_page_lines', 1, $term->taxonomy, $term->term_id);
 
-    // [TMW-TAX-PAGE-ACC] Render a unified accordion for taxonomy page content.
     return tmw_render_accordion([
-      'content_html'    => $combined_html,
+      'content_html'    => $content,
       'lines'           => $lines,
       'collapsed'       => true,
       'accordion_class' => 'tmw-accordion--taxonomy-page',
