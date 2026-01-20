@@ -3,18 +3,12 @@ if (!defined('ABSPATH')) {
   exit;
 }
 
-if (!function_exists('tmw_taxpage_debug_log')) {
-  function tmw_taxpage_debug_log(string $message, string $tag = '[TMW-TAXPAGE]'): void {
-    if (!defined('TMW_DEBUG') || !TMW_DEBUG) {
+if (!function_exists('tmw_register_taxonomy_pages_cpt')) {
+  function tmw_register_taxonomy_pages_cpt(): void {
+    if (post_type_exists('tmw_tax_page')) {
       return;
     }
 
-    error_log(sprintf('%s %s', $tag, $message));
-  }
-}
-
-if (!function_exists('tmw_register_taxonomy_pages_cpt')) {
-  function tmw_register_taxonomy_pages_cpt(): void {
     $labels = [
       'name'               => __('Taxonomy Pages', 'retrotube-child'),
       'singular_name'      => __('Taxonomy Page', 'retrotube-child'),
@@ -35,7 +29,7 @@ if (!function_exists('tmw_register_taxonomy_pages_cpt')) {
       'show_in_menu'    => true,
       'show_in_rest'    => true,
       'menu_position'   => 25,
-      'supports'        => ['title', 'editor', 'excerpt', 'thumbnail', 'revisions'],
+      'supports'        => ['title', 'editor', 'excerpt', 'thumbnail'],
       'capability_type' => 'post',
       'has_archive'     => false,
       'rewrite'         => false,
@@ -45,29 +39,99 @@ if (!function_exists('tmw_register_taxonomy_pages_cpt')) {
 }
 add_action('init', 'tmw_register_taxonomy_pages_cpt');
 
+if (!function_exists('tmw_taxpage_register_meta')) {
+  function tmw_taxpage_register_meta(): void {
+    register_post_meta('tmw_tax_page', '_tmw_taxonomy', [
+      'type'              => 'string',
+      'single'            => true,
+      'show_in_rest'      => true,
+      'sanitize_callback' => 'sanitize_key',
+      'auth_callback'     => '__return_true',
+    ]);
+
+    register_post_meta('tmw_tax_page', '_tmw_term_id', [
+      'type'              => 'integer',
+      'single'            => true,
+      'show_in_rest'      => true,
+      'sanitize_callback' => 'absint',
+      'auth_callback'     => '__return_true',
+    ]);
+
+    register_post_meta('tmw_tax_page', '_tmw_term_slug', [
+      'type'              => 'string',
+      'single'            => true,
+      'show_in_rest'      => true,
+      'sanitize_callback' => 'sanitize_title',
+      'auth_callback'     => '__return_true',
+    ]);
+  }
+}
+add_action('init', 'tmw_taxpage_register_meta');
+
 if (!function_exists('tmw_taxpage_get_allowed_taxonomies')) {
   function tmw_taxpage_get_allowed_taxonomies(): array {
     return ['category', 'blog_category'];
   }
 }
 
-if (!function_exists('tmw_taxpage_get_linked_post_id')) {
-  function tmw_taxpage_get_linked_post_id($term): int {
-    if (!$term instanceof WP_Term) {
-      return 0;
+if (!function_exists('tmw_taxpage_debug_log')) {
+  function tmw_taxpage_debug_log(string $message, string $tag): void {
+    if (!defined('TMW_DEBUG') || !TMW_DEBUG) {
+      return;
     }
 
-    $post_id = (int) get_term_meta($term->term_id, 'tmw_taxpage_post_id', true);
-    if ($post_id > 0) {
-      $post = get_post($post_id);
-      if ($post instanceof WP_Post && $post->post_type === 'tmw_tax_page' && $post->post_status !== 'trash') {
-        return $post_id;
-      }
+    error_log(sprintf('%s %s', $tag, $message));
+  }
+}
 
-      delete_term_meta($term->term_id, 'tmw_taxpage_post_id');
+if (!function_exists('tmw_taxpage_get_term_meta_value')) {
+  function tmw_taxpage_get_term_meta_value(WP_Term $term, string $meta_key): string {
+    $value = get_term_meta($term->term_id, $meta_key, true);
+    return is_string($value) ? $value : '';
+  }
+}
+
+if (!function_exists('tmw_taxpage_get_acf_term_field')) {
+  function tmw_taxpage_get_acf_term_field(WP_Term $term, string $field_key): string {
+    if (!function_exists('get_field')) {
+      return '';
     }
 
+    $value = get_field($field_key, $term);
+    if (is_string($value) && trim($value) !== '') {
+      return $value;
+    }
+
+    $value = get_field($field_key, sprintf('%s_%d', $term->taxonomy, $term->term_id));
+    return is_string($value) ? $value : '';
+  }
+}
+
+if (!function_exists('tmw_taxpage_find_linked_post')) {
+  function tmw_taxpage_find_linked_post(WP_Term $term): int {
     $posts = get_posts([
+      'post_type'      => 'tmw_tax_page',
+      'post_status'    => ['publish', 'draft', 'pending', 'private'],
+      'fields'         => 'ids',
+      'posts_per_page' => 1,
+      'no_found_rows'  => true,
+      'meta_query'     => [
+        [
+          'key'   => '_tmw_taxonomy',
+          'value' => $term->taxonomy,
+        ],
+        [
+          'key'   => '_tmw_term_id',
+          'value' => (string) $term->term_id,
+        ],
+      ],
+    ]);
+
+    if (!empty($posts)) {
+      return (int) $posts[0];
+    }
+
+    $legacy_posts = get_posts([
       'post_type'      => 'tmw_tax_page',
       'post_status'    => ['publish', 'draft', 'pending', 'private'],
       'fields'         => 'ids',
@@ -85,16 +149,129 @@ if (!function_exists('tmw_taxpage_get_linked_post_id')) {
       ],
     ]);
 
-    $fallback_id = !empty($posts) ? (int) $posts[0] : 0;
-    if ($fallback_id > 0) {
-      update_term_meta($term->term_id, 'tmw_taxpage_post_id', $fallback_id);
-      tmw_taxpage_debug_log(
-        sprintf('Recovered mapping for %s:%d -> post %d', $term->taxonomy, $term->term_id, $fallback_id),
-        '[TMW-TAXPAGE-MAP]'
-      );
+    if (!empty($legacy_posts)) {
+      return (int) $legacy_posts[0];
     }
 
-    return $fallback_id;
+    $posts = get_posts([
+      'post_type'      => 'tmw_tax_page',
+      'post_status'    => ['publish', 'draft', 'pending', 'private'],
+      'fields'         => 'ids',
+      'posts_per_page' => 1,
+      'no_found_rows'  => true,
+      'name'           => $term->slug,
+    ]);
+
+    return !empty($posts) ? (int) $posts[0] : 0;
+  }
+}
+
+if (!function_exists('tmw_taxpage_sync_term')) {
+  function tmw_taxpage_sync_term(int $term_id, string $taxonomy): void {
+    if (!in_array($taxonomy, tmw_taxpage_get_allowed_taxonomies(), true)) {
+      return;
+    }
+
+    $term = get_term($term_id, $taxonomy);
+    if (!$term instanceof WP_Term) {
+      return;
+    }
+
+    $linked_post_id = tmw_taxpage_find_linked_post($term);
+    $was_created = false;
+
+    if ($linked_post_id <= 0) {
+      $linked_post_id = wp_insert_post([
+        'post_type'   => 'tmw_tax_page',
+        'post_status' => 'publish',
+        'post_title'  => $term->name,
+        'post_name'   => $term->slug,
+      ]);
+
+      if (is_wp_error($linked_post_id) || $linked_post_id <= 0) {
+        return;
+      }
+
+      $was_created = true;
+    }
+
+    $post = get_post($linked_post_id);
+    if (!$post instanceof WP_Post) {
+      return;
+    }
+
+    $update_args = [
+      'ID'         => $linked_post_id,
+      'post_title' => $term->name,
+      'post_name'  => $term->slug,
+    ];
+
+    $content = '';
+    $excerpt = '';
+
+    if (trim($post->post_content) === '') {
+      $content = tmw_taxpage_get_term_meta_value($term, 'tmw_term_page_content');
+      if ($content === '') {
+        $content = tmw_taxpage_get_acf_term_field($term, 'page_content');
+      }
+      if ($content === '') {
+        $content = term_description($term->term_id, $taxonomy);
+      }
+      $update_args['post_content'] = $content;
+    }
+
+    if (trim($post->post_excerpt) === '') {
+      $excerpt = tmw_taxpage_get_term_meta_value($term, 'tmw_term_short_intro');
+      if ($excerpt === '') {
+        $excerpt = tmw_taxpage_get_acf_term_field($term, 'seo_intro');
+      }
+      $update_args['post_excerpt'] = $excerpt;
+    }
+
+    wp_update_post($update_args);
+
+    update_post_meta($linked_post_id, '_tmw_taxonomy', $term->taxonomy);
+    update_post_meta($linked_post_id, '_tmw_term_id', $term->term_id);
+    update_post_meta($linked_post_id, '_tmw_term_slug', $term->slug);
+
+    tmw_taxpage_debug_log(
+      sprintf(
+        '%s taxonomy page %d for %s:%d',
+        $was_created ? 'Created' : 'Linked',
+        $linked_post_id,
+        $term->taxonomy,
+        $term->term_id
+      ),
+      '[TMW-TAXPAGES]'
+    );
+  }
+}
+
+add_action('created_term', function (int $term_id, int $tt_id, string $taxonomy) {
+  tmw_taxpage_sync_term($term_id, $taxonomy);
+}, 10, 3);
+
+add_action('edited_term', function (int $term_id, int $tt_id, string $taxonomy) {
+  tmw_taxpage_sync_term($term_id, $taxonomy);
+}, 10, 3);
+
+if (!function_exists('tmw_taxpage_get_linked_post_id')) {
+  function tmw_taxpage_get_linked_post_id($term): int {
+    if (!$term instanceof WP_Term) {
+      return 0;
+    }
+
+    $post_id = tmw_taxpage_find_linked_post($term);
+    if ($post_id <= 0) {
+      return 0;
+    }
+
+    $post = get_post($post_id);
+    if (!$post instanceof WP_Post || $post->post_type !== 'tmw_tax_page' || $post->post_status === 'trash') {
+      return 0;
+    }
+
+    return $post_id;
   }
 }
 
@@ -103,10 +280,10 @@ if (!function_exists('tmw_taxpage_render_linked_term_metabox')) {
     wp_nonce_field('tmw_taxpage_linked_term_save', 'tmw_taxpage_linked_term_nonce');
 
     $allowed_taxonomies = tmw_taxpage_get_allowed_taxonomies();
-    $selected_taxonomy = get_post_meta($post->ID, '_tmw_taxpage_taxonomy', true);
+    $selected_taxonomy = get_post_meta($post->ID, '_tmw_taxonomy', true);
     $selected_taxonomy = is_string($selected_taxonomy) ? $selected_taxonomy : '';
 
-    $selected_term_id = (int) get_post_meta($post->ID, '_tmw_taxpage_term_id', true);
+    $selected_term_id = (int) get_post_meta($post->ID, '_tmw_term_id', true);
 
     if ($selected_taxonomy === '' && isset($_GET['tmw_tax'])) {
       $selected_taxonomy = sanitize_key(wp_unslash($_GET['tmw_tax']));
@@ -152,16 +329,13 @@ if (!function_exists('tmw_taxpage_render_linked_term_metabox')) {
         <?php endforeach; ?>
       </select>
     </p>
-    <p class="description">
-      <?php esc_html_e('Link this Gutenberg page to a taxonomy term. The term archive will render this content.', 'retrotube-child'); ?>
-    </p>
     <?php
   }
 }
 
 if (!function_exists('tmw_taxpage_render_tools_metabox')) {
   function tmw_taxpage_render_tools_metabox(WP_Post $post): void {
-    do_action('tmw_taxpage_tools_metabox', $post);
+    do_action('tmw_tax_page_tools_metabox', $post);
     ?>
     <p><?php esc_html_e('TMW Slot Machine integration area.', 'retrotube-child'); ?></p>
     <p><?php esc_html_e('TMW SEO Autopilot integration area.', 'retrotube-child'); ?></p>
@@ -210,9 +384,9 @@ add_action('save_post_tmw_tax_page', function ($post_id) {
   $taxonomy = isset($_POST['tmw_taxpage_taxonomy']) ? sanitize_key(wp_unslash($_POST['tmw_taxpage_taxonomy'])) : '';
   $term_id = isset($_POST['tmw_taxpage_term_id']) ? (int) $_POST['tmw_taxpage_term_id'] : 0;
 
-  $previous_taxonomy = get_post_meta($post_id, '_tmw_taxpage_taxonomy', true);
+  $previous_taxonomy = get_post_meta($post_id, '_tmw_taxonomy', true);
   $previous_taxonomy = is_string($previous_taxonomy) ? $previous_taxonomy : '';
-  $previous_term_id = (int) get_post_meta($post_id, '_tmw_taxpage_term_id', true);
+  $previous_term_id = (int) get_post_meta($post_id, '_tmw_term_id', true);
 
   if (!in_array($taxonomy, $allowed_taxonomies, true)) {
     $taxonomy = '';
@@ -227,99 +401,108 @@ add_action('save_post_tmw_tax_page', function ($post_id) {
     }
   }
 
-  if ($previous_taxonomy && $previous_term_id && ($previous_taxonomy !== $taxonomy || $previous_term_id !== $term_id)) {
-    $previous_term = get_term($previous_term_id, $previous_taxonomy);
-    if ($previous_term instanceof WP_Term) {
-      $linked_post_id = (int) get_term_meta($previous_term->term_id, 'tmw_taxpage_post_id', true);
-      if ($linked_post_id === (int) $post_id) {
-        delete_term_meta($previous_term->term_id, 'tmw_taxpage_post_id');
-        tmw_taxpage_debug_log(
-          sprintf('Cleared mapping for %s:%d from post %d', $previous_taxonomy, $previous_term_id, $post_id),
-          '[TMW-TAXPAGE-MAP]'
-        );
-      }
-    }
-  }
-
   if ($taxonomy !== '' && $term_id > 0 && $term instanceof WP_Term) {
-    update_post_meta($post_id, '_tmw_taxpage_taxonomy', $taxonomy);
-    update_post_meta($post_id, '_tmw_taxpage_term_id', $term_id);
-    update_term_meta($term_id, 'tmw_taxpage_post_id', $post_id);
-
-    tmw_taxpage_debug_log(
-      sprintf('Mapped post %d -> %s:%d', $post_id, $taxonomy, $term_id),
-      '[TMW-TAXPAGE-MAP]'
-    );
+    update_post_meta($post_id, '_tmw_taxonomy', $taxonomy);
+    update_post_meta($post_id, '_tmw_term_id', $term_id);
+    update_post_meta($post_id, '_tmw_term_slug', $term->slug);
   } else {
-    delete_post_meta($post_id, '_tmw_taxpage_taxonomy');
-    delete_post_meta($post_id, '_tmw_taxpage_term_id');
-
-    tmw_taxpage_debug_log(
-      sprintf('Missing or invalid mapping for post %d', $post_id),
-      '[TMW-TAXPAGE-MAP]'
-    );
+    delete_post_meta($post_id, '_tmw_taxonomy');
+    delete_post_meta($post_id, '_tmw_term_id');
+    delete_post_meta($post_id, '_tmw_term_slug');
   }
 });
 
-add_action('admin_notices', function () {
-  if (!is_admin()) {
+add_action('admin_init', function () {
+  remove_action('category_add_form_fields', 'tmw_category_term_editor_add_fields');
+  remove_action('category_edit_form_fields', 'tmw_category_term_editor_edit_fields');
+});
+
+add_filter('post_type_link', function (string $permalink, WP_Post $post): string {
+  if ($post->post_type !== 'tmw_tax_page') {
+    return $permalink;
+  }
+
+  $taxonomy = get_post_meta($post->ID, '_tmw_taxonomy', true);
+  $taxonomy = is_string($taxonomy) ? $taxonomy : '';
+  $term_id = (int) get_post_meta($post->ID, '_tmw_term_id', true);
+
+  if ($taxonomy === '' || $term_id <= 0) {
+    $legacy_taxonomy = get_post_meta($post->ID, '_tmw_taxpage_taxonomy', true);
+    $legacy_term_id = (int) get_post_meta($post->ID, '_tmw_taxpage_term_id', true);
+    $taxonomy = $taxonomy ?: (is_string($legacy_taxonomy) ? $legacy_taxonomy : '');
+    $term_id = $term_id ?: $legacy_term_id;
+  }
+
+  if ($taxonomy === '' || $term_id <= 0) {
+    return $permalink;
+  }
+
+  $term = get_term($term_id, $taxonomy);
+  if (!$term instanceof WP_Term) {
+    return $permalink;
+  }
+
+  $term_link = get_term_link($term);
+  if (is_wp_error($term_link) || !is_string($term_link)) {
+    return $permalink;
+  }
+
+  return $term_link;
+}, 10, 2);
+
+add_action('template_redirect', function () {
+  if (!is_singular('tmw_tax_page')) {
     return;
   }
 
-  $screen = function_exists('get_current_screen') ? get_current_screen() : null;
-  if (!$screen || $screen->base !== 'term' || empty($screen->taxonomy)) {
+  $post_id = get_queried_object_id();
+  if ($post_id <= 0) {
     return;
   }
 
-  $allowed_taxonomies = tmw_taxpage_get_allowed_taxonomies();
-  if (!in_array($screen->taxonomy, $allowed_taxonomies, true)) {
+  $taxonomy = get_post_meta($post_id, '_tmw_taxonomy', true);
+  $taxonomy = is_string($taxonomy) ? $taxonomy : '';
+  $term_id = (int) get_post_meta($post_id, '_tmw_term_id', true);
+
+  if ($taxonomy === '' || $term_id <= 0) {
+    $legacy_taxonomy = get_post_meta($post_id, '_tmw_taxpage_taxonomy', true);
+    $legacy_term_id = (int) get_post_meta($post_id, '_tmw_taxpage_term_id', true);
+    $taxonomy = $taxonomy ?: (is_string($legacy_taxonomy) ? $legacy_taxonomy : '');
+    $term_id = $term_id ?: $legacy_term_id;
+  }
+
+  if ($taxonomy === '' || $term_id <= 0) {
     return;
   }
 
-  $term_id = isset($_GET['tag_ID']) ? (int) $_GET['tag_ID'] : 0;
-  if ($term_id <= 0) {
-    return;
-  }
-
-  $term = get_term($term_id, $screen->taxonomy);
+  $term = get_term($term_id, $taxonomy);
   if (!$term instanceof WP_Term) {
     return;
   }
 
-  $linked_post_id = tmw_taxpage_get_linked_post_id($term);
-  $edit_url = '';
-  $label = '';
-
-  if ($linked_post_id > 0) {
-    $edit_url = get_edit_post_link($linked_post_id, '');
-    $label = __('Edit SEO Page', 'retrotube-child');
-  } else {
-    $edit_url = add_query_arg([
-      'post_type'   => 'tmw_tax_page',
-      'tmw_tax'     => $term->taxonomy,
-      'tmw_term_id' => $term->term_id,
-    ], admin_url('post-new.php'));
-    $label = __('Create SEO Page', 'retrotube-child');
-  }
-
-  if (!$edit_url) {
+  $term_link = get_term_link($term);
+  if (is_wp_error($term_link) || !is_string($term_link)) {
     return;
   }
 
   tmw_taxpage_debug_log(
-    sprintf('Rendered admin link for %s:%d (post %d)', $term->taxonomy, $term->term_id, $linked_post_id),
-    '[TMW-TAXPAGE-ADMIN]'
+    sprintf('Redirected tmw_tax_page %d to %s:%d', $post_id, $taxonomy, $term_id),
+    '[TMW-TAXPAGES]'
   );
-  ?>
-  <div class="notice notice-info tmw-taxpage-admin-notice">
-    <p>
-      <strong><?php esc_html_e('Taxonomy SEO Page', 'retrotube-child'); ?></strong>
-      &mdash;
-      <?php echo esc_html($term->name); ?>
-      <a class="button button-primary" style="margin-left:10px;" href="<?php echo esc_url($edit_url); ?>">
-        <?php echo esc_html($label); ?>
-      </a>
-    </p>
-  </div>
-  <?php
+  wp_safe_redirect($term_link, 301);
+  exit;
+});
+
+add_filter('rank_math/metabox/post_types', function (array $post_types): array {
+  static $logged = false;
+
+  if (!in_array('tmw_tax_page', $post_types, true)) {
+    $post_types[] = 'tmw_tax_page';
+    if (!$logged) {
+      tmw_taxpage_debug_log('Injected tmw_tax_page into RankMath metabox types.', '[TMW-TAXPAGES-RM]');
+      $logged = true;
+    }
+  }
+
+  return $post_types;
 });

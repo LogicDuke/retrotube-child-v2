@@ -48,7 +48,7 @@ if (!function_exists('tmw_tpa_get_linked_post')) {
 
 if (!function_exists('tmw_tpa_filter_archive_title')) {
   /**
-   * [TMW-TAXPAGE] Override archive titles with linked taxonomy page title.
+   * [TMW-TAXPAGES] Override archive titles with linked taxonomy page title.
    *
    * @param string $title Archive title.
    * @return string
@@ -71,7 +71,7 @@ add_filter('get_the_archive_title', 'tmw_tpa_filter_archive_title', 9);
 
 if (!function_exists('tmw_tpa_filter_archive_description')) {
   /**
-   * [TMW-TAXPAGE] Render linked taxonomy page content above the video grid.
+   * [TMW-TAXPAGES] Render linked taxonomy page content above the video grid.
    *
    * @param string $description Archive description HTML.
    * @return string
@@ -88,19 +88,16 @@ if (!function_exists('tmw_tpa_filter_archive_description')) {
 
     $post = tmw_tpa_get_linked_post();
     if (!$post) {
-      if (defined('TMW_DEBUG') && TMW_DEBUG) {
-        error_log(sprintf('[TMW-TAXPAGE] No linked taxonomy page for %s:%d', $term->taxonomy, $term->term_id));
-      }
       return $description;
     }
 
     $content = '';
     if (!empty($post->post_excerpt)) {
-      $content .= wpautop(do_shortcode($post->post_excerpt));
+      $content .= apply_filters('the_excerpt', $post->post_excerpt);
     }
 
     if (!empty($post->post_content)) {
-      $content .= wpautop(do_shortcode($post->post_content));
+      $content .= apply_filters('the_content', $post->post_content);
     }
 
     if (trim(wp_strip_all_tags($content)) === '') {
