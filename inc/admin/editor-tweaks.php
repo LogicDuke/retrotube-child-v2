@@ -17,7 +17,7 @@ function tmw_enqueue_term_editor_ui($hook) {
         return;
     }
 
-    $allowed_taxonomies = array('category');
+    $allowed_taxonomies = array('category', 'blog_category');
     if (!in_array($screen->taxonomy, $allowed_taxonomies, true)) {
         return;
     }
