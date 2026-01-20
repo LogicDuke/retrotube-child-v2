@@ -52,4 +52,5 @@ if (is_admin()) {
     require_once __DIR__ . '/admin/metabox-model-banner.php';
     require_once __DIR__ . '/admin/tmw-slot-banner-metabox.php';
     require_once __DIR__ . '/admin/editor-tweaks.php';
+    require_once __DIR__ . '/admin/tmw-term-editor-sidebar.php';
 }
