@@ -232,6 +232,18 @@
    8. Responsive
    ========================================================================== */
 
+/* ==========================================================================
+   9. Footer Legal Menu
+   ========================================================================== */
+
+.site-footer .footer-bottom .menu a,
+.site-footer .footer-bottom .menu a:visited,
+.site-footer .footer-bottom .menu a:hover,
+.site-footer .footer-bottom .menu a:focus,
+.site-footer .footer-bottom .menu a:active {
+    color: #ffffff !important;
+}
+
 @media (max-width: 768px) {
     .video-meta-inline {
         flex-direction: column;
